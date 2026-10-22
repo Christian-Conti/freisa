@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# outdated: compare each tools.lock pin with upstream HEAD.  update <name> [ref]: re-pin a tool (default: upstream HEAD).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+case "${1:-}" in
+  outdated)
+    grep -v '^#' tools.lock | while read -r name url sha; do
+      head=$(git ls-remote "$url" HEAD | cut -c1-40)
+      [[ $head == "$sha" ]] && echo "ok        $name ${sha:0:10}" || echo "NEWER     $name pinned ${sha:0:10} upstream ${head:0:10}"
+    done ;;
+  update)
+    name=${2:?usage: update <name> [ref]}; line=$(grep -E "^$name[[:space:]]" tools.lock) || { echo "unknown tool $name"; exit 1; }
+    url=$(awk '{print $2}' <<<"$line"); old=$(awk '{print $3}' <<<"$line")
+    new=$(git ls-remote "$url" "${3:-HEAD}" | cut -c1-40 | head -1); [[ -n $new ]] || { echo "ref not found"; exit 1; }
+    sed -i "s#^\($name[[:space:]]\+[^[:space:]]\+[[:space:]]\+\)$old#\1$new#" tools.lock
+    echo "$name: ${old:0:10} -> ${new:0:10}  (run: make fetch, rebuild the tool if it has an install-* target, then re-run the smoke tests in docs/adding-blocks.md)" ;;
+  *) echo "usage: $0 outdated | update <name> [ref]"; exit 1 ;;
+esac

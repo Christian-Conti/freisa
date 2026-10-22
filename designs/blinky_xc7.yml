@@ -1,0 +1,5 @@
+repo: ../examples/blinky
+top: blinky
+rtl: ["*.v"]
+xdc: [pynq_z1.xdc]
+synth_args: -flatten -abc9

@@ -1,0 +1,3 @@
+repo: ../examples/uart_tx
+top: uart_tx
+rtl: ["*.v"]

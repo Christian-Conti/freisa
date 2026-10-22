@@ -1,0 +1,11 @@
+# name  url  commit   (pinned; `make install` clones exactly these)
+rapidwright           https://github.com/Xilinx/RapidWright                       ad989a04f3618b8f0493542a6b645a7ba1dabd90
+fpl26_contest         https://github.com/Xilinx/fpl26_optimization_contest        47ad33ce66fd2fe82e9721c19177e617c3ec71cf
+# dreamplacefpga: commit named in the RapidWright tutorial (master HEAD imports an unbuilt timing op)
+dreamplacefpga        https://github.com/rachelselinar/DREAMPlaceFPGA             fb6d086ed082f8404123679ec59d53e7116b3f2e
+openparf              https://github.com/PKU-IDEA/OpenPARF                        793cac2bb109e5cc76046f87d39ed70fa093cf60
+f4pga                 https://github.com/chipsalliance/f4pga                      0723f9ca4ea4b686ff9c2e32c9cec56d40de1a62
+fpga-interchange-schema https://github.com/chipsalliance/fpga-interchange-schema  c985b4648e66414b250261c1ba4cbe45a2971b1c
+nextpnr-xilinx        https://github.com/gatecat/nextpnr-xilinx                   8f178fc6a6d4dfbc57bef66c3ccff34d558047d5
+prjxray               https://github.com/f4pga/prjxray                            c9f02d8576042325425824647ab5555b1bc77833
+prjxray-db            https://github.com/SymbiFlow/prjxray-db                     0a0addedd73e7e4139d52a6d8db4258763e0f1f3

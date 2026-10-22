@@ -1,0 +1,11 @@
+# generic defaults; a design file or a target `flow:` overrides these
+stages: {sources: files, synth: yosys, netlist: rapidwright_edif, place: dreamplacefpga, route: rwroute, bitgen: vivado}
+synth_args: -flatten
+ext: {}
+# whole-flow presets, chosen with `make flow PROFILE=<name>`; they take precedence over design/board stage choices
+profiles:
+  open:       {synth: yosys, netlist: rapidwright_edif, place: dreamplacefpga, route: rwroute, bitgen: vivado}
+  vivado:     {synth: vivado, netlist: none, place: vivado, route: vivado, bitgen: vivado}
+  vivado_ps:  {synth: vivado, netlist: none, place: vivado, route: vivado, bitgen: vivado_ps}
+  # mixes: open synthesis, Vivado implementation
+  yosys_vivado: {synth: yosys, netlist: vivado_link, place: vivado, route: vivado, bitgen: vivado}

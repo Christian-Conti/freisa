@@ -1,0 +1,6 @@
+part: xck26-sfvc784-2LV-c
+family: xczu
+yosys_family: xcup
+needs_ps: true
+carry: none        # DREAMPlaceFPGA has no CARRY8 node type; use `carry8` with a placer that does
+legalize: dreamplace   # map BUFG/INV/LUT0 onto the placer's primitive library

@@ -1,0 +1,7 @@
+# Only family with a fully open bitstream path (prjxray + nextpnr-xilinx). Used for PL-only logic.
+part: xc7z020clg400-1
+family: xc7
+yosys_family: xc7
+chipdb: install/share/xc7z020.bin
+db_root: third_party/prjxray-db/zynq7
+flow: {netlist: none, place: in_route, route: nextpnr_xilinx, bitgen: prjxray}

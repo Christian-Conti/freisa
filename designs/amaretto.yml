@@ -1,0 +1,13 @@
+# repo is relative to this file's dir; a rendered fusesoc tree works too
+repo: ../../../fpga/projects/amaretto/build/vlsi_lab_system_amaretto_1.0.0/zcu106-sources
+top: amaretto_axi_top
+stages: {sources: core}
+core: amaretto.core            # FuseSoC .core; or drop `core` and list `rtl:` globs instead
+vhdl_top: sin_cos_flopoco
+xdc: [fpga/xdc/clock.xdc]
+slang_args: --compat vcs --allow-hierarchical-const --unroll-limit 1000000
+patches:   # slang rejects nested '{default:} on a 2-D unpacked array; flat form is equivalent
+  - {file: wr_enable.sv, from: "'{default: '{default: 1'b0}}", to: "'{default: 1'b0}"}
+yosys_pre:   # yosys cannot map URAM (ram_style=ultra) memories; fall back to its own BRAM/LUT choice
+  - attrmap -remove ram_style
+synth_args: -flatten -nolutram -nosrl   # placer has no LUTRAM/SRL node types

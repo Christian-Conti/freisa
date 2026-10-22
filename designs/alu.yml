@@ -1,0 +1,9 @@
+repo: ../examples/alu
+top: alu
+rtl: ["*.sv"]
+explore:
+  synth:
+    - {synth_args: -flatten}
+    - {synth_args: -flatten -abc9}
+    - {synth_args: -flatten -abc9 -retime}
+    - {synth_args: -flatten -dff}
