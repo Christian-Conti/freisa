@@ -30,3 +30,8 @@ Outputs and logs: `build/<design>/<board>/` (one `<step>.log` per tool call, `sy
 `make doctor TARGET=<board>` prints every backend with `ok` or the reason it cannot run.
 
 Vivado backends for every step (optional): see [vivado.md](vivado.md).
+
+## Upload and reports
+`make upload` runs an `upload` backend (`openfpgaloader` or `vivado`) on `out.bit`; board keys: `ofl_board`, `ofl_cable`, `hw_device`.
+After each stage `freisa/report.py` collects the tool reports into `report/reports/`; at the end it links every artifact into
+`report/artifacts/`, runs sign-off reports on the final checkpoint (Vivado if present, RapidWright otherwise) and writes `summary.md`/`summary.json`.

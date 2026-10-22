@@ -1,7 +1,7 @@
 # Optional Vivado steps
 
 The open flow cannot map everything (URAM, LUTRAM/SRL, wide muxes, carry chains, I/O buffers, PS) and cannot write
-UltraScale+ bitstreams. If Vivado is installed (on `PATH` or `$VIVADO`), every step has a Vivado backend, and steps exchange
+UltraScale+ bitstreams. If Vivado is installed (`$VIVADO`, `PATH`, or `/eda/Xilinx/Vivado/<version>/bin/vivado`, preferring 2024.1), every step has a Vivado backend, and steps exchange
 checkpoints, so you can run all of them or mix them with open ones. `make doctor` shows what is available.
 
 | stage | backend | what it runs |
@@ -39,5 +39,5 @@ vivado_jobs: 8
 run on the board. A checkpoint produced by the open placer/router cannot be put inside a block design (module references
 need RTL), so PS builds use the Vivado profiles.
 
-These Vivado backends have not been run in this repository's test setup (no Vivado installed there); check the generated
-`*.tcl` files in the stage directories first.
+Tested here with Vivado 2024.1: `synth`, `place` and the sign-off reports on open-flow checkpoints. `vivado_ps` (block design) is not yet
+exercised; check the generated `*.tcl` files in the stage directories first.

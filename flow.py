@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """RTL -> bitstream (any design: designs/*.yml, any board: targets/*.yml), modular. `flow.py doctor [-t T]` shows what each stage can do; `flow.py run -t T [--from S] [--to S]`."""
 import argparse, json, os, pathlib, sys
-from freisa import core, ui
+from freisa import core, ui, report
 
 HERE = pathlib.Path(__file__).parent
 
@@ -20,12 +20,15 @@ def main():
     ap.add_argument("-o", "--out", default=HERE / "build")
     a = ap.parse_args()
     core.load_backends()
-    dpath = pathlib.Path(a.design) if a.design.endswith(".yml") else HERE / "designs" / f"{a.design}.yml"
+    # `-d` may be a name, designs/<name>[.yml], designs/example/<name>[.yml] or any path to a yml
+    nm = pathlib.Path(a.design.strip('"')).name.removesuffix(".yml")
+    dpath = next((p for p in [pathlib.Path(a.design.strip('"')), HERE / "designs" / f"{nm}.yml", HERE / "designs" / "example" / f"{nm}.yml"] if p.is_file()), None)
+    if dpath is None: sys.exit(f"design '{a.design}' not found in designs/ or designs/example/")
     flow = {**core.load_yaml(HERE / "defaults.yml"), **core.load_yaml(dpath)}
     flow["stages"] = {**core.load_yaml(HERE / "defaults.yml")["stages"], **flow["stages"]} if "stages" in flow else flow["stages"]
     name = dpath.stem
     target = core.load_yaml(HERE / "targets" / f"{a.target}.yml")
-    ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, (dpath.parent / flow["repo"]).resolve())
+    ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists() or r == (HERE / "designs" / flow["repo"]).resolve()))
     if a.cmd == "upload":
         b = core.REGISTRY["upload"].get(a.tool) or sys.exit(f"unknown upload tool {a.tool} (have {list(core.REGISTRY['upload'])})")
         b = b(); why = b.supports(target)
@@ -50,7 +53,7 @@ def main():
         why = sel[s].supports(target)
         if why and s == run[-1] and len(run) > 1: print(f"note: stopping before {s}/{sel[s].name}: {why}"); run = run[:-1]
         elif why: sys.exit(f"stage {s}/{sel[s].name} unavailable: {why}")
-    mon = ui.Monitor(run, ctx, ctx.work / "flow.log"); mon.start()
+    mon = ui.Monitor(run, ctx, ctx.work / "flow.log"); mon.start(); rep = report.Reporter(ctx)
     for s in run:
         b = sel[s]
         mon.begin(s, b.name)
@@ -60,10 +63,12 @@ def main():
             mon.finish(False); raise
         if s == "sources": core.apply_patches(ctx)
         art.write_text(json.dumps({k: v if k == "rtl" else str(v) for k, v in ctx.art.items()}))
-        try: sc = b.score(ctx) if s in ("synth", "place", "route") else None
+        best = ctx.work / f"{s}_best.json"
+        try: sc = json.loads(best.read_text())["score"] if s in flow.get("explore", {}) else (b.score(ctx) if s in ("synth", "place", "route") else None)
         except Exception: sc = None
-        mon.end(s, f"score {sc}" if sc else "")
-    mon.finish()
+        mon.end(s, f"score {sc}" if sc else "", rep)
+    mon.say("report: " + os.path.relpath(rep.finalize()))
     mon.say("artifacts: " + ", ".join(f"{k}={v}" for k, v in ctx.art.items() if k != "rtl"))
+    mon.finish()
 
 main()

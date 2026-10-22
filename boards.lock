@@ -1,0 +1,8 @@
+# supported boards (from targets/*.yml `board_store:`); `make install-boards` refreshes, `PIN=1` keeps
+store https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
+# store-path  version
+TUL/pynq-z2 A.0
+Xilinx/kv260_carrier 1.3
+Xilinx/kv260_som 1.4
+Xilinx/zcu104 1.1
+Xilinx/zcu106 2.6

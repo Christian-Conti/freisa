@@ -60,7 +60,7 @@ class VivadoPlace(_Viv):
         c = ctx.cfg
         po = "phys_opt_design\n" if c.get("phys_opt", False) else ""
         _run(ctx, f"open_checkpoint {{{ctx.art['dcp']}}}\nopt_design -directive {c.get('opt_directive', 'Default')}\n"
-             f"place_design -directive {c.get('place_directive', 'Default')}\n{po}report_timing_summary -file place_timing.rpt\nwrite_checkpoint -force placed.dcp\n", "viv_place")
+             f"place_design -directive {c.get('place_directive', 'Default')}\n{po}report_timing_summary -file place_timing.rpt\nreport_utilization -file place_util.rpt\nreport_clock_utilization -file place_clock_util.rpt\nreport_congestion -file place_congestion.rpt\nwrite_checkpoint -force placed.dcp\n", "viv_place")
         ctx.art["dcp"] = ctx.work / "placed.dcp"
 
 @backend
@@ -71,7 +71,7 @@ class VivadoRoute(_Viv):
         c = ctx.cfg
         po = f"phys_opt_design -directive {c.get('post_route_phys_opt', 'Default')}\n" if c.get("post_route_phys_opt") else ""
         _run(ctx, f"open_checkpoint {{{ctx.art['dcp']}}}\nroute_design -directive {c.get('route_directive', 'Default')}\n{po}"
-             "report_timing_summary -file route_timing.rpt\nreport_utilization -file route_util.rpt\nreport_route_status -file route_status.rpt\nwrite_checkpoint -force routed.dcp\n", "viv_route")
+             "report_timing_summary -max_paths 20 -file route_timing.rpt\nreport_utilization -file route_util.rpt\nreport_route_status -file route_status.rpt\nreport_drc -file route_drc.rpt\nreport_power -file route_power.rpt\nreport_methodology -file route_methodology.rpt\nwrite_checkpoint -force routed.dcp\n", "viv_route")
         ctx.art["dcp"] = ctx.work / "routed.dcp"
 
 @backend

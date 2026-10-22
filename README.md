@@ -1,33 +1,53 @@
 # FREISA — FPGA Reusable and Extensible Infrastructure for Synthesis Automation
 
-Modular open-source RTL → bitstream flow (Yosys · RapidWright · DREAMPlaceFPGA · RWRoute · nextpnr-xilinx · prjxray), with optional Vivado steps.
+Modular RTL → bitstream flow built from open-source tools, with optional Vivado steps. Every step is a swappable block;
+designs and boards are small YAML files, so any RTL and any supported chip can be added without touching the tools.
 
+## Quick start
 ```
-make install                 # conda env + pinned clones of every tool (tools.lock)
-make doctor TARGET=zcu106    # which backend of each stage can run for this board
-make install-dreamplace      # open UltraScale+ placer
-make flow DESIGN=amaretto TARGET=zcu106
-make flow DESIGN=example TARGET=zcu106 TO=synth
+make install                      # conda env, board files, open tools (built once)
+make example                      # blinky: RTL -> .bit on a Zynq-7000, no Vivado
+make doctor TARGET=zcu106         # which block of each step can run
+make flow DESIGN=<design> TARGET=<board>
+make upload TARGET=<board> TOOL=openfpgaloader
 make help
 ```
 
-Stages: `sources → synth → netlist → place → route → bitgen`. Each stage has interchangeable backends
-(`freisa/stages/*.py`, one `@backend` class each); defaults in `defaults.yml`, overridable per design or per board.
+## The flow
+```
+ sources -> synth -> netlist -> place -> route -> bitgen -> upload
+ (RTL list) Yosys    RapidWright DREAMPlaceFPGA RWRoute   prjxray   openFPGALoader
+            Vivado   Vivado     nextpnr-xilinx nextpnr-xilinx Vivado  Vivado HW manager
+```
+Each arrow is a checkpoint (`edif`/`json`, `dcp`, `fasm`, `bit`), so open and Vivado blocks can be mixed per step.
+`PROFILE=open|vivado|vivado_ps|yosys_vivado` picks a preset, `explore:` / `EXPLORE=all` runs several variants or every supported
+backend and keeps the best, and a live monitor shows progress, time, CPU and memory. Each run writes `report/` with area,
+timing and routing reports plus all generated artifacts.
 
-| Add…        | By…                                                                                   |
-|-------------|----------------------------------------------------------------------------------------|
-| a design    | `designs/<name>.yml`: `repo`, `top`, and either `core:` (FuseSoC) or `rtl:` globs      |
-| a board     | `targets/<name>.yml`: `part`, `family`, `yosys_family`, optional `flow:` overrides     |
-| a tool      | a module in `freisa/stages/` with a `Backend` subclass (`supports()` + `run()`), a line in `tools.lock` |
+## Make targets
+| Target | What it does |
+|--------|--------------|
+| `install` / `uninstall` | everything (env, boards, tools) / remove it |
+| `install-boards` | pull the supported boards from XilinxBoardStore, refresh `boards.lock` (`PIN=1` keeps it) |
+| `install-xc7`, `install-dreamplace` | build the open tools (skipped when present, `FORCE=1`) |
+| `doctor` | availability of every block for a board |
+| `flow` | run the flow (`DESIGN`, `TARGET`, `PROFILE`, `EXPLORE`, `FROM`, `TO`) |
+| `example` | run a bundled example |
+| `upload` | program the board (`TOOL=openfpgaloader\|vivado`, `BIT=`) |
+| `outdated` / `update` | compare/re-pin the tools in `tools.lock` |
 
-## What is open, what is not (honest)
-- **Synthesis (Yosys: slang for SV, ghdl for VHDL → EDIF/JSON)** works for any xc7/UltraScale+ part.
-- **Full open bitstream exists only for xc7** (prjxray + nextpnr-xilinx): `make install-xc7`, target `xc7z020`.
-- **UltraScale+ (zcu104/zcu106/kv260): open end to end up to a routed DCP** — Yosys → RapidWright (EDIF→DCP) → DREAMPlaceFPGA →
-  RWRoute. No open UltraScale+ bitstream database exists, so `bitgen: vivado` (`write_bitstream` only) is the one closed step.
-  `PROFILE=vivado` / `vivado_ps` run the same steps in Vivado (URAM etc.; `.hwh` for PS boards). Each stage can `explore:` several variants/tools and keep the best.
-- Boards with a PS (zcu*, kv260) need the block design for a final bitstream; the OOC netlist alone has no I/O or PS.
-- `patches:` in a design file fixes tool-compat RTL issues on copies without touching the source tree.
+## Supported platforms
+Zynq UltraScale+ (ZCU104, ZCU106, Kria KV260) and Zynq-7000 (PYNQ-Z1/Z2). Full table with the tools available per step: [docs/platforms.md](docs/platforms.md).
 
-Docs: [Vivado steps & PS/.hwh](docs/vivado.md) · [platforms](docs/platforms.md) · [add/update flow blocks](docs/adding-blocks.md) · [architecture](docs/architecture.md) · [extending: designs, boards, tools](docs/extending.md) · [install](docs/install.md)
-Examples: `make flow DESIGN=counter TO=synth`, `alu`, `uart_tx`, `vhdl_blink`, `example`.
+## Documentation
+- [Example: configuration and complete flow](docs/example.md)
+- [Supported platforms and adding a board](docs/platforms.md)
+- [Architecture](docs/architecture.md) · [Extending](docs/extending.md) · [Adding and updating flow blocks](docs/adding-blocks.md)
+- [Vivado steps, PS boards and `.hwh`](docs/vivado.md) · [Install](docs/install.md)
+
+## Layout
+```
+Makefile  flow.py          entry points            designs/  targets/   one YAML per design / board
+freisa/                    flow engine and blocks  tools.lock boards.lock pinned tools / boards
+utils/                     install scripts         examples/             small RTL designs
+```

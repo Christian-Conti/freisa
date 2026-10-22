@@ -2,3 +2,4 @@ build/
 third_party/
 install/
 __pycache__/
+boards/
