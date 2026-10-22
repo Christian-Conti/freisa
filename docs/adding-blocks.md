@@ -31,19 +31,18 @@ read/write `ctx.art` (artifacts), so replacing one never touches the others.
 ## 2. Update a block when a new release comes out
 ```
 make outdated                 # every pin vs upstream HEAD
-make update TOOL=rapidwright  # re-pin to upstream HEAD   (or REF=v2026.2.0 for a tag/branch/commit)
+make update NAME=dreamplacefpga   # re-pin to upstream HEAD   (or REF=<tag/branch/commit>)
 make fetch                    # check out the new commit
 make install-dreamplace       # rebuild if the tool has an install-* target (install-xc7 for nextpnr-xilinx/prjxray)
 make flow DESIGN=lfsr_bank TARGET=zcu106 TO=route    # smoke test; then DESIGN=blinky_xc7 TARGET=xc7z020
 ```
 Rules of thumb:
 - Pins are exact commits; nothing changes until you run `make update`. Commit `tools.lock` together with the code that needs it.
-- RapidWright is also a pip package: bump `rapidwright==` in `utils/python-requirements.txt` and re-run `make conda-env`
-  (keep it in step with the `tools.lock` commit used for the Interchange schemas).
+- RapidWright is used as the pip package (it bundles the jar): bump `rapidwright==` in `utils/python-requirements.txt` and re-run `make conda-env`.
 - A failing smoke test after an update means the block's *adapter* needs a fix (CLI flags, file names); fix it in the
   block's `run()` only. Several blocks here carry workarounds for their upstream (see comments in `freisa/stages/rapidwright.py`,
   `utils/build_dreamplace.sh`); on an update, check whether each is still needed and delete the ones that are not.
-- To go back, `make update TOOL=<name> REF=<old commit>` and `make fetch`.
+- To go back, `make update NAME=<name> REF=<old commit>` and `make fetch`.
 - Known pin: DREAMPlaceFPGA is pinned to the commit named in RapidWright's tutorial because current `master` imports an op that is not built.
 
 ## 3. Add a new board

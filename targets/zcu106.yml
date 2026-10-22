@@ -4,3 +4,4 @@ yosys_family: xcup    # synth_xilinx has no zu+; xcup (UltraScale+ primitives) i
 needs_ps: true        # PL is fed by PS8 DDR/AXI -> final bitstream needs the BD, open tools cannot emit it
 carry: none        # DREAMPlaceFPGA has no CARRY8 node type; use `carry8` with a placer that does
 legalize: dreamplace   # map BUFG/INV/LUT0 onto the placer's primitive library
+ofl_board: zcu106

@@ -18,6 +18,7 @@ Notes
 - Other UltraScale+ and UltraScale parts work by adding a board file; DREAMPlaceFPGA's Interchange support targets most of them.
 - Other xc7 parts (Artix-7, Kintex-7, Spartan-7, other Zynq-7000) need the matching chip database for nextpnr-xilinx
   (`utils/build_xc7.sh` builds `xc7z020` as the example) and a board file.
+- Evaluated but not integrated: OpenPARF and AMF-Placer (contest architectures only / need Vivado Tcl), f4pga (7-series wrapper around the tools used here), the FPL'26 contest agent (Vivado-driven).
 - Not supported: Versal, Lattice, Gowin, Intel (other Yosys/nextpnr families can be added as new boards + blocks).
 
 ## Add a board

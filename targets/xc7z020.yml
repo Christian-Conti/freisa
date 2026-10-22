@@ -5,3 +5,4 @@ yosys_family: xc7
 chipdb: install/share/xc7z020.bin
 db_root: third_party/prjxray-db/zynq7
 flow: {netlist: none, place: in_route, route: nextpnr_xilinx, bitgen: prjxray}
+ofl_board: pynq_z1

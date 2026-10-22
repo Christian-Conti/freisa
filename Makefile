@@ -12,18 +12,20 @@ DESIGN ?= amaretto
 TARGET ?= zcu106
 ## @param PROFILE Stage preset: open (default) | vivado | vivado_ps (PS boards: also .hwh/.xsa) | yosys_vivado
 PROFILE ?=
+## @param EXPLORE `all` = try every supported backend per stage, keep the best (scores compared per metric)
+EXPLORE ?=
 ## @param FROM First stage (sources|synth|netlist|place|route|bitgen)
 FROM ?= sources
 ## @param TO Last stage
 TO ?= bitgen
-.PHONY: example outdated update uninstall install-dreamplace check-deps help install conda-env fetch install-xc7 doctor flow synth clean
+.PHONY: upload example outdated update uninstall install-dreamplace check-deps help install conda-env fetch install-xc7 doctor flow synth clean
 ## @section Help
 ## Show this guide
 help:
 	@FILE_FOR_HELP="$(firstword $(MAKEFILE_LIST))" bash "$(MAKEFILE_DIR)utils/MakeHelp"
 ## @section Install
 ## Everything: conda env (python deps + RapidWright), pinned tool clones (tools.lock)
-install: conda-env fetch check-deps
+install: conda-env check-deps
 ## Download miniconda (if needed) and create the conda env
 conda-env:
 	@ENV_NAME=$(ENV_NAME) bash utils/MakeConda
@@ -32,21 +34,29 @@ outdated:
 	@bash utils/tool_version.sh outdated
 ## Re-pin one tool in tools.lock to upstream HEAD (or REF)
 update:
-	@bash utils/tool_version.sh update $(TOOL) $(REF)
+	@bash utils/tool_version.sh update $(NAME) $(REF)
 ## Check build dependencies (git, cmake, g++, boost, eigen, python deps); runs before every build
 check-deps:
 	@$(CONDA_RUN) bash utils/check_deps.sh || true
-## Clone every tool in tools.lock at its pinned commit into third_party/
+## Clone the tools in tools.lock at their pinned commit into third_party/ (TOOLS="a b" for a subset; present ones are skipped)
 fetch:
-	@bash utils/fetch_tools.sh
+	@bash utils/fetch_tools.sh $(TOOLS)
 ## Build nextpnr-xilinx + prjxray (open xc7 bitstream path; long build, needs cmake/boost/eigen)
-install-xc7: fetch
+install-xc7:
+	@bash utils/fetch_tools.sh nextpnr-xilinx prjxray prjxray-db
 	@$(CONDA_RUN) bash utils/check_deps.sh && bash utils/build_xc7.sh
 ## Build DREAMPlaceFPGA (CPU or CUDA, per available torch) for the open UltraScale+ placer
-install-dreamplace: fetch
+install-dreamplace:
+	@bash utils/fetch_tools.sh dreamplacefpga
 	@$(CONDA_RUN) bash utils/check_deps.sh && bash utils/build_dreamplace.sh
-## @param TOOL Tool name in tools.lock (for `update`)
+## @param TOOL Upload tool for `make upload`: openfpgaloader | vivado
 TOOL ?=
+## @param BIT Bitstream file for `make upload` (default build/<DESIGN>/<TARGET>/out.bit)
+BIT ?=
+## @param NAME Tool name in tools.lock (for `update`)
+NAME ?=
+## @param TOOLS Subset of tools.lock names (for `fetch`)
+TOOLS ?=
 ## @param REF Branch/tag/commit to pin (for `update`, default upstream HEAD)
 REF ?=
 ## @param EXAMPLE Design for `make example` (blinky_xc7|lfsr_bank|counter|alu|uart_tx|vhdl_blink|example)
@@ -56,9 +66,12 @@ EXAMPLE_TARGET ?= xc7z020
 ## @param EXAMPLE_TO Last stage for `make example` (default: bitgen on xc7z020, route otherwise)
 EXAMPLE_TO ?=
 ## @section Flow
+## Program the bitstream on the connected board: TOOL=openfpgaloader (open, default) | vivado; BIT=<file> to override
+upload:
+	@$(CONDA_RUN) python flow.py upload -d $(DESIGN) -t $(TARGET) --tool $(or $(TOOL),openfpgaloader) $(if $(BIT),--bit $(BIT))
 ## Show which backend of each stage can run for TARGET
 doctor:
-	@$(CONDA_RUN) python flow.py doctor -d $(DESIGN) -t $(TARGET) $(if $(PROFILE),-p $(PROFILE))
+	@$(CONDA_RUN) python flow.py doctor -d $(DESIGN) -t $(TARGET) $(if $(PROFILE),-p $(PROFILE)) $(if $(EXPLORE),--explore $(EXPLORE))
 ## Run the flow for DESIGN on TARGET (FROM..TO stages)
 flow:
 	@$(CONDA_RUN) python flow.py run -d $(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO) $(if $(PROFILE),-p $(PROFILE))

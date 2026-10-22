@@ -16,6 +16,7 @@ def _carry8_map():
 @backend
 class YosysSlang(Backend):
     """yosys-slang (SV/Verilog) + ghdl plugin (VHDL) -> synth_xilinx -> EDIF + JSON. Open source, any xc7/xcup design."""
+    metric = "area"
     stage, name, tools = "synth", "yosys", ["yosys"]
     def run(self, ctx):
         t, c = ctx.target, ctx.cfg

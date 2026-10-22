@@ -31,6 +31,7 @@ class Ctx:
 class Backend:
     stage = name = None
     tools = []  # executables needed
+    metric = "none"  # unit of score(): scores of different metrics are never ranked against each other
     def score(self, ctx):
         """Lower is better; used by `explore:`. Default: no preference."""
         return 0
@@ -62,8 +63,13 @@ def apply_patches(ctx):
                 ctx.art["rtl"][i] = (str(dst), ft)
 
 def explore(stage, b, ctx, variants, jobs):
-    """Run `variants` (config overlays, optional `backend:` to swap the tool) in parallel, keep the lowest b.score(); returns winner's ctx state."""
+    """`variants`: list of config overlays (optional `backend:` swaps the tool) or "all" = every backend that supports the target.
+    Scores are only compared within one `metric` (the first variant's); other metrics are reported, not ranked.
+    Run `variants` (config overlays, optional `backend:` to swap the tool) in parallel, keep the lowest b.score(); returns winner's ctx state."""
     import concurrent.futures as cf, copy, json
+    if variants == "all":
+        variants = [{"backend": n} for n, cls in REGISTRY[stage].items() if cls().supports(ctx.target) is None]
+        variants.sort(key=lambda v: v["backend"] != b.name)  # the selected backend first: it defines the ranking metric
     def one(i_v):
         i, v = i_v
         c = copy.copy(ctx); c.cfg = {**ctx.cfg, **v}; c.work = ctx.work / f"{stage}_v{i}"; c.art = dict(ctx.art)
@@ -77,10 +83,22 @@ def explore(stage, b, ctx, variants, jobs):
             return i, v, c, None
     with cf.ThreadPoolExecutor(jobs) as ex:
         res = list(ex.map(one, enumerate(variants)))
+    metric = lambda v: (REGISTRY[stage][v["backend"]] if "backend" in v else type(b)).metric
     ok = [r for r in res if r[3] is not None]
-    for i, v, c, s in res: print(f"   {stage} v{i} {v}: {'FAILED' if s is None else s}")
+    for i, v, c, s in res: print(f"   {stage} v{i} {v} [{metric(v)}]: {'FAILED' if s is None else s}")
+    ok = [r for r in ok if metric(r[1]) == metric(res[0][1])] or ok  # rank only comparable scores
     if not ok: sys.exit(f"stage {stage}: every variant failed")
     i, v, c, s = min(ok, key=lambda r: r[3])
     (ctx.work / f"{stage}_best.json").write_text(json.dumps({"variant": i, "overlay": v, "score": s, "all": [[r[0], r[3]] for r in res]}))
     print(f"   -> {stage} keeps v{i}")
     ctx.art.update(c.art)
+
+def find_vivado():
+    """$VIVADO, then PATH, then /eda/Xilinx/Vivado/<version>/bin/vivado ($VIVADO_ROOT, $VIVADO_VERSION; prefers 2024.1)."""
+    if os.environ.get("VIVADO"): return os.environ["VIVADO"]
+    if shutil.which("vivado"): return "vivado"
+    root = pathlib.Path(os.environ.get("VIVADO_ROOT", "/eda/Xilinx/Vivado"))
+    ver = os.environ.get("VIVADO_VERSION", "2024.1")
+    found = sorted(root.glob("*/bin/vivado"), key=lambda p: p.parts[-3])
+    pref = [p for p in found if p.parts[-3] == ver]
+    return str((pref or found[-1:] or [None])[0]) if (pref or found) else None

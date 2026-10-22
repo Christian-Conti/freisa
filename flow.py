@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """RTL -> bitstream (any design: designs/*.yml, any board: targets/*.yml), modular. `flow.py doctor [-t T]` shows what each stage can do; `flow.py run -t T [--from S] [--to S]`."""
-import argparse, json, pathlib, sys
+import argparse, json, os, pathlib, sys
 from freisa import core, ui
 
 HERE = pathlib.Path(__file__).parent
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "doctor"])
+    ap.add_argument("cmd", choices=["run", "doctor", "upload"])
     ap.add_argument("-t", "--target", default="zcu106")
     ap.add_argument("-d", "--design", default="amaretto", help="designs/<name>.yml or a path")
     ap.add_argument("-p", "--profile", default=None, help="stage preset from defaults.yml: open|vivado|vivado_ps|yosys_vivado")
+    ap.add_argument("--explore", choices=["all"], help="try every supported backend in every stage and keep the best")
+    ap.add_argument("--tool", default="openfpgaloader", help="upload: openfpgaloader | vivado")
+    ap.add_argument("--bit", help="upload: bitstream (default: build/<design>/<board>/out.bit)")
     ap.add_argument("--from", dest="frm", default=core.STAGES[0])
     ap.add_argument("--to", default=core.STAGES[-1])
     ap.add_argument("-j", "--jobs", type=int, default=4, help="parallel explore variants")
@@ -23,6 +26,13 @@ def main():
     name = dpath.stem
     target = core.load_yaml(HERE / "targets" / f"{a.target}.yml")
     ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, (dpath.parent / flow["repo"]).resolve())
+    if a.cmd == "upload":
+        b = core.REGISTRY["upload"].get(a.tool) or sys.exit(f"unknown upload tool {a.tool} (have {list(core.REGISTRY['upload'])})")
+        b = b(); why = b.supports(target)
+        if why: sys.exit(f"upload/{a.tool} unavailable: {why}")
+        ctx.art["bit"] = pathlib.Path(a.bit) if a.bit else ctx.work / "out.bit"
+        if not ctx.art["bit"].exists(): sys.exit(f"no bitstream at {os.path.relpath(ctx.art['bit'])}: run the flow first or pass BIT=")
+        b.run(ctx); print(f"uploaded {os.path.relpath(ctx.art['bit'])} with {a.tool}"); return
     sel = {s: core.pick(s, flow, target, a.profile) for s in core.STAGES}
     if a.cmd == "doctor":
         for s in core.STAGES:
@@ -33,6 +43,7 @@ def main():
     art = ctx.work / "artifacts.json"
     if a.frm != core.STAGES[0] and art.exists():  # resume: reload what earlier stages produced
         ctx.art = {k: ([tuple(x) for x in v] if k == "rtl" else pathlib.Path(v)) for k, v in json.loads(art.read_text()).items()}
+    if a.explore == "all": flow["explore"] = {**{s: "all" for s in ("synth", "place", "route")}, **flow.get("explore", {})}
     run = core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     # preflight: fail before hours of work if a middle stage cannot run; a missing last step (e.g. Vivado bitgen) just ends the run early
     for s in run:

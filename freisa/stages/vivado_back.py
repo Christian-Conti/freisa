@@ -3,12 +3,12 @@ chains, IO/PS, bitstream).  Use with `PROFILE=vivado` (all steps) or pick single
 Vivado is found on PATH or via $VIVADO; steps exchange checkpoints (`dcp`), so open and Vivado steps can be mixed
 (e.g. `synth: yosys`, `place: vivado`, `route: rwroute`)."""
 import os, re
-from ..core import Backend, backend
+from ..core import Backend, backend, find_vivado
 
 def _run(ctx, body, log):
     t = ctx.work / f"{log}.tcl"
     t.write_text(body)
-    ctx.sh([os.environ.get("VIVADO", "vivado"), "-mode", "batch", "-nojournal", "-log", f"{log}.vivado.log", "-source", t.name], log, cwd=ctx.work)
+    ctx.sh([find_vivado(), "-mode", "batch", "-nojournal", "-log", f"{log}.vivado.log", "-source", t.name], log, cwd=ctx.work)
 
 def _wns(rpt):
     """Worst negative slack from a report_timing_summary file (None if absent)."""
@@ -19,7 +19,9 @@ def _wns(rpt):
         return None
 
 class _Viv(Backend):
-    tools = ["vivado"]
+    metric = "wns"
+    def supports(self, target):
+        return None if find_vivado() else "Vivado not found (PATH, $VIVADO, or /eda/Xilinx/Vivado/<version>/bin/vivado)"
     def score(self, ctx):  # explore: lower is better -> maximise WNS
         w = _wns(ctx.work / f"{self.stage}_timing.rpt")
         return -w if w is not None else 0
@@ -36,7 +38,7 @@ class VivadoSynth(_Viv):
         defs = " ".join(f"-verilog_define {k}={v}" for k, v in c.get("defines", {}).items())
         gens = " ".join(f"-generic {k}={v}" for k, v in c.get("params", {}).items())
         xdc = "".join(f"read_xdc {{{ctx.root / x}}}\n" for x in c.get("xdc", []))
-        ooc = "-mode out_of_context" if c.get("ooc", ctx.target.get("needs_ps", False) is False and not c.get("xdc")) else ""
+        ooc = "-mode out_of_context" if c.get("ooc", not c.get("xdc")) else ""  # no pin constraints -> out-of-context
         _run(ctx, "\n".join(read) + f"\n{xdc}synth_design -top {c['top']} -part {ctx.target['part']} {ooc} {defs} {gens} {c.get('vivado_synth_args', '-flatten_hierarchy rebuilt')}\n"
              f"report_utilization -file synth_util.rpt\nreport_timing_summary -file synth_timing.rpt\nwrite_checkpoint -force synth.dcp\nwrite_edif -force synth.edf\n", "viv_synth")
         ctx.art["dcp"], ctx.art["edif"] = ctx.work / "synth.dcp", ctx.work / "synth.edf"

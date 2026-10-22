@@ -24,7 +24,6 @@ Outputs and logs: `build/<design>/<board>/` (one `<step>.log` per tool call, `sy
 | place | `dreamplacefpga` | DcpToInterchange → Bookshelf → DREAMPlaceFPGA → DCP; needs `make install-dreamplace` |
 | route | `rwroute` | RapidWright RWRoute (timing-driven, multithreaded) |
 | bitgen | `vivado` | `write_bitstream` only: the single closed step, for UltraScale+ |
-| place | `openparf`, `amf_placer` | registered, report unavailable (contest-only architecture / needs Vivado Tcl) |
 | route | `nextpnr_xilinx` | xc7 only |
 | bitgen | `prjxray` | xc7 only |
 

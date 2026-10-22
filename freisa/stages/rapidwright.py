@@ -29,6 +29,7 @@ class RwNetlist(_UsPlus):
 @backend
 class DreamPlaceFpga(_UsPlus):
     """DCP -> Interchange netlist -> Bookshelf -> DREAMPlaceFPGA (gpu or cpu) -> phys netlist -> DCP."""
+    metric = "hpwl"
     stage, name, tools = "place", "dreamplacefpga", ["java"]
     def supports(self, target):
         return super().supports(target) or (None if self._root() else "build DREAMPlaceFPGA: `make install-dreamplace` (or set DREAMPLACEFPGA_ROOT)")
@@ -67,6 +68,7 @@ class DreamPlaceFpga(_UsPlus):
 @backend
 class RwRoute(_UsPlus):
     """RWRoute: open timing-driven router for UltraScale+ (runs in the RapidWright jar, multi-threaded)."""
+    metric = "wirelength"
     stage, name, tools = "route", "rwroute", ["java"]
     def run(self, ctx):
         rw(ctx, "rwroute.RWRoute", [ctx.art["dcp"], ctx.work / "routed.dcp", *ctx.cfg.get("rwroute_args", ["--nonTimingDriven", "--outOfContext"])], "rwroute")  # timing-driven needs clock constraints
@@ -75,17 +77,3 @@ class RwRoute(_UsPlus):
         import re
         m = re.findall(r"[Tt]otal wirelength:?\s*([0-9]+)", (ctx.work / "rwroute.log").read_text())
         return int(m[-1]) if m else (ctx.work / "routed.dcp").stat().st_size
-
-class _Unavail(Backend):
-    stage = "place"
-    def run(self, ctx): raise SystemExit(self.supports(ctx.target))
-
-@backend
-class OpenParf(_Unavail):
-    name = "openparf"
-    def supports(self, target): return "OpenPARF reads Bookshelf for ISPD/FPGA24 contest architectures; no xczu device model/converter"
-
-@backend
-class AmfPlacer(_Unavail):
-    name = "amf_placer"
-    def supports(self, target): return "AMF-Placer (UltraScale, VCU108 benchmarks) needs Vivado Tcl for netlist/DCP exchange; v2.0 is not public"
