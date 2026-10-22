@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
-# Clone the tools.lock entries named in $@ (default: all) at their pinned commit into third_party/.
-# Tools already at the pinned commit are left alone (no network).
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Clones the pinned third-party tools.
+# Module   : fetch_tools.sh
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p third_party

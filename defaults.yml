@@ -1,4 +1,12 @@
-# generic defaults; a design file or a target `flow:` overrides these
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Default stage selection and profiles for the flow.
+# Module   : defaults.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 stages: {sources: files, synth: yosys, netlist: rapidwright_edif, place: dreamplacefpga, route: rwroute, bitgen: vivado}
 synth_args: -flatten
 ext: {}

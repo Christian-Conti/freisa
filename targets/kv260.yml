@@ -1,3 +1,12 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Target board description.
+# Module   : kv260.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 part: xck26-sfvc784-2LV-c
 family: xczu
 yosys_family: xcup

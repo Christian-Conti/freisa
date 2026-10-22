@@ -1,4 +1,12 @@
-// N parallel 32-bit LFSRs with a registered XOR reduction: a few thousand LUT/FF, no carry, sync reset only.
+// Copyright 2026 FREISA contributors
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Info     : Bank of LFSRs seeded from one input.
+// Module   : lfsr_bank
+// Author   : Christian Conti
+// Contact  : christian.conti@mail.it
+
 module lfsr_bank #(parameter N = 64)(input logic clk, rst, input logic [31:0] seed, output logic [31:0] y);
   logic [31:0] s [N];
   logic [31:0] acc;

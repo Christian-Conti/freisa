@@ -1,6 +1,13 @@
-"""Open UltraScale+ implementation: RapidWright (EDIF->DCP, Interchange, RWRoute) + DREAMPlaceFPGA (GPU/CPU analytical placer).
-Vivado is then only needed for write_bitstream. Flow follows RapidWright's 'Use DREAMPlaceFPGA via FPGA Interchange Format'."""
-import json, os, pathlib, shutil, sys
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : RapidWright/DREAMPlaceFPGA netlist, placement and routing backends.
+# Module   : rapidwright.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+import json, os, pathlib, re, shutil, sys
 from ..core import Backend, backend
 
 US_PLUS = ("xczu", "xcvu", "xcku")  # families RapidWright/DREAMPlaceFPGA IF models cover (UltraScale+)
@@ -55,8 +62,21 @@ class DreamPlaceFpga(_UsPlus):
                "aux_input": f"benchmarks/IF2bookshelf/{base}/design.aux", "gpu": int(ctx.cfg.get("gpu", 0)),
                "part_name": ctx.target["part"], "num_threads": int(ctx.cfg.get("threads", 4)), "result_dir": str(d / "results"),
                **ctx.cfg.get("dreamplace", {})}
-        (d / "dp.json").write_text(json.dumps(cfg, indent=1))
-        ctx.sh(py + [root / "install/dreamplacefpga/Placer.py", d / "dp.json"], "dreamplace", cwd=root)
+        # tiny designs can make the optimizer diverge (HPWL -inf/nan, then a crash): retry with a smaller step and another seed
+        for attempt in range(int(ctx.cfg.get("dreamplace_retries", 3))):
+            c = json.loads(json.dumps(cfg)); shutil.rmtree(d / "results", ignore_errors=True)
+            c["random_seed"] = cfg["random_seed"] + attempt
+            for st in c.get("global_place_stages", []): st["learning_rate"] = st.get("learning_rate", 0.01) / 2 ** attempt
+            (d / "dp.json").write_text(json.dumps(c, indent=1))
+            try:
+                ctx.sh(py + [root / "install/dreamplacefpga/Placer.py", d / "dp.json"], "dreamplace", cwd=root, watch=r"HPWL\s+-?(inf|nan)")
+                ok = not re.search(r"HPWL\s+-?(inf|nan)", (ctx.work / "dreamplace.log").read_text(), re.I) and any((d / "results").rglob("*.phys"))
+            except SystemExit:
+                ok = False
+            if ok: break
+            print(f"   dreamplace attempt {attempt + 1} diverged or crashed; retrying with a smaller step", flush=True)
+        else:
+            raise SystemExit(f"[dreamplace] failed after {attempt + 1} attempts, see {os.path.relpath(ctx.work / 'dreamplace.log')}")
         phys = next((d / "results").rglob("*.phys"))
         rw(ctx, "interchange.PhysicalNetlistToDcp", [d / f"{base}.netlist", phys, d / f"{base}.xdc", w / "placed.dcp", "--out_of_context"], "phys2dcp")
         ctx.art["dcp"] = w / "placed.dcp"

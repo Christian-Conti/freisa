@@ -1,5 +1,12 @@
-"""Stage/backend registry. A backend = class with stage, name, supports(target), run(ctx).
-Drop a module in freisa/stages/ that calls @backend and it is picked up; select it in flow.yml."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Backend registry, stage runner and YAML loading.
+# Module   : core.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import os, importlib, pkgutil, shutil, subprocess, sys, pathlib, yaml
 
 REGISTRY = {}  # stage -> {name: class}
@@ -19,14 +26,21 @@ class Ctx:
         self.target, self.cfg, self.work, self.root = target, cfg, pathlib.Path(work), pathlib.Path(root)
         self.art = {}  # artifacts passed between stages: name -> path/list
         self.work.mkdir(parents=True, exist_ok=True)
-    def sh(self, cmd, log, **kw):
-        """Run a command, tee to work/<log>.log, raise on failure."""
+    def sh(self, cmd, log, watch=None, **kw):
+        """Run a command, tee to work/<log>.log, raise on failure. `watch`: regex; if it shows up in the log the command is
+        killed early (e.g. a diverging optimizer) and the call fails."""
+        import re, time
         self.cur_log = self.work / f"{log}.log"  # the monitor tails this
         with open(self.work / f"{log}.log", "w") as f:
             f.write("$ " + " ".join(map(str, cmd)) + "\n"); f.flush()
-            r = subprocess.run(list(map(str, cmd)), stdout=f, stderr=subprocess.STDOUT, **kw)
-        if r.returncode:
-            sys.exit(f"[{log}] failed ({r.returncode}), see {os.path.relpath(self.work / (log + '.log'))}")
+            p = subprocess.Popen(list(map(str, cmd)), stdout=f, stderr=subprocess.STDOUT, **kw)
+            while p.poll() is None:
+                time.sleep(2)
+                if watch and re.search(watch, self.cur_log.read_text(errors="replace")[-4000:], re.I):
+                    p.terminate(); p.wait()
+                    sys.exit(f"[{log}] stopped early: '{watch}' found in the log, see {os.path.relpath(self.cur_log)}")
+        if p.returncode:
+            sys.exit(f"[{log}] failed ({p.returncode}), see {os.path.relpath(self.work / (log + '.log'))}")
 
 class Backend:
     stage = name = None

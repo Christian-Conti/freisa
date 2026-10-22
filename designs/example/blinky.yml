@@ -1,0 +1,15 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Example design configuration.
+# Module   : blinky.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+repo: ../examples/blinky
+top: blinky
+rtl: ["*.v"]
+xdc_per_target: true      # uses <repo>/<target>.xdc when it exists (pin constraints); otherwise out-of-context, no pins
+synth_args: -flatten
+clocks: {clk: 8.0}

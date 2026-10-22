@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-# Fully open xc7 path: nextpnr-xilinx + prjxray tools (fasm2frames, xc7frames2bit). Heavy; run via `make install-xc7`.
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Builds nextpnr-xilinx and the prjxray tools.
+# Module   : build_xc7.sh
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 set -euo pipefail
 export XRAY_DIR="${XRAY_DIR:-$(cd "$(dirname "$0")/.." && pwd)/third_party/prjxray}" DB_DIR="${DB_DIR:-$(cd "$(dirname "$0")/.." && pwd)/third_party/prjxray-db}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; PREFIX="$ROOT/install"; mkdir -p "$PREFIX/bin"

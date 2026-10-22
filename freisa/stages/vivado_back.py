@@ -1,7 +1,12 @@
-"""Optional Vivado flow, one backend per step, for what the open tools cannot map (URAM, LUTRAM/SRL, wide muxes, carry
-chains, IO/PS, bitstream).  Use with `PROFILE=vivado` (all steps) or pick single steps per stage / in `explore:`.
-Vivado is found on PATH or via $VIVADO; steps exchange checkpoints (`dcp`), so open and Vivado steps can be mixed
-(e.g. `synth: yosys`, `place: vivado`, `route: rwroute`)."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Optional Vivado backends for synthesis, placement, routing and bitstream.
+# Module   : vivado_back.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import os, re
 from ..core import Backend, backend, find_vivado
 

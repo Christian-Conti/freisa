@@ -1,4 +1,12 @@
-# FREISA - FPGA Reusable and Extensible Infrastructure for Synthesis Automation: open-source RTL -> bitstream flow. Modular: designs/*.yml (any RTL), targets/*.yml (any board), freisa/stages/*.py (any tool).
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Top-level build, install and run targets for the FREISA flow.
+# Module   : Makefile
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 SHELL := /bin/bash
 MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 ENV_NAME ?= freisa
@@ -9,7 +17,7 @@ export PATH := $(MAKEFILE_DIR)install/bin:$(PATH)
 DESIGN_DIR = "designs/"
 ## @section Config
 ## @param DESIGN Design file name in designs/ (or a .yml path)
-DESIGN ?=  blinky_xc7
+DESIGN ?= blinky
 ## @param TARGET Board file name in targets/
 TARGET ?= xc7z020
 ## @param PROFILE Stage preset: open (default) | vivado | vivado_ps (PS boards: also .hwh/.xsa) | yosys_vivado
@@ -78,7 +86,7 @@ doctor:
 ## Run the flow for DESIGN on TARGET (FROM..TO stages)
 flow:
 	@$(CONDA_RUN) python flow.py run -d $(DESIGN_DIR)$(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO) $(if $(PROFILE),-p $(PROFILE)) $(if $(EXPLORE),--explore $(EXPLORE))
-## Run the flow on a small bundled example (default: blinky on xc7z020, fully open RTL -> .bit). Other: EXAMPLE=lfsr_bank EXAMPLE_TARGET=zcu106 TO=route
+## Run the bundled blinky example on any supported board: make example TARGET=zcu104 (xc7z020: RTL -> .bit fully open; UltraScale+ boards: up to the routed checkpoint, no Vivado needed)
 example:
 	@$(MAKE) --no-print-directory flow DESIGN=$(DESIGN) TARGET=$(TARGET) FROM=sources TO=$(or $(TO),$(if $(filter xc7z020,$(TARGET)),bitgen,route))
 ## Open synthesis only (yosys)

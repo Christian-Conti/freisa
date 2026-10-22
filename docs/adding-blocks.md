@@ -26,7 +26,7 @@ read/write `ctx.art` (artifacts), so replacing one never touches the others.
 3. **Select it**: `stages: {place: myplacer}` in a design file, or `flow:` in a board file. `make doctor TARGET=<board>` must show it `ok`.
 4. **Compare it** against the current block without replacing it: `explore: {place: [{backend: dreamplacefpga}, {backend: myplacer}]}`
    (needs the same score metric). Keep the loser registered; it costs nothing.
-5. **Smoke-test**: `make flow DESIGN=lfsr_bank TARGET=<board>` for UltraScale+, `DESIGN=blinky_xc7 TARGET=xc7z020` for the open xc7 path.
+5. **Smoke-test**: `make flow DESIGN=lfsr_bank TARGET=<board>` for UltraScale+, `DESIGN=blinky TARGET=xc7z020` for the open xc7 path.
 
 ## 2. Update a block when a new release comes out
 ```
@@ -34,7 +34,7 @@ make outdated                 # every pin vs upstream HEAD
 make update NAME=dreamplacefpga   # re-pin to upstream HEAD   (or REF=<tag/branch/commit>)
 make fetch                    # check out the new commit
 make install-dreamplace       # rebuild if the tool has an install-* target (install-xc7 for nextpnr-xilinx/prjxray)
-make flow DESIGN=lfsr_bank TARGET=zcu106 TO=route    # smoke test; then DESIGN=blinky_xc7 TARGET=xc7z020
+make flow DESIGN=lfsr_bank TARGET=zcu106 TO=route    # smoke test; then DESIGN=blinky TARGET=xc7z020
 ```
 Rules of thumb:
 - Pins are exact commits; nothing changes until you run `make update`. Commit `tools.lock` together with the code that needs it.

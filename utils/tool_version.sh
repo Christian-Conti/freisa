@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-# outdated: compare each tools.lock pin with upstream HEAD.  update <name> [ref]: re-pin a tool (default: upstream HEAD).
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Compares and updates the pinned tool versions.
+# Module   : tool_version.sh
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 case "${1:-}" in

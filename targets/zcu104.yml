@@ -1,3 +1,12 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Target board description.
+# Module   : zcu104.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 part: xczu7ev-ffvc1156-2-e
 family: xczu
 yosys_family: xcup    # synth_xilinx has no zu+; xcup (UltraScale+ primitives) is the same fabric

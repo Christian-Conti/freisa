@@ -1,8 +1,18 @@
-"""Live monitor, On a TTY it refreshes the progress bar every second; otherwise it prints a plain line every 30 s
-(make > file, CI).
-"""
+#!/usr/bin/env python3
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Command-line entry point: run, doctor and upload.
+# Module   : flow.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import os
+import re
+import shutil
 import sys
+import textwrap
 import threading
 import time
 
@@ -12,6 +22,11 @@ try:
     import psutil
 except ImportError:  # resources are then simply not shown
     psutil = None
+
+
+_ORANGE = "\033[38;2;255;165;0m"
+_RESET = "\033[0m"
+_ANSI_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 def _fmt(s):
@@ -37,35 +52,122 @@ class Monitor:
         self.peak_rss = 0
         self.cpu_sum = 0.0
         self.cpu_n = 0
+        self.last_cpu = 0.0
+        self.last_rss = 0
 
         self.stop = threading.Event()
         self.thread = None
         self.finished = False
+        self._display_lock = threading.RLock()
         self.out = open(logfile, "a")
 
         self.proc = psutil.Process() if psutil else None
         if self.proc:
             self.proc.cpu_percent(None)
 
+        self.digits = max(2, len(str(len(self.stages))))
+        self.layout = self._layout_name(self._terminal_width())
+
+        # Reserve a fixed number of terminal rows for the latest log message.
+        terminal_height = shutil.get_terminal_size(
+            fallback=(80, 24)
+        ).lines
+        self.log_line_count = min(3, max(1, terminal_height - 4))
+
+        # Main status line. The stage counter is more important than a graphical bar.
         self.pbar = tqdm(
             total=len(self.stages),
-            desc="Stages",
-            unit="stage",
+            desc="",
+            bar_format="{desc}",
+            position=0,
             dynamic_ncols=True,
             file=sys.stdout,
             disable=not self.tty,
             leave=True,
-            ascii="▖▘▝▗▚▞█",   #░▖▘▝▗▚▞█
-            colour="magenta"
+        )
+
+        # Independent display rows underneath the status line.
+        self.logbars = [
+            tqdm(
+                total=0,
+                desc="",
+                bar_format="{desc}",
+                position=i + 1,
+                dynamic_ncols=True,
+                file=sys.stdout,
+                disable=not self.tty,
+                leave=False,
+            )
+            for i in range(self.log_line_count)
+        ]
+
+        if self.tty:
+            self._refresh_display()
+
+    def _terminal_width(self):
+        """Return the usable terminal width, leaving the last column unused."""
+        return max(
+            1,
+            shutil.get_terminal_size(fallback=(80, 24)).columns - 1,
+        )
+
+    @staticmethod
+    def _layout_name(width):
+        """Select a stable status layout for the available terminal width."""
+        if width >= 130:
+            return "wide"
+        if width >= 95:
+            return "normal"
+        if width >= 76:
+            return "compact"
+        if width >= 42:
+            return "narrow"
+        if width >= 24:
+            return "tiny"
+        return "micro"
+
+    def _description(self):
+        """Return the current stage name at a fixed width."""
+        widths = {
+            "wide": 12,
+            "normal": 10,
+            "compact": 7,
+            "narrow": 5,
+            "tiny": 3,
+        }
+
+        width = widths.get(self.layout, 0)
+        if width == 0:
+            return ""
+
+        label = str(self.cur or "Waiting")[:width].ljust(width)
+        return label + ": "
+
+    def _counter(self):
+        """Return the current stage / total stages without colour codes."""
+        total = len(self.stages)
+        current = min(total, self.done + (1 if self.cur else 0))
+
+        if self.layout in ("tiny", "micro"):
+            return f"{current}/{total}"
+
+        return (
+            f"{current:0{self.digits}d}/"
+            f"{total:0{self.digits}d}"
         )
 
     def say(self, msg):
-        """Permanent line (preserves the progress bar), also appended to flow.log."""
-        for base in (str(self.root) + os.sep, os.getcwd() + os.sep):
+        """Print a permanent line without corrupting the live display."""
+        for base in (
+            str(self.root) + os.sep,
+            os.getcwd() + os.sep,
+        ):
             msg = msg.replace(base, "")
 
         if self.tty and not self.finished:
-            self.pbar.write(msg)
+            with self._display_lock:
+                self.pbar.write(msg)
+                self._render_log_rows()
         else:
             print(msg, flush=True)
 
@@ -74,7 +176,8 @@ class Monitor:
 
     def _res(self):
         if not self.proc:
-            return 0.0, 0
+            self.last_cpu, self.last_rss = 0.0, 0
+            return self.last_cpu, self.last_rss
 
         try:
             cache = self.__dict__.setdefault("_cache", {})
@@ -83,12 +186,21 @@ class Monitor:
                 for p in [self.proc] + self.proc.children(recursive=True)
             ]
 
-            cpu = sum(p.cpu_percent(None) for p in procs if p.is_running())
-            rss = sum(p.memory_info().rss for p in procs if p.is_running())
+            cpu = sum(
+                p.cpu_percent(None)
+                for p in procs
+                if p.is_running()
+            )
+            rss = sum(
+                p.memory_info().rss
+                for p in procs
+                if p.is_running()
+            )
 
         except psutil.Error:
-            return 0.0, 0
+            return self.last_cpu, self.last_rss
 
+        self.last_cpu, self.last_rss = cpu, rss
         self.peak_rss = max(self.peak_rss, rss)
         self.cpu_sum += cpu
         self.cpu_n += 1
@@ -96,12 +208,14 @@ class Monitor:
         return cpu, rss
 
     def _last_line(self):
+        """Read the last nonempty line from the current stage log."""
         log = getattr(self.ctx, "cur_log", None)
 
         try:
             with open(log, "rb") as f:
                 f.seek(0, 2)
                 f.seek(max(0, f.tell() - 400))
+
                 lines = [
                     line
                     for line in f.read().decode(errors="replace").splitlines()
@@ -113,30 +227,158 @@ class Monitor:
         except (OSError, TypeError):
             return ""
 
+    def _tty_postfix(self, cpu, rss, elapsed, stage_elapsed):
+        """Format status fields independently of the log display."""
+        count = self._counter()
+        memory = _gb(rss)
+        width = self._terminal_width()
+
+        if self.layout in ("wide", "normal"):
+            return (
+                f"{count} | step {stage_elapsed} | total {elapsed} | "
+                f"CPU {cpu:4.0f}% | MEM {memory:>6}"
+            )
+
+        if self.layout == "compact":
+            return (
+                f"{count} | S{stage_elapsed} | T{elapsed} | "
+                f"C{cpu:4.0f}% | M{memory:>5}"
+            )
+
+        if self.layout == "narrow":
+            return (
+                f"{count} | {elapsed} | "
+                f"C{cpu:3.0f}% | M{memory:>4}"
+            )
+
+        if self.layout == "tiny":
+            if width >= 30:
+                return f"{count} | {elapsed} | C{cpu:3.0f}%"
+            return f"{count} | {elapsed}"
+
+        # On extremely narrow terminals, preserve the stage counter.
+        if width >= len(count) + 11:
+            return f"{count} | {elapsed}"
+
+        return count
+
+    def _render_log_rows(self):
+        """Wrap the latest log line into fixed rows below the status line."""
+        if not self.tty:
+            return
+
+        with self._display_lock:
+            width = self._terminal_width()
+            tail = self._last_line()
+
+            # Remove ANSI escape sequences and terminal control characters.
+            tail = _ANSI_RE.sub("", tail)
+            tail = re.sub(r"[\x00-\x1f\x7f]+", " ", tail)
+            tail = " ".join(tail.split())
+
+            lines = []
+
+            if tail:
+                prefix = "log: " if width >= 10 else ""
+                indent = " " * len(prefix)
+                wrap_width = max(1, width - len(prefix))
+
+                chunks = textwrap.wrap(
+                    tail,
+                    width=wrap_width,
+                    break_long_words=True,
+                    break_on_hyphens=False,
+                )
+
+                if chunks:
+                    lines = [prefix + chunks[0]]
+                    lines.extend(
+                        indent + chunk
+                        for chunk in chunks[1:]
+                    )
+
+            # If the log is longer than the available display, retain its ending.
+            if len(lines) > self.log_line_count:
+                lines = lines[-self.log_line_count:]
+
+                if self.log_line_count == 1:
+                    lines[0] = (
+                        "…" + lines[0][-max(0, width - 1):]
+                    )[:width]
+                else:
+                    lines[0] = (
+                        "… " + lines[0].lstrip()
+                    )[:width]
+
+            # Clear unused rows when the next message is shorter.
+            lines = [line[:width] for line in lines]
+            lines.extend([""] * (self.log_line_count - len(lines)))
+
+            for bar, line in zip(self.logbars, lines):
+                bar.set_description_str(line or " ", refresh=False)
+
+            for bar in self.logbars:
+                bar.refresh()
+
+    def _refresh_display(self):
+        """Refresh the main status line and the independent log rows."""
+        if not self.tty:
+            return
+
+        with self._display_lock:
+            width = self._terminal_width()
+            self.layout = self._layout_name(width)
+
+            elapsed = _fmt(time.time() - self.t0)
+            stage_elapsed = _fmt(time.time() - self.t_stage)
+
+            description = self._description()
+            postfix = self._tty_postfix(
+                self.last_cpu,
+                self.last_rss,
+                elapsed,
+                stage_elapsed,
+            )
+
+            # Truncate the status line before adding ANSI colour codes.
+            status = (description + postfix)[:width]
+
+            # Colour only the stage counter orange.
+            count = self._counter()
+            count_start = len(description)
+
+            if (
+                count
+                and status[count_start:count_start + len(count)] == count
+            ):
+                status = (
+                    status[:count_start]
+                    + _ORANGE
+                    + count
+                    + _RESET
+                    + status[count_start + len(count):]
+                )
+
+            self.pbar.set_description_str(status, refresh=False)
+            self.pbar.refresh()
+
+            self._render_log_rows()
+
     def _render(self):
         cpu, rss = self._res()
 
         elapsed = _fmt(time.time() - self.t0)
         stage_elapsed = _fmt(time.time() - self.t_stage)
-        tail = self._last_line()
-
-        postfix = (
-            f"step {stage_elapsed} | total {elapsed} | "
-            f"CPU {cpu:.0f}% | MEM {_gb(rss)}"
-        )
-
-        if tail:
-            postfix += f" | {tail[-100:]}"
 
         if self.tty:
-            self.pbar.set_description_str(self.cur or "Waiting", refresh=False)
-            self.pbar.set_postfix_str(postfix, refresh=False)
-            self.pbar.refresh()
-
+            self._refresh_display()
         else:
             n = len(self.stages)
+            tail = self._last_line()
+
             self.say(
-                f"{self.done}/{n} {self.cur or '-'} "
+                f"{self.done + (1 if self.cur else 0)}/{n} "
+                f"{self.cur or '-'} "
                 f"step {stage_elapsed} total {elapsed} | "
                 f"CPU {cpu:.0f}% MEM {_gb(rss)} | {tail[:100]}"
             )
@@ -153,7 +395,7 @@ class Monitor:
             if self.tty or tick % 30 == 0:
                 self._render()
             else:
-                self._res()  # keep sampling for the step summary
+                self._res()  # Keep sampling for the step summary.
 
     def start(self):
         self.say(
@@ -161,47 +403,50 @@ class Monitor:
             f"stages: {' > '.join(self.stages)}"
         )
 
-        self.thread = threading.Thread(target=self._loop, daemon=True)
+        self._refresh_display()
+
+        self.thread = threading.Thread(
+            target=self._loop,
+            daemon=True,
+        )
         self.thread.start()
 
     def begin(self, stage, backend):
-        self.cur = stage
-        self.t_stage = time.time()
-        self.peak_rss = 0
-        self.cpu_sum = 0.0
-        self.cpu_n = 0
+        with self._display_lock:
+            self.cur = stage
+            self.t_stage = time.time()
+            self.peak_rss = 0
+            self.cpu_sum = 0.0
+            self.cpu_n = 0
 
-        self.backend = backend
-        self.ctx.cur_log = None
+            self.backend = backend
+            self.ctx.cur_log = None
 
-        self.pbar.set_description_str(stage, refresh=False)
-        self.pbar.set_postfix_str("", refresh=False)
-        if self.tty:
-            self.pbar.refresh()
+            self._refresh_display()
 
         self.say(f">> {stage}: {backend}")
 
     def end(self, stage, extra="", rep=None):
-        dt = time.time() - self.t_stage
-        self.done += 1
+        with self._display_lock:
+            dt = time.time() - self.t_stage
+            avg = self.cpu_sum / self.cpu_n if self.cpu_n else 0
+            peak_rss = self.peak_rss
 
-        avg = self.cpu_sum / self.cpu_n if self.cpu_n else 0
+            self.done += 1
+            self.cur = None
 
-        self.cur = None
-        self.pbar.set_description_str(
-            "Complete" if self.done == len(self.stages) else "Waiting",
-            refresh=False,
-        )
-        self.pbar.set_postfix_str("", refresh=False)
-        self.pbar.update(1)
+            # Advance the stage counter immediately.
+            self.pbar.update(1)
+            self._refresh_display()
 
         self.say(
             f"   {stage} done in {_fmt(dt)} | "
-            f"avg cpu {avg:.0f}% | peak mem {_gb(self.peak_rss)}"
+            f"avg cpu {avg:.0f}% | peak mem {_gb(peak_rss)}"
             + (f" | {extra}" if extra else "")
         )
 
         log = getattr(self.ctx, "cur_log", None)
+
         if log and os.path.exists(log):
             try:
                 with open(log, errors="replace") as f:
@@ -223,15 +468,24 @@ class Monitor:
                 self.backend,
                 dt,
                 avg,
-                self.peak_rss / 2**30,
+                peak_rss / 2**30,
                 extra.replace("score ", "") or None,
             )
 
     def finish(self, ok=True):
         self.stop.set()
 
-        if self.thread and self.thread is not threading.current_thread():
+        if (
+            self.thread
+            and self.thread is not threading.current_thread()
+        ):
             self.thread.join()
+
+        self._refresh_display()
+
+        # Close lower rows first, then finish the main status line.
+        for bar in reversed(self.logbars):
+            bar.close()
 
         self.pbar.close()
         self.finished = True

@@ -30,7 +30,7 @@ the explore score is minus the worst negative slack from the step's timing repor
 ## PS boards and the hardware handoff (`.hwh`)
 Boards with a PS (`needs_ps: true`: zcu104, zcu106, kv260) need a block design. Add to the design file:
 ```yaml
-bd_tcl: fpga/scripts/Xilinx/amaretto_bd.tcl   # relative to `repo`; creates the BD (PS8, clocks, AXI) and instantiates the RTL top
+bd_tcl: path/to/Xilinx/block_design.tcl   # relative to `repo`; creates the BD (PS8, clocks, AXI) and instantiates the RTL top
 bd_name: design_1
 vivado_jobs: 8
 ```

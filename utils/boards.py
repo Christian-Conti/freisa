@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Pull board files from Xilinx/XilinxBoardStore for the boards referenced by targets/*.yml (`board_store: <Vendor>/<board>`).
-`install`  : move boards.lock to the store's HEAD / newest board versions, fetch only those boards into boards/<target>/
-`install --pin`: use boards.lock exactly as committed.
-Each board dir gets board.xml, part0_pins.xml, preset.xml and a generated pins.xdc (PACKAGE_PIN/IOSTANDARD per board pin,
-guarded so ports a design does not have are skipped)."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Fetches board files from XilinxBoardStore.
+# Module   : boards.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import argparse, pathlib, re, shutil, subprocess, sys, xml.etree.ElementTree as ET
 import yaml
 

@@ -1,5 +1,0 @@
-# Any plain RTL design: globs relative to repo, .v/.sv/.vhd/.vhdl picked by extension
-repo: ../examples/blinky
-top: blinky
-rtl: ["*.v"]
-xdc: []

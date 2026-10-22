@@ -1,3 +1,12 @@
+// Copyright 2026 FREISA contributors
+// Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+//
+// Info     : UART transmitter.
+// Module   : uart_tx
+// Author   : Christian Conti
+// Contact  : christian.conti@mail.it
+
 module uart_tx #(parameter DIV = 868)(input clk, input [7:0] data, input start, output reg tx, output busy);
   reg [15:0] cnt = 0; reg [3:0] nb = 0; reg [9:0] sh = 10'h3ff; reg run = 0;
   assign busy = run;

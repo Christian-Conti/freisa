@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-# DREAMPlaceFPGA needs pytorch (+ cmake/boost/eigen); CPU torch is used unless CUDA torch is already in the env.
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Builds DREAMPlaceFPGA.
+# Module   : build_dreamplace.sh
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; D="$ROOT/third_party/dreamplacefpga"
 python -c 'import torch; assert torch.__version__.startswith("2.0")' 2>/dev/null || pip install "torch==2.0.1" "numpy<2" --index-url https://download.pytorch.org/whl/cpu

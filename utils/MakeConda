@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Conda environment setup rules.
+# Module   : MakeConda
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 set -euo pipefail
 
 ENV_NAME="${ENV_NAME:-freisa}"

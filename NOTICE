@@ -1,0 +1,27 @@
+Third-party components used by FREISA (all fetched/installed separately, none
+redistributed here). All open-source licences below are permissive: none
+requires the flow, or the hardware built with it, to adopt its licence.
+
+  DREAMPlaceFPGA   BSD-3-Clause
+  nextpnr-xilinx   ISC
+  prjxray          ISC
+  prjxray-db       CC0-1.0
+  RapidWright      Apache-2.0 (device data files are fetched by it at run time)
+  Yosys (+slang)   ISC / MIT
+  openFPGALoader   Apache-2.0
+  PyYAML           MIT
+  psutil           BSD-3-Clause
+  tqdm             MPL-2.0 AND MIT
+  PyTorch          BSD-3-Clause
+  XilinxBoardStore Apache-2.0 (board files)
+
+Optional, NOT open source: AMD Vivado (vivado/vivado_ps profiles). It is
+user-installed under the user's own AMD licence and is not part of the
+open-source path.
+
+Hardware designed or built with this flow: the flow does not impose a licence
+on your design or on generated bitstreams. The bundled examples/ are
+SHL-2.1; use SHL-2.0 for your own hardware if you want the same terms.
+Vendor-derived outputs (e.g. the prjxray-db-derived bitstreams) carry no
+additional obligations from the permissive licences above, beyond keeping
+their notices if you redistribute those tools.

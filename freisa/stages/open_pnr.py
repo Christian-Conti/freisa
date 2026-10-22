@@ -1,4 +1,12 @@
-"""Fully open P&R + bitstream. Only xc7 (Zynq-7000/Artix/Kintex) has a database (prjxray); nothing open exists for UltraScale+."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Open xc7 place-and-route and bitstream backends.
+# Module   : open_pnr.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import os, pathlib
 from ..core import Backend, backend
 

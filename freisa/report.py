@@ -1,6 +1,12 @@
-"""Per-run report folder  <work>/report/ :  reports/ (area, timing, routing, power...), artifacts/ (links to every generated
-file), logs/, summary.md + summary.json.  Tool reports are collected after each stage; at the end a sign-off report of the
-final checkpoint is generated with Vivado if present, else a RapidWright utilization report."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Collects tool reports and writes the run summary.
+# Module   : report.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import json, os, pathlib, shutil, sys
 from .core import find_vivado
 

@@ -15,6 +15,18 @@ explore:                          # optional: several runs per stage, keep the b
 ```
 The board is `targets/<board>.yml` ([platforms](platforms.md)).
 
+### The bundled example on every board
+`designs/example/blinky.yml` is one design for all boards. `xdc_per_target: true` makes the flow use `examples/blinky/<TARGET>.xdc`
+when it exists (here only `xc7z020.xdc`, the PYNQ pins); without one the design is implemented out of context (no pins).
+What `make example TARGET=<board>` produces:
+
+| board | result |
+|-------|--------|
+| `xc7z020` | `out.bit` (fully open) |
+| `zcu104`, `zcu106`, `kv260` | `routed.dcp` plus reports; the bitstream needs Vivado and, with the PS, the block design (`PROFILE=vivado_ps`) |
+
+To run it with a different design, board or profile: `make flow DESIGN=<name> TARGET=<board> [PROFILE=...] [TO=<stage>]`.
+
 ## 2. Install once
 ```
 make install            # conda env "freisa", board files, xc7 tools, DREAMPlaceFPGA (skips what is built)
@@ -23,12 +35,14 @@ make doctor TARGET=zcu106
 
 ## 3. Run
 ```
-make example                                           # blinky on xc7z020: RTL -> .bit, fully open
-make flow DESIGN=lfsr_bank TARGET=zcu106 TO=route      # UltraScale+: Yosys -> RapidWright -> DREAMPlaceFPGA -> RWRoute
-make flow DESIGN=lfsr_bank TARGET=zcu106 PROFILE=vivado        # same design, every step in Vivado
-make flow DESIGN=lfsr_bank TARGET=zcu106 EXPLORE=all           # every supported backend per stage, keep the best
-make flow DESIGN=amaretto TARGET=zcu106 PROFILE=vivado_ps      # PS board: .bit + .hwh + .xsa
-make upload DESIGN=blinky_xc7 TARGET=xc7z020 TOOL=openfpgaloader   # or TOOL=vivado
+make example                                           # blinky on the default board (xc7z020): RTL -> .bit, fully open
+make example TARGET=zcu104                             # same design on any supported board: zcu104 | zcu106 | kv260 | xc7z020
+make flow DESIGN=blinky TARGET=zcu106 TO=route              # UltraScale+: Yosys -> RapidWright -> DREAMPlaceFPGA -> RWRoute
+make flow DESIGN=blinky TARGET=zcu106 PROFILE=vivado        # same design, every step in Vivado
+make flow DESIGN=blinky TARGET=zcu106 EXPLORE=all           # every supported backend per stage, keep the best
+make flow DESIGN=blinky TARGET=zcu106 PROFILE=vivado_ps     # PS board: .bit + .hwh + .xsa
+
+make upload DESIGN=blinky TARGET=xc7z020 TOOL=openfpgaloader   # or TOOL=vivado
 ```
 While it runs the monitor shows one status line (progress bar over the stages, step and total time, CPU and memory of the
 running tools, last log line); after each step it prints the step time, average CPU, peak memory, the step's score and the

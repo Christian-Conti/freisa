@@ -1,4 +1,12 @@
-# Only family with a fully open bitstream path (prjxray + nextpnr-xilinx). Used for PL-only logic.
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Target board description.
+# Module   : xc7z020.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 part: xc7z020clg400-1
 family: xc7
 yosys_family: xc7

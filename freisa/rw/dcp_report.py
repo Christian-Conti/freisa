@@ -1,4 +1,12 @@
-"""Utilization/routing report of a checkpoint using RapidWright only (no Vivado): cells by type, site usage, net routing state."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Prints a utilization report of a DCP via RapidWright.
+# Module   : dcp_report.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import sys, collections, rapidwright
 from com.xilinx.rapidwright.design import Design
 d = Design.readCheckpoint(sys.argv[1])

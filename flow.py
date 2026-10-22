@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""RTL -> bitstream (any design: designs/*.yml, any board: targets/*.yml), modular. `flow.py doctor [-t T]` shows what each stage can do; `flow.py run -t T [--from S] [--to S]`."""
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Command-line entry point: run, doctor and upload.
+# Module   : flow.py
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 import argparse, json, os, pathlib, sys
 from freisa import core, ui, report
 
@@ -8,8 +16,8 @@ HERE = pathlib.Path(__file__).parent
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "doctor", "upload"])
-    ap.add_argument("-t", "--target", default="zcu106")
-    ap.add_argument("-d", "--design", default="amaretto", help="designs/<name>.yml or a path")
+    ap.add_argument("-t", "--target", default="xc7z020")
+    ap.add_argument("-d", "--design", default="blinky", help="designs/<name>.yml or a path")
     ap.add_argument("-p", "--profile", default=None, help="stage preset from defaults.yml: open|vivado|vivado_ps|yosys_vivado")
     ap.add_argument("--explore", choices=["all"], help="try every supported backend in every stage and keep the best")
     ap.add_argument("--tool", default="openfpgaloader", help="upload: openfpgaloader | vivado")
@@ -28,6 +36,9 @@ def main():
     flow["stages"] = {**core.load_yaml(HERE / "defaults.yml")["stages"], **flow["stages"]} if "stages" in flow else flow["stages"]
     name = dpath.stem
     target = core.load_yaml(HERE / "targets" / f"{a.target}.yml")
+    if flow.get("xdc_per_target"):  # per-board constraint file next to the RTL, optional
+        r = next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists())
+        flow["xdc"] = [f"{a.target}.xdc"] if (r / f"{a.target}.xdc").exists() else []
     ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists() or r == (HERE / "designs" / flow["repo"]).resolve()))
     if a.cmd == "upload":
         b = core.REGISTRY["upload"].get(a.tool) or sys.exit(f"unknown upload tool {a.tool} (have {list(core.REGISTRY['upload'])})")
