@@ -18,6 +18,9 @@ Reading the table
 - f4pga: its flow targets 7-series parts with architecture definitions (Artix-7 35T/100T, Zynq xc7z010) and it programs
   boards through openFPGALoader, which FREISA already uses for `make upload`; it is not integrated as a flow because the
   xc7z020 and UltraScale+ parts are outside its device list.
+- DREAMPlaceFPGA behaviour: the iteration count is scaled with the design size (a few dozen cells never reach the placer's stop
+  criterion, so the full schedule would only burn time; override with `dreamplace_iterations:` or a full `dreamplace:` block), and a diverging
+  run (HPWL `inf`/`nan`) is stopped as soon as it shows in the log and retried with a smaller step and another seed (`dreamplace_retries:`).
 - DREAMPlaceFPGA restrictions (applied automatically by `legalize: dreamplace`): no carry chains, no wide LUT muxes, no
   LUTRAM/SRL, FDRE flip-flops, RAMB36E2 and DSP48E2 as hard blocks. Use the Vivado steps when the design needs URAM or others.
 - Evaluated but not integrated: OpenPARF and AMF-Placer (contest architectures only / need Vivado Tcl), the FPL'26 contest agent (Vivado-driven).

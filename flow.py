@@ -36,9 +36,8 @@ def main():
     flow["stages"] = {**core.load_yaml(HERE / "defaults.yml")["stages"], **flow["stages"]} if "stages" in flow else flow["stages"]
     name = dpath.stem
     target = core.load_yaml(HERE / "targets" / f"{a.target}.yml")
-    if flow.get("xdc_per_target"):  # per-board constraint file next to the RTL, optional
-        r = next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists())
-        flow["xdc"] = [f"{a.target}.xdc"] if (r / f"{a.target}.xdc").exists() else []
+    flow.update(flow.get("per_target", {}).get(a.target, {}))  # board-specific overrides (top, xdc, profile...)
+    a.profile = a.profile or flow.get("profile")
     ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists() or r == (HERE / "designs" / flow["repo"]).resolve()))
     if a.cmd == "upload":
         b = core.REGISTRY["upload"].get(a.tool) or sys.exit(f"unknown upload tool {a.tool} (have {list(core.REGISTRY['upload'])})")

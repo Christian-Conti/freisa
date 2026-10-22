@@ -62,6 +62,13 @@ class DreamPlaceFpga(_UsPlus):
                "aux_input": f"benchmarks/IF2bookshelf/{base}/design.aux", "gpu": int(ctx.cfg.get("gpu", 0)),
                "part_name": ctx.target["part"], "num_threads": int(ctx.cfg.get("threads", 4)), "result_dir": str(d / "results"),
                **ctx.cfg.get("dreamplace", {})}
+        # the default 2000-iteration schedule is sized for big designs; a few hundred cells never reach the stop criterion
+        # (overflow stays high because the density force is dominated by filler cells), so scale the schedule with design size
+        if "global_place_stages" not in ctx.cfg.get("dreamplace", {}):
+            n = sum(1 for _ in open(root / f"benchmarks/IF2bookshelf/{base}/design.nodes"))
+            its = int(ctx.cfg.get("dreamplace_iterations", 150 if n < 1000 else 500 if n < 10000 else 2000))
+            for st in cfg.get("global_place_stages", []): st["iteration"] = its
+            print(f"   dreamplace: {n} nodes -> {its} iterations", flush=True)
         # tiny designs can make the optimizer diverge (HPWL -inf/nan, then a crash): retry with a smaller step and another seed
         for attempt in range(int(ctx.cfg.get("dreamplace_retries", 3))):
             c = json.loads(json.dumps(cfg)); shutil.rmtree(d / "results", ignore_errors=True)

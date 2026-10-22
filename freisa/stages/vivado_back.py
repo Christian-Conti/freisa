@@ -81,11 +81,13 @@ class VivadoRoute(_Viv):
 
 @backend
 class VivadoBitgen(_Viv):
-    """write_bitstream from a routed checkpoint (PL only: no PS/BD)."""
+    """write_bitstream from a routed, in-context checkpoint (PL only; out-of-context checkpoints are refused by Vivado, DRC HDOOC-3)."""
     stage, name = "bitgen", "vivado"
-    def supports(self, target):
-        return super().supports(target) or ("PS present: use `bitgen: vivado_ps` (block design, produces .bit + .hwh + .xsa)" if target.get("needs_ps") else None)
     def run(self, ctx):
+        if ctx.target.get("needs_ps") and "bd_tcl" in ctx.cfg:
+            raise SystemExit("design has a PS block design (bd_tcl): use PROFILE=vivado_ps to get .bit + .hwh + .xsa")
+        if ctx.cfg.get("ooc", not ctx.cfg.get("xdc")):
+            raise SystemExit("out-of-context design (no `xdc:` pin constraints): Vivado cannot write a bitstream for it; add pin constraints or run with PROFILE=vivado")
         _run(ctx, f"open_checkpoint {{{ctx.art['dcp']}}}\nwrite_bitstream -force out.bit\n", "viv_bitgen")
         ctx.art["bit"] = ctx.work / "out.bit"
 

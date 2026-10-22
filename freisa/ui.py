@@ -78,12 +78,13 @@ class Monitor:
         self.pbar = tqdm(
             total=len(self.stages),
             desc="",
-            bar_format="{desc}",
+            bar_format=self._bar_format(self.layout),
             position=0,
             dynamic_ncols=True,
             file=sys.stdout,
             disable=not self.tty,
             leave=True,
+            colour="#FFA500",
         )
 
         # Independent display rows underneath the status line.
@@ -125,7 +126,15 @@ class Monitor:
         if width >= 24:
             return "tiny"
         return "micro"
+    
+    @staticmethod
+    def _bar_format(layout):
+        """Show the progress bar only when enough terminal space is available."""
+        if layout in ("wide", "normal", "compact"):
+            return "{desc}{percentage:3.0f}%|{bar}| {postfix}"
 
+        return "{desc}{postfix}"
+    
     def _description(self):
         """Return the current stage name at a fixed width."""
         widths = {
@@ -228,40 +237,37 @@ class Monitor:
             return ""
 
     def _tty_postfix(self, cpu, rss, elapsed, stage_elapsed):
-        """Format status fields independently of the log display."""
+        """Format status fields independently of the progress bar."""
         count = self._counter()
+        colored_count = f"{_ORANGE}{count}{_RESET}"
         memory = _gb(rss)
         width = self._terminal_width()
 
         if self.layout in ("wide", "normal"):
             return (
-                f"{count} | step {stage_elapsed} | total {elapsed} | "
-                f"CPU {cpu:4.0f}% | MEM {memory:>6}"
+                f"{colored_count} | step {stage_elapsed} | "
+                f"total {elapsed} | CPU {cpu:4.0f}% | MEM {memory:>6}"
             )
 
         if self.layout == "compact":
             return (
-                f"{count} | S{stage_elapsed} | T{elapsed} | "
+                f"{colored_count} | S{stage_elapsed} | T{elapsed} | "
                 f"C{cpu:4.0f}% | M{memory:>5}"
             )
 
         if self.layout == "narrow":
             return (
-                f"{count} | {elapsed} | "
+                f"{colored_count} | {elapsed} | "
                 f"C{cpu:3.0f}% | M{memory:>4}"
             )
 
         if self.layout == "tiny":
             if width >= 30:
-                return f"{count} | {elapsed} | C{cpu:3.0f}%"
-            return f"{count} | {elapsed}"
+                return f"{colored_count} | {elapsed} | C{cpu:3.0f}%"
+            return f"{colored_count} | {elapsed}"
 
-        # On extremely narrow terminals, preserve the stage counter.
-        if width >= len(count) + 11:
-            return f"{count} | {elapsed}"
-
-        return count
-
+        return colored_count
+    
     def _render_log_rows(self):
         """Wrap the latest log line into fixed rows below the status line."""
         if not self.tty:
@@ -321,48 +327,34 @@ class Monitor:
                 bar.refresh()
 
     def _refresh_display(self):
-        """Refresh the main status line and the independent log rows."""
+        """Refresh the status line and the independent log rows."""
         if not self.tty:
             return
 
         with self._display_lock:
-            width = self._terminal_width()
-            self.layout = self._layout_name(width)
+            self.layout = self._layout_name(self._terminal_width())
+            self.pbar.bar_format = self._bar_format(self.layout)
 
             elapsed = _fmt(time.time() - self.t0)
             stage_elapsed = _fmt(time.time() - self.t_stage)
 
-            description = self._description()
-            postfix = self._tty_postfix(
-                self.last_cpu,
-                self.last_rss,
-                elapsed,
-                stage_elapsed,
+            self.pbar.set_description_str(
+                self._description(),
+                refresh=False,
             )
-
-            # Truncate the status line before adding ANSI colour codes.
-            status = (description + postfix)[:width]
-
-            # Colour only the stage counter orange.
-            count = self._counter()
-            count_start = len(description)
-
-            if (
-                count
-                and status[count_start:count_start + len(count)] == count
-            ):
-                status = (
-                    status[:count_start]
-                    + _ORANGE
-                    + count
-                    + _RESET
-                    + status[count_start + len(count):]
-                )
-
-            self.pbar.set_description_str(status, refresh=False)
+            self.pbar.set_postfix_str(
+                self._tty_postfix(
+                    self.last_cpu,
+                    self.last_rss,
+                    elapsed,
+                    stage_elapsed,
+                ),
+                refresh=False,
+            )
             self.pbar.refresh()
 
             self._render_log_rows()
+
 
     def _render(self):
         cpu, rss = self._res()
