@@ -1,14 +1,6 @@
-# Copyright 2026 FREISA contributors
-# Apache License, Version 2.0, see LICENSE.md for details.
-# SPDX-License-Identifier: Apache-2.0
-#
-# Info     : Files git ignores: build outputs, cloned and built tools, downloaded board files.
-# Module   : .gitignore
-# Author   : Christian Conti
-# Contact  : christian.conti@mail.it
-
 build/
 third_party/
 install/
 __pycache__/
 boards/
+*.log
