@@ -29,9 +29,10 @@ synth_args: -flatten
 # Tools per step (formerly flow.yml: every project now chooses its own tools)
 # ---------------------------------------------------------------------------------------------------------------------
 # steps:  tool of each step, for every board. Values:
-#           auto    first open-source tool that works on the board (also the default of a step that is not listed)
-#           all     try every tool that works on the board for this step and keep the best result
-#           <name>  a specific tool; `make doctor TARGET=<board>` lists them and whether they can run
+#           auto      first open-source tool that works on the board (also the default of a step that is not listed)
+#           all       try every tool that works on the board for this step and keep the best result
+#           all_open  try every open source tool that works on the board for this step and keep the best result
+#           <name>    a specific tool; `make doctor TARGET=<board>` lists them and whether they can run
 #         synth:   yosys | vivado
 #         netlist: rapidwright_if | yosys_json_if | vivado_link | none   (auto: rapidwright_if on UltraScale+, yosys_json_if on xc7)
 #         place:   dreamplacefpga | in_route | vivado         (auto: dreamplacefpga on UltraScale+, in_route on xc7)
@@ -41,10 +42,10 @@ synth_args: -flatten
 #         upload:  openfpgaloader | vivado
 steps:
   synth: yosys
-  netlist: auto
-  place: auto
-  route: auto
-  bitgen: auto
+  netlist: all_open
+  place: all_open
+  route: all_open
+  bitgen: all_open
   upload: openfpgaloader
 
 # boards: tools for one board only, merged over `steps` when TARGET is that board.
