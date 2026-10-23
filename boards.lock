@@ -1,4 +1,12 @@
-# supported boards (from targets/*.yml `board_store:`); `make install-boards` refreshes, `PIN=1` keeps
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Pinned XilinxBoardStore commit and board versions. `make install-boards` refreshes it.
+# Module   : boards.lock
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
 store https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
 # store-path  version
 TUL/pynq-z2 A.0

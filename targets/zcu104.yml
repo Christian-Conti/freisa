@@ -10,8 +10,10 @@
 part: xczu7ev-ffvc1156-2-e
 family: xczu
 yosys_family: xcup    # synth_xilinx has no zu+; xcup (UltraScale+ primitives) is the same fabric
-needs_ps: true        # PL is fed by PS8 DDR/AXI -> final bitstream needs the BD, open tools cannot emit it
+has_ps: true          # Zynq PS present on the chip; only designs with a block design (`bd_tcl:`) use it
 carry: none        # DREAMPlaceFPGA has no CARRY8 node type; use `carry8` with a placer that does
 legalize: dreamplace   # map BUFG/INV/LUT0 onto the placer's primitive library
-ofl_board: zcu104
+ofl_cable: ft4232         # openFPGALoader has no zcu104 board entry: JTAG is channel A of the FT4232H
 board_store: Xilinx/zcu104   # XilinxBoardStore path(s), pulled by `make install-boards`
+# jtag_serial: <serial>   # optional: force a JTAG cable; by default the cable whose chain has this FPGA is found automatically
+uart_channel: 3          # FT4232H interface of the PL UART (used by make uart-test)

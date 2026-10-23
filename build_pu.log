@@ -1,0 +1,217 @@
+CMake Deprecation Warning at third_party/googletest/CMakeLists.txt:4 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at third_party/googletest/googlemock/CMakeLists.txt:45 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at third_party/googletest/googletest/CMakeLists.txt:56 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Warning (dev) at third_party/googletest/googletest/cmake/internal_utils.cmake:243 (find_package):
+  Policy CMP0148 is not set: The FindPythonInterp and FindPythonLibs modules
+  are removed.  Run "cmake --help-policy CMP0148" for policy details.  Use
+  the cmake_policy command to set the policy and suppress this warning.
+
+Call Stack (most recent call first):
+  third_party/googletest/googletest/CMakeLists.txt:91 (include)
+This warning is for project developers.  Use -Wno-dev to suppress it.
+
+CMake Deprecation Warning at third_party/gflags/CMakeLists.txt:73 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at third_party/cctz/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at third_party/yaml-cpp/CMakeLists.txt:2 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_POLICY_VERSION_MINIMUM
+
+
+make: Entering directory '/home/christian.conti/Desktop/freisa/third_party/_build/prjuray-tools'
+[  2%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_spinlock_wait.dir/internal/spinlock_wait.cc.o
+[  2%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_log_severity.dir/log_severity.cc.o
+[  4%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilder.cpp.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_dynamic_annotations.dir/dynamic_annotations.cc.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_fixed.cc.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings_internal.dir/internal/ostringstream.cc.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/numeric/CMakeFiles/absl_int128.dir/int128.cc.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_civil_time.dir/internal/cctz/src/civil_time_detail.cc.o
+[  4%] Linking CXX static library libabsl_absl_dynamic_annotations.a
+[  4%] Built target absl_dynamic_annotations
+[  4%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/contrib/graphbuilderadapter.cpp.o
+[  4%] Linking CXX static library libabsl_absl_spinlock_wait.a
+[  4%] Built target absl_spinlock_wait
+[  4%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings_internal.dir/internal/utf8.cc.o
+[  4%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_format.cc.o
+[  6%] Linking CXX static library libabsl_absl_strings_internal.a
+[  8%] Linking CXX static library libabsl_absl_log_severity.a
+[  8%] Building CXX object third_party/gflags/CMakeFiles/gflags_nothreads_static.dir/src/gflags.cc.o
+[ 10%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_if.cc.o
+[ 10%] Built target absl_log_severity
+[ 10%] Built target absl_strings_internal
+[ 10%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_impl.cc.o
+[ 10%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_info.cc.o
+[ 10%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/binary.cpp.o
+[ 13%] Linking CXX static library libabsl_absl_civil_time.a
+[ 15%] Linking CXX static library libabsl_absl_int128.a
+[ 15%] Built target absl_civil_time
+[ 15%] Building CXX object third_party/gflags/CMakeFiles/gflags_nothreads_static.dir/src/gflags_reporting.cc.o
+[ 15%] Built target absl_int128
+[ 17%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_libc.cc.o
+[ 19%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/convert.cpp.o
+[ 19%] Building CXX object third_party/gflags/CMakeFiles/gflags_nothreads_static.dir/src/gflags_completions.cc.o
+[ 19%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_lookup.cc.o
+[ 19%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/time_zone_posix.cc.o
+[ 21%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time_zone.dir/internal/cctz/src/zone_info_source.cc.o
+[ 21%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/directives.cpp.o
+[ 21%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emit.cpp.o
+[ 23%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitfromevents.cpp.o
+[ 23%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitter.cpp.o
+[ 23%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitterstate.cpp.o
+[ 26%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/emitterutils.cpp.o
+[ 26%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/exceptions.cpp.o
+[ 26%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/exp.cpp.o
+[ 28%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/memory.cpp.o
+[ 28%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/node.cpp.o
+[ 28%] Linking CXX static library libabsl_absl_time_zone.a
+[ 28%] Built target absl_time_zone
+[ 28%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_raw_logging_internal.dir/internal/raw_logging.cc.o
+[ 28%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/node_data.cpp.o
+[ 30%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/nodebuilder.cpp.o
+[ 30%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/nodeevents.cpp.o
+[ 30%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/null.cpp.o
+[ 32%] Linking CXX static library libabsl_absl_raw_logging_internal.a
+[ 34%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/ostream_wrapper.cpp.o
+[ 34%] Built target absl_raw_logging_internal
+[ 34%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/parse.cpp.o
+[ 36%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_base.dir/internal/cycleclock.cc.o
+[ 36%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_base.dir/internal/spinlock.cc.o
+[ 36%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_throw_delegate.dir/internal/throw_delegate.cc.o
+[ 36%] Building CXX object third_party/abseil-cpp/absl/types/CMakeFiles/absl_bad_optional_access.dir/bad_optional_access.cc.o
+[ 36%] Building CXX object third_party/abseil-cpp/absl/types/CMakeFiles/absl_bad_variant_access.dir/bad_variant_access.cc.o
+[ 36%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/parser.cpp.o
+[ 39%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/regex_yaml.cpp.o
+[ 39%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_base.dir/internal/sysinfo.cc.o
+[ 41%] Linking CXX static library libabsl_absl_bad_optional_access.a
+[ 43%] Linking CXX static library libabsl_absl_throw_delegate.a
+[ 43%] Built target absl_bad_optional_access
+[ 45%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_base.dir/internal/thread_identity.cc.o
+[ 45%] Built target absl_throw_delegate
+[ 45%] Building CXX object third_party/abseil-cpp/absl/base/CMakeFiles/absl_base.dir/internal/unscaledcycleclock.cc.o
+[ 45%] Linking CXX static library libabsl_absl_bad_variant_access.a
+[ 45%] Built target absl_bad_variant_access
+[ 45%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scanner.cpp.o
+[ 45%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scanscalar.cpp.o
+[ 47%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scantag.cpp.o
+[ 47%] Linking CXX static library libabsl_absl_base.a
+[ 50%] Linking CXX static library libgflags_nothreads.a
+[ 50%] Built target absl_base
+[ 50%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/ascii.cc.o
+[ 50%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/charconv.cc.o
+[ 50%] Built target gflags_nothreads_static
+[ 50%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/internal/charconv_bigint.cc.o
+[ 52%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/escaping.cc.o
+[ 52%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/internal/charconv_parse.cc.o
+[ 52%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/scantoken.cpp.o
+[ 54%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/internal/escaping.cc.o
+[ 54%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/internal/memutil.cc.o
+[ 54%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/match.cc.o
+[ 56%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/numbers.cc.o
+[ 56%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/str_cat.cc.o
+[ 56%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/str_replace.cc.o
+[ 58%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/str_split.cc.o
+[ 58%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/simplekey.cpp.o
+[ 58%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/string_view.cc.o
+[ 60%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/singledocparser.cpp.o
+[ 60%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/stream.cpp.o
+[ 60%] Building CXX object third_party/abseil-cpp/absl/strings/CMakeFiles/absl_strings.dir/substitute.cc.o
+[ 60%] Building CXX object third_party/yaml-cpp/CMakeFiles/yaml-cpp.dir/src/tag.cpp.o
+[ 63%] Linking CXX static library libabsl_absl_strings.a
+[ 63%] Built target absl_strings
+[ 63%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time.dir/civil_time.cc.o
+[ 63%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time.dir/clock.cc.o
+[ 65%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time.dir/duration.cc.o
+[ 65%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time.dir/format.cc.o
+[ 65%] Building CXX object third_party/abseil-cpp/absl/time/CMakeFiles/absl_time.dir/time.cc.o
+[ 67%] Linking CXX static library libabsl_absl_time.a
+[ 67%] Built target absl_time
+[ 69%] Linking CXX static library libyaml-cpp.a
+[ 69%] Built target yaml-cpp
+[ 71%] Building CXX object lib/CMakeFiles/libprjxray.dir/database.cc.o
+[ 71%] Building CXX object lib/CMakeFiles/libprjxray.dir/memory_mapped_file.cc.o
+[ 71%] Building CXX object lib/CMakeFiles/libprjxray.dir/segbits_file_reader.cc.o
+[ 71%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/bitstream_writer.cc.o
+[ 73%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/configuration_packet.cc.o
+[ 73%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/configuration_register.cc.o
+[ 73%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/configuration.cc.o
+[ 76%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/frames.cc.o
+[ 76%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/frame_address.cc.o
+[ 76%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/global_clock_region.cc.o
+[ 78%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/part.cc.o
+[ 78%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/configuration_row.cc.o
+[ 78%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/block_type.cc.o
+[ 80%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/configuration_bus.cc.o
+[ 80%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/spartan6/configuration_column.cc.o
+[ 80%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/frame_address.cc.o
+[ 82%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/global_clock_region.cc.o
+[ 82%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/part.cc.o
+[ 82%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/configuration_row.cc.o
+[ 84%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/block_type.cc.o
+[ 84%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/configuration_bus.cc.o
+[ 84%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/configuration_column.cc.o
+[ 86%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xc7series/ecc.cc.o
+[ 86%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/frame_address.cc.o
+[ 86%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/part.cc.o
+[ 89%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/configuration_row.cc.o
+[ 89%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/block_type.cc.o
+[ 89%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/configuration_bus.cc.o
+[ 91%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/configuration_column.cc.o
+[ 91%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcuseries/ecc.cc.o
+[ 91%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/frame_address.cc.o
+[ 93%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/part.cc.o
+[ 93%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/configuration_row.cc.o
+[ 93%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/block_type.cc.o
+[ 95%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/configuration_bus.cc.o
+[ 95%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/configuration_column.cc.o
+[ 95%] Building CXX object lib/CMakeFiles/libprjxray.dir/xilinx/xcupseries/ecc.cc.o
+[ 97%] Linking CXX static library liblibprjxray.a
+[ 97%] Built target libprjxray
+[100%] Building CXX object tools/CMakeFiles/xcframes2bit.dir/xcframes2bit.cc.o
+[100%] Linking CXX executable xcframes2bit
+[100%] Built target xcframes2bit
+make: Leaving directory '/home/christian.conti/Desktop/freisa/third_party/_build/prjuray-tools'
+[INFO] prjuray tools in /home/christian.conti/Desktop/freisa/install/bin (xcframes2bit, prjuray-fasm2bit)

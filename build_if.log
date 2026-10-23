@@ -1,0 +1,807 @@
+make: Entering directory '/home/christian.conti/Desktop/freisa/third_party/_build/nextpnr-fpga-interchange'
+[  0%] Compiling Cap'n Proto schema fpga_interchange/lookahead.capnp
+[  0%] Generating schema/capnp/java.capnp
+[  0%] Generating ../../interchange
+--2026-10-23 10:19:23--  https://raw.githubusercontent.com/capnproto/capnproto-java/master/compiler/src/main/schema/capnp/java.capnp
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... [  0%] Built target fpga_interchange_capnp_output_directory
+connected.
+HTTP request sent, awaiting response... [  0%] Building CXX object CMakeFiles/extra_capnp.dir/fpga_interchange/lookahead.capnp.c++.o
+200 OK
+Length: 1459 (1,4K) [text/plain]
+Saving to: ‘/home/christian.conti/Desktop/freisa/third_party/_build/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/schema/capnp/java.capnp’
+
+     0K .                                                     100% 7,31M=0s
+
+2026-10-23 10:19:23 (7,31 MB/s) - ‘/home/christian.conti/Desktop/freisa/third_party/_build/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/schema/capnp/java.capnp’ saved [1459/1459]
+
+[  0%] Built target get_java_capnp_schema
+[  0%] Compiling Cap'n Proto schema /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/../../interchange/References.capnp
+[ 14%] Compiling Cap'n Proto schema /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/../../interchange/DeviceResources.capnp
+[ 14%] Compiling Cap'n Proto schema /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/../../interchange/LogicalNetlist.capnp
+[ 14%] Compiling Cap'n Proto schema /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/3rdparty/fpga-interchange-schema/cmake/cxx_static/../../interchange/PhysicalNetlist.capnp
+[ 14%] Building CXX object 3rdparty/fpga-interchange-schema/cmake/cxx_static/CMakeFiles/fpga_interchange_capnp.dir/__/__/interchange/LogicalNetlist.capnp.c++.o
+[ 14%] Building CXX object 3rdparty/fpga-interchange-schema/cmake/cxx_static/CMakeFiles/fpga_interchange_capnp.dir/__/__/interchange/PhysicalNetlist.capnp.c++.o
+[ 14%] Building CXX object 3rdparty/fpga-interchange-schema/cmake/cxx_static/CMakeFiles/fpga_interchange_capnp.dir/__/__/interchange/DeviceResources.capnp.c++.o
+[ 14%] Building CXX object 3rdparty/fpga-interchange-schema/cmake/cxx_static/CMakeFiles/fpga_interchange_capnp.dir/__/__/interchange/References.capnp.c++.o
+[ 14%] Linking CXX static library libextra_capnp.a
+[ 14%] Built target extra_capnp
+[ 14%] Linking CXX static library libfpga_interchange_capnp.a
+[ 14%] Built target fpga_interchange_capnp
+[ 14%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/archcheck.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/basectx.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/bits.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/command.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/context.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/design_utils.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/embed.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/handle_error.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/idstring.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/idstringlist.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/idstringlist.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/iterator:63,
+                 from /opt/miniconda3/envs/freisa/include/boost/container_hash/is_range.hpp:8,
+                 from /opt/miniconda3/envs/freisa/include/boost/container_hash/hash.hpp:14,
+                 from /opt/miniconda3/envs/freisa/include/boost/functional/hash.hpp:6,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/idstringlist.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/idstringlist.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/design_utils.h:21,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/design_utils.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/include/boost/assert/source_location.hpp:13,
+                 from /opt/miniconda3/envs/freisa/include/boost/exception/exception.hpp:9,
+                 from /opt/miniconda3/envs/freisa/include/boost/throw_exception.hpp:21,
+                 from /opt/miniconda3/envs/freisa/include/boost/lexical_cast/bad_lexical_cast.hpp:28,
+                 from /opt/miniconda3/envs/freisa/include/boost/lexical_cast.hpp:32,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:24:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/basectx.cc:24:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/basectx.h:25,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/basectx.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/archcheck.cc:23:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/list:64,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/archcheck.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/embed.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/embed.cc:8:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_tree.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/map:64,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/embed.cc:1:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/command.h:27,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/command.cc:39:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string/std/string_traits.hpp:15,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string/std_containers_traits.hpp:19,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string.hpp:18,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/command.cc:30:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/log.cc.o
+[ 28%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/nextpnr.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/nextpnr_assertions.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/nextpnr_namespaces.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/nextpnr_types.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/property.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/pybindings.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/report.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/sdc.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/sdf.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/str_ring_buffer.cc.o
+[ 42%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/svg.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/timing.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/kernel/timing_log.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr_types.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr_types.h:27,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr_types.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/detail_place_core.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/report.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/3rdparty/json11/json11.hpp:53,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/report.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/sdc.cc:23:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/sdc.cc:22:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/sdf.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/svg.cc:23:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string/std/string_traits.hpp:15,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string/std_containers_traits.hpp:19,
+                 from /opt/miniconda3/envs/freisa/include/boost/algorithm/string.hpp:18,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/svg.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/timing_log.cc:24:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/algorithm:62,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/timing_log.cc:22:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/timing.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/timing.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/parallel_refine.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/detail_place_core.h:47,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/detail_place_core.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/place_common.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/placer1.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/placer_heap.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/placer_static.cc.o
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/place/timing_opt.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/detail_place_cfg.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/parallel_refine.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/parallel_refine.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/place_common.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/place_common.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer1.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer1.cc:24:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer1.h:22:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/route/router1.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_static.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_static.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_static.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.h:30,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.cc:34:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.h:29:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 57%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/common/route/router2.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/timing_opt.h:21,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/timing_opt.cc:31:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/timing_opt.h:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.cc: In constructor 'nextpnr_fpga_interchange::HeAPPlacer::HeAPPlacer(nextpnr_fpga_interchange::Context*, nextpnr_fpga_interchange::PlacerHeapCfg)':
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.cc:143:28: warning: 'void Eigen::initParallel()' is deprecated: Initialization is no longer needed. [-Wdeprecated-declarations]
+  143 |         Eigen::initParallel();
+      |         ~~~~~~~~~~~~~~~~~~~^~
+In file included from /opt/miniconda3/envs/freisa/include/eigen3/Eigen/Core:392,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/place/placer_heap.cc:35:
+/opt/miniconda3/envs/freisa/include/eigen3/Eigen/src/Core/products/Parallelizer.h:50:81: note: declared here
+   50 | EIGEN_DEPRECATED_WITH_REASON("Initialization is no longer needed.") inline void initParallel() {}
+      |                                                                                 ^~~~~~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/route/router1.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/route/router1.cc:25:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/specfun.h:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/cmath:3913,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/route/router1.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/3rdparty/json11/json11.cpp.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/3rdparty/oourafft/fftsg.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/route/router2.h:20,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/route/router2.cc:29:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/3rdparty/oourafft/fftsg2d.cc.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/json/jsonwrite.cc.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/frontend/json_frontend.cc.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/arch.cc.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/arch_pack_clusters.cc.o
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/arch_pack_io.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/json/jsonwrite.h:25,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/json/jsonwrite.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/locale_classes.h:42,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/ios_base.h:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/ios:46,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/ostream.h:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/ostream:42,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/json/jsonwrite.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/arch_place_constr.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/include/boost/iostreams/device/mapped_file.hpp:16,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:26:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/frontend/json_frontend.h:20,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/frontend/json_frontend.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_pack_clusters.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/include/boost/iostreams/device/mapped_file.hpp:16,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:26:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 71%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/arch_pybindings.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/cell_parameters.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_pack_io.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_pack_io.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/cost_map.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/dedicated_interconnect.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_place_constr.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_place_constr.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/fpga_interchange.cpp.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cell_parameters.cc:26:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bitset:51,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/regex:42,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cell_parameters.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cell_parameters.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/dedicated_interconnect.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/dedicated_interconnect.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.cc:23:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/iterator:63,
+                 from /opt/miniconda3/envs/freisa/include/boost/array.hpp:44,
+                 from /opt/miniconda3/envs/freisa/include/boost/multi_array/range_list.hpp:19,
+                 from /opt/miniconda3/envs/freisa/include/boost/multi_array/extent_gen.hpp:17,
+                 from /opt/miniconda3/envs/freisa/include/boost/multi_array/base.hpp:22,
+                 from /opt/miniconda3/envs/freisa/include/boost/multi_array.hpp:29,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.cc: In member function 'nextpnr_fpga_interchange::delay_t nextpnr_fpga_interchange::CostMap::get_penalty(const boost::multi_array<int, 2>&) const':
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.cc:326:28: warning: possibly dangling reference to a temporary [-Wdangling-reference]
+  326 |             const delay_t &cost_entry = matrix[ix][iy];
+      |                            ^~~~~~~~~~
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/cost_map.cc:326:50: note: 'boost::multi_array_ref<int, 2>::const_reference' {aka 'boost::detail::multi_array::const_sub_array<int, 1, const int*>'} temporary created here
+  326 |             const delay_t &cost_entry = matrix[ix][iy];
+      |                                         ~~~~~~~~~^
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/globals.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/lookahead.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/luts.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/fpga_interchange.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/fpga_interchange.cpp:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/macros.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/main.cc.o
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/pseudo_pip_model.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/globals.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable_policy.h:36,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/hashtable.h:37,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/unordered_map.h:33,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/unordered_map:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/functional:65,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/log.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/globals.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/lookahead.cc:33:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/algorithm:62,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/lookahead.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/lookahead.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/luts.cc:23:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/idstring.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/luts.h:23,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/luts.cc:20:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[ 85%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/sampler.cc.o
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/site_arch.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:28,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_router.h:29,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/pseudo_pip_model.h:29,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/pseudo_pip_model.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/vector:64,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/dynamic_bitarray.h:25,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/pseudo_pip_model.h:26:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/design_utils.h:21,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/macros.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/command.h:27,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/main.cc:26:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/locale_classes.h:42,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/ios_base.h:43,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/ios:46,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/istream:42,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/fstream:42,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/main.cc:24:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:28,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/vector:64,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:25:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/site_lut_mapping_cache.cc.o
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/site_router.cc.o
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/site_routing_cache.cc.o
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/type_wire.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:28,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_lut_mapping_cache.h:25,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_lut_mapping_cache.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/idstring.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_lut_mapping_cache.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[100%] Building CXX object CMakeFiles/nextpnr-fpga_interchange.dir/fpga_interchange/xdc.cc.o
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:28,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_routing_cache.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_routing_cache.cc:21:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/vector:64,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_arch.h:25:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/site_router.cc:20:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/array:45,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/base_arch.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/nextpnr.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/type_wire.cc:22:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_algobase.h:65,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/algorithm:62,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/type_wire.h:24,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/type_wire.cc:21:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+In file included from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch.h:36,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/common/kernel/context.h:26,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/xdc.cc:25:
+/home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/arch_iterators.h:446:32: warning: 'template<class _Category, class _Tp, class _Distance, class _Pointer, class _Reference> struct std::iterator' is deprecated [-Wdeprecated-declarations]
+  446 | struct IdStringIterator : std::iterator<std::forward_iterator_tag,
+      |                                ^~~~~~~~
+In file included from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_funcs.h:68,
+                 from /opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/string:49,
+                 from /home/christian.conti/Desktop/freisa/third_party/nextpnr-fpga-interchange/fpga_interchange/xdc.cc:23:
+/opt/miniconda3/envs/freisa/lib/gcc/x86_64-conda-linux-gnu/15.3.0/include/c++/bits/stl_iterator_base_types.h:129:34: note: declared here
+  129 |     struct _GLIBCXX17_DEPRECATED iterator
+      |                                  ^~~~~~~~
+[100%] Linking CXX executable nextpnr-fpga_interchange
+[100%] Built target nextpnr-fpga_interchange
+Building CXX object bba/CMakeFiles/bbasm.dir/main.cc.o
+Linking CXX executable bbasm
+Built target bbasm
+make: Leaving directory '/home/christian.conti/Desktop/freisa/third_party/_build/nextpnr-fpga-interchange'
+[INFO] nextpnr-fpga_interchange in /home/christian.conti/Desktop/freisa/install/bin

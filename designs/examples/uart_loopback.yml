@@ -1,0 +1,33 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Project file of the uart_loopback example: what the PC sends on the board's PL UART comes back.
+#            Build: `make flow DESIGN=uart_loopback TARGET=zcu104`, program: `make upload DESIGN=uart_loopback TARGET=zcu104`,
+#            test: `make uart-test TARGET=zcu104` (same USB cable as JTAG: the PL UART is another channel of its FT4232H).
+# Module   : uart_loopback.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+# Sources (paths relative to this file); top module and its RTL. See blinky.yml for the explanation of every key.
+repo: ../../examples/uart_loopback
+top: uart_loopback
+rtl: ["*.v"]
+synth_args: -flatten
+
+# Tools: open tools for every step; on ZCU104/ZCU106 the I/O is done by open tools too and Vivado only writes the file.
+steps:
+  synth: yosys
+  netlist: auto
+  place: auto
+  route: auto
+  bitgen: auto
+  upload: openfpgaloader
+boards:
+  zcu104: {bitgen: open_io}
+  zcu106: {bitgen: open_io}
+
+# Pins: the PL UART pins of each board, the 300 MHz differential clock (clk_p/clk_n -> port clk) and LED 0.
+per_target:
+  zcu104@open_io: {xdc: [zcu104.xdc], clocks: {clk: 3.333}}
+  zcu106@open_io: {xdc: [zcu106.xdc], clocks: {clk: 3.333}}

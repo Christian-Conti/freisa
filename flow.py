@@ -9,64 +9,66 @@
 # Contact  : christian.conti@mail.it
 
 import argparse, json, os, pathlib, sys
-from freisa import core, ui, report
+from freisa import core, ui, report, resolve, term
 
 HERE = pathlib.Path(__file__).parent
+
+def doctor(r, board):
+    """Every tool of every step for one board: available or not (and why); ◀ marks the one the project file selects."""
+    print(term.banner(f"FREISA doctor  {r.name} → {board}  ({r.target.get('part')})", "every tool of every step; ◀ = chosen by the project file"))
+    for s in core.STAGES + ["upload"]:
+        for n, cls in core.REGISTRY[s].items():
+            why = cls().supports(r.target)
+            sel = n == r.sel[s].name; lb = cls.label()
+            print(f"  {s:8} {(term.bold(lb) if sel else lb) + ' ' * max(1, 26 - len(lb))} {(term.orange('◀ selected') if sel else '          ')} {term.green('yes') if not why else term.red('no')}")
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "doctor", "upload"])
     ap.add_argument("-t", "--target", default="xc7z020")
     ap.add_argument("-d", "--design", default="blinky", help="designs/<name>.yml or a path")
-    ap.add_argument("-p", "--profile", default=None, help="stage preset from defaults.yml: open|vivado|vivado_ps|yosys_vivado")
-    ap.add_argument("--explore", choices=["all"], help="try every supported backend in every stage and keep the best")
-    ap.add_argument("--tool", default="openfpgaloader", help="upload: openfpgaloader | vivado")
+    ap.add_argument("--tool", default=None, help="upload: openfpgaloader | vivado (default: `upload` in the project file)")
     ap.add_argument("--bit", help="upload: bitstream (default: build/<design>/<board>/out.bit)")
     ap.add_argument("--from", dest="frm", default=core.STAGES[0])
     ap.add_argument("--to", default=core.STAGES[-1])
     ap.add_argument("-j", "--jobs", type=int, default=4, help="parallel explore variants")
     ap.add_argument("-o", "--out", default=HERE / "build")
+    ap.add_argument("--all-boards", action="store_true", help="doctor: every board in targets/")
     a = ap.parse_args()
-    core.load_backends()
-    # `-d` may be a name, designs/<name>[.yml], designs/example/<name>[.yml] or any path to a yml
-    nm = pathlib.Path(a.design.strip('"')).name.removesuffix(".yml")
-    dpath = next((p for p in [pathlib.Path(a.design.strip('"')), HERE / "designs" / f"{nm}.yml", HERE / "designs" / "example" / f"{nm}.yml"] if p.is_file()), None)
-    if dpath is None: sys.exit(f"design '{a.design}' not found in designs/ or designs/example/")
-    flow = {**core.load_yaml(HERE / "defaults.yml"), **core.load_yaml(dpath)}
-    flow["stages"] = {**core.load_yaml(HERE / "defaults.yml")["stages"], **flow["stages"]} if "stages" in flow else flow["stages"]
-    name = dpath.stem
-    target = core.load_yaml(HERE / "targets" / f"{a.target}.yml")
-    flow.update(flow.get("per_target", {}).get(a.target, {}))  # board-specific overrides (top, xdc, profile...)
-    a.profile = a.profile or flow.get("profile")
-    ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, next(r for r in [(dpath.parent / flow["repo"]).resolve(), (HERE / "designs" / flow["repo"]).resolve()] if r.exists() or r == (HERE / "designs" / flow["repo"]).resolve()))
-    if a.cmd == "upload":
-        b = core.REGISTRY["upload"].get(a.tool) or sys.exit(f"unknown upload tool {a.tool} (have {list(core.REGISTRY['upload'])})")
-        b = b(); why = b.supports(target)
-        if why: sys.exit(f"upload/{a.tool} unavailable: {why}")
-        ctx.art["bit"] = pathlib.Path(a.bit) if a.bit else ctx.work / "out.bit"
-        if not ctx.art["bit"].exists(): sys.exit(f"no bitstream at {os.path.relpath(ctx.art['bit'])}: run the flow first or pass BIT=")
-        b.run(ctx); print(f"uploaded {os.path.relpath(ctx.art['bit'])} with {a.tool}"); return
-    sel = {s: core.pick(s, flow, target, a.profile) for s in core.STAGES}
-    if a.cmd == "doctor":
-        for s in core.STAGES:
-            for n, cls in core.REGISTRY[s].items():
-                why = cls().supports(target)
-                print(f"{s:8} {n:16} {'*' if n == sel[s].name else ' '} {'ok' if not why else 'NO: ' + why}")
+    if a.cmd == "doctor" and a.all_boards:  # one table per board
+        for tf in sorted((HERE / "targets").glob("*.yml")):
+            doctor(resolve.Resolved(a.design, tf.stem), tf.stem); print()
         return
+    r = resolve.Resolved(a.design, a.target)
+    flow, target, name = r.flow, r.target, r.name
+    ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, r.root)
+    if a.cmd == "upload":
+        b = core.pick("upload", a.tool, target) if a.tool else r.sel["upload"]
+        why = b.supports(target)
+        if why: sys.exit(term.error(f"upload/{b.name} unavailable: {why}"))
+        ctx.art["bit"] = pathlib.Path(a.bit) if a.bit else ctx.work / "out.bit"
+        if not ctx.art["bit"].exists(): sys.exit(term.error(f"no bitstream at {os.path.relpath(ctx.art['bit'])}: run the flow first or pass BIT="))
+        print(f"{term.ARROW} {term.bold('upload')}   {term.cyan(b.label())}  {term.dim(os.path.relpath(ctx.art['bit']))}")
+        b.run(ctx); print(f"  {term.OK} {term.green('programmed')} {os.path.relpath(ctx.art['bit'])} {term.dim('with ' + b.label())}"); return
+    sel = r.sel
+    if a.cmd == "doctor":
+        doctor(r, a.target); return
     art = ctx.work / "artifacts.json"
     if a.frm != core.STAGES[0] and art.exists():  # resume: reload what earlier stages produced
         ctx.art = {k: ([tuple(x) for x in v] if k == "rtl" else pathlib.Path(v)) for k, v in json.loads(art.read_text()).items()}
-    if a.explore == "all": flow["explore"] = {**{s: "all" for s in ("synth", "place", "route")}, **flow.get("explore", {})}
+    flow["explore"] = {**flow.get("explore", {}), **{s: "all" for s in r.explore_all}}  # `all` in steps = explore every tool
     run = core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     # preflight: fail before hours of work if a middle stage cannot run; a missing last step (e.g. Vivado bitgen) just ends the run early
+    if run[-1] == "bitgen" and sel["bitgen"].name == "vivado" and flow.get("ooc", not flow.get("xdc")) and len(run) > 1:
+        print(term.note("stopping before bitgen: out-of-context design (no `xdc:` pins), Vivado cannot write its bitstream")); run = run[:-1]
     for s in run:
         why = sel[s].supports(target)
-        if why and s == run[-1] and len(run) > 1: print(f"note: stopping before {s}/{sel[s].name}: {why}"); run = run[:-1]
-        elif why: sys.exit(f"stage {s}/{sel[s].name} unavailable: {why}")
+        if why and s == run[-1] and len(run) > 1: print(term.note(f"stopping before {s}/{sel[s].label()}: {why}")); run = run[:-1]
+        elif why: sys.exit(term.error(f"stage {s}/{sel[s].label()} unavailable: {why}"))
     mon = ui.Monitor(run, ctx, ctx.work / "flow.log"); mon.start(); rep = report.Reporter(ctx)
     for s in run:
         b = sel[s]
-        mon.begin(s, b.name)
+        mon.begin(s, b.label())
         try:
             core.explore(s, b, ctx, flow["explore"][s], a.jobs) if s in flow.get("explore", {}) else b.run(ctx)
         except SystemExit as e:
@@ -77,8 +79,11 @@ def main():
         try: sc = json.loads(best.read_text())["score"] if s in flow.get("explore", {}) else (b.score(ctx) if s in ("synth", "place", "route") else None)
         except Exception: sc = None
         mon.end(s, f"score {sc}" if sc else "", rep)
-    mon.say("report: " + os.path.relpath(rep.finalize()))
-    mon.say("artifacts: " + ", ".join(f"{k}={v}" for k, v in ctx.art.items() if k != "rtl"))
+    rdir = os.path.relpath(rep.finalize())
+    mon.say(f"\n{term.bold('results')}  {term.dim(os.path.relpath(ctx.work))}")
+    for k, v in ctx.art.items():
+        if k != "rtl": mon.say(f"  {term.orange(k.ljust(6))} {os.path.relpath(v)}")
+    mon.say(f"  {term.orange('report'.ljust(6))} {rdir}/summary.md  {term.dim('(+ reports/, logs/, artifacts/)')}")
     mon.finish()
 
 main()

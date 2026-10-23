@@ -1,0 +1,82 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : Project file of the blinky example: sources, tools per step and per-board settings.
+#            One project file per design; `make flow DESIGN=blinky TARGET=<board>` uses it.
+# Module   : blinky.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------------------------------------------------
+# repo:  folder with the RTL, relative to this file (or absolute). Every other path in this file is relative to it.
+repo: ../../examples/blinky
+# top:   top-level module (or VHDL entity) of the design.
+top: blinky
+# rtl:   source files, as glob patterns inside `repo`. The language comes from the extension (.v, .sv, .vhd, .vhdl).
+#        blinky_diff.v is matched too; it is only instantiated where a board setting below asks for it.
+rtl: ["*.v"]
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Synthesis options
+# ---------------------------------------------------------------------------------------------------------------------
+# synth_args: extra options for Yosys `synth_xilinx`. -flatten merges the hierarchy into one module.
+synth_args: -flatten
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Tools per step (formerly flow.yml: every project now chooses its own tools)
+# ---------------------------------------------------------------------------------------------------------------------
+# steps:  tool of each step, for every board. Values:
+#           auto    first open-source tool that works on the board (also the default of a step that is not listed)
+#           all     try every tool that works on the board for this step and keep the best result
+#           <name>  a specific tool; `make doctor TARGET=<board>` lists them and whether they can run
+#         synth:   yosys | vivado
+#         netlist: rapidwright_if | yosys_json_if | vivado_link | none   (auto: rapidwright_if on UltraScale+, yosys_json_if on xc7)
+#         place:   dreamplacefpga | in_route | vivado         (auto: dreamplacefpga on UltraScale+, in_route on xc7)
+#         route:   rwroute | nextpnr_interchange | vivado     (auto: rwroute on UltraScale+, nextpnr_interchange on xc7)
+#         bitgen:  prjxray | prjuray | open_io | vivado_wrap | vivado | vivado_ps   (auto: prjxray on xc7)
+#         Between steps every tool exchanges FPGA Interchange files (.netlist, .phys); names shown with (vivado) use Vivado.
+#         upload:  openfpgaloader | vivado
+steps:
+  synth: yosys
+  netlist: auto
+  place: auto
+  route: auto
+  bitgen: auto
+  upload: openfpgaloader
+
+# boards: tools for one board only, merged over `steps` when TARGET is that board.
+#         ZCU104/ZCU106 (UltraScale+) have no open bitstream writer, so `auto` would stop after routing.
+#         open_io: open tools also do the I/O buffers and their routing; Vivado only runs write_bitstream.
+#         KV260 is not listed: it has no PL clock oscillator (the PL clock comes from the PS), so blinky can only be
+#         built up to the routed checkpoint there: `make flow TARGET=kv260 TO=route`.
+boards:
+  zcu104: {bitgen: open_io}
+  zcu106: {bitgen: open_io}
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Per-board design settings
+# ---------------------------------------------------------------------------------------------------------------------
+# per_target: keys that change for one board, merged over the keys above.
+#   "<board>"          always applies on that board
+#   "<board>@<tool>"   applies only when <tool> runs in some step on that board
+# Keys used here:
+#   xdc:     constraint files (inside `repo`) with PACKAGE_PIN and IOSTANDARD for every port. Without pins the design is
+#            built out of context and no bitstream can be written.
+#   clocks:  {port: period in ns}: clock constraint (used by open_io and by the sign-off timing report).
+#   top:     a different top module on this board.
+#   wrap:    {top, rtl, cell}: I/O wrapper used by bitgen vivado_wrap (Vivado puts the open-routed design into `cell`).
+per_target:
+  # PYNQ-Z1/Z2: single-ended 125 MHz clock and one LED; the open tools write out.bit
+  xc7z020: {xdc: [xc7z020.xdc]}
+  # ZCU104/ZCU106 with open_io: the XDC names the differential clock pins clk_p/clk_n, which open_io connects to port clk
+  zcu104@open_io: {xdc: [zcu104.xdc], clocks: {clk: 3.333}}
+  zcu106@open_io: {xdc: [zcu106.xdc], clocks: {clk: 3.333}}
+  # alternative bitgen vivado_wrap: Vivado implements the hand-written I/O wrapper blinky_diff around the open design
+  zcu104@vivado_wrap: {xdc: [zcu104.xdc], wrap: {top: blinky_diff, rtl: [blinky_diff.v], cell: core}}
+  zcu106@vivado_wrap: {xdc: [zcu106.xdc], wrap: {top: blinky_diff, rtl: [blinky_diff.v], cell: core}}
+  # alternative: every step in Vivado (boards: {zcu104: {synth: vivado, netlist: none, place: vivado, route: vivado, bitgen: vivado}})
+  zcu104@vivado: {top: blinky_diff, xdc: [zcu104.xdc]}
+  zcu106@vivado: {top: blinky_diff, xdc: [zcu106.xdc]}

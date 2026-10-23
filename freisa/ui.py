@@ -3,8 +3,8 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : Command-line entry point: run, doctor and upload.
-# Module   : flow.py
+# Info     : Live monitor: progress, time, CPU/memory of the running tools, last log line, step summaries.
+# Module   : ui.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
@@ -17,6 +17,8 @@ import threading
 import time
 
 from tqdm import tqdm
+
+from . import term
 
 try:
     import psutil
@@ -180,7 +182,7 @@ class Monitor:
         else:
             print(msg, flush=True)
 
-        self.out.write(msg + "\n")
+        self.out.write(term.plain(msg) + "\n")
         self.out.flush()
 
     def _res(self):
@@ -390,10 +392,10 @@ class Monitor:
                 self._res()  # Keep sampling for the step summary.
 
     def start(self):
-        self.say(
-            f"== {self.ctx.target.get('part')}  "
-            f"stages: {' > '.join(self.stages)}"
-        )
+        self.say(term.banner(
+            f"FREISA  {self.ctx.cfg.get('top', '')} → {self.ctx.target.get('part')}",
+            "  " + f" {term.DOT} ".join(self.stages),
+        ))
 
         self._refresh_display()
 
@@ -416,7 +418,7 @@ class Monitor:
 
             self._refresh_display()
 
-        self.say(f">> {stage}: {backend}")
+        self.say(f"{term.ARROW} {term.bold(stage.ljust(8))} {term.cyan(backend)}")
 
     def end(self, stage, extra="", rep=None):
         with self._display_lock:
@@ -432,9 +434,9 @@ class Monitor:
             self._refresh_display()
 
         self.say(
-            f"   {stage} done in {_fmt(dt)} | "
-            f"avg cpu {avg:.0f}% | peak mem {_gb(peak_rss)}"
-            + (f" | {extra}" if extra else "")
+            f"  {term.OK} {stage} {term.dim('done in')} {_fmt(dt)}  "
+            + term.dim(f"cpu {avg:.0f}%  mem {_gb(peak_rss)}")
+            + (f"  {term.orange(extra)}" if extra else "")
         )
 
         log = getattr(self.ctx, "cur_log", None)
@@ -445,11 +447,11 @@ class Monitor:
                     lines = [
                         line.strip()
                         for line in f
-                        if line.strip()
+                        if line.strip() and not line.startswith("$ ")  # skip the logged command line
                     ]
 
                 for line in lines[-3:]:
-                    self.say(f"   | {line[:150]}")
+                    self.say("    " + term.dim("│ " + line[:150]))
 
             except OSError:
                 pass
@@ -482,9 +484,7 @@ class Monitor:
         self.pbar.close()
         self.finished = True
 
-        self.say(
-            f"== {'finished' if ok else 'FAILED'} "
-            f"in {_fmt(time.time() - self.t0)}"
-        )
+        t = _fmt(time.time() - self.t0)
+        self.say(f"{term.OK} {term.green(term.bold('finished'))} in {t}" if ok else f"{term.FAIL} {term.red(term.bold('FAILED'))} after {t}")
 
         self.out.close()

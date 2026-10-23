@@ -1,4 +1,13 @@
-# ZCU106: 300 MHz user SI570 clock, PL LED 0. Pins from XilinxBoardStore zcu106 2.6
+# Copyright 2026 FREISA contributors
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Info     : Pin and IO constraints of the blinky example on the ZCU106.
+# Module   : zcu106.xdc
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+# 300 MHz user SI570 clock and PL LED 0; pins from XilinxBoardStore zcu106 2.6
 set_property PACKAGE_PIN AH12 [get_ports clk_p]
 set_property PACKAGE_PIN AJ12 [get_ports clk_n]
 set_property IOSTANDARD DIFF_SSTL12 [get_ports {clk_p clk_n}]

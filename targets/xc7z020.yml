@@ -10,8 +10,8 @@
 part: xc7z020clg400-1
 family: xc7
 yosys_family: xc7
-chipdb: install/share/xc7z020.bin
+package: clg400            # nextpnr-fpga_interchange package name
+legalize: nextpnr_if       # Yosys settings for nextpnr-fpga_interchange
 db_root: third_party/prjxray-db/zynq7
-flow: {netlist: none, place: in_route, route: nextpnr_xilinx, bitgen: prjxray}
 ofl_board: pynq_z2
 board_store: TUL/pynq-z2   # XilinxBoardStore path(s), pulled by `make install-boards`

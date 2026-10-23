@@ -21,6 +21,13 @@ def load_backends():
     for m in pkgutil.iter_modules(stages.__path__):
         importlib.import_module(f"{stages.__name__}.{m.name}")
 
+def _t():
+    from . import term
+    return term
+
+def _err(msg):
+    return _t().error(msg)
+
 class Ctx:
     def __init__(self, target, cfg, work, root):
         self.target, self.cfg, self.work, self.root = target, cfg, pathlib.Path(work), pathlib.Path(root)
@@ -38,13 +45,18 @@ class Ctx:
                 time.sleep(2)
                 if watch and re.search(watch, self.cur_log.read_text(errors="replace")[-4000:], re.I):
                     p.terminate(); p.wait()
-                    sys.exit(f"[{log}] stopped early: '{watch}' found in the log, see {os.path.relpath(self.cur_log)}")
+                    sys.exit(_err(f"{log}: stopped early ('{watch}' in its log), see {os.path.relpath(self.cur_log)}"))
         if p.returncode:
-            sys.exit(f"[{log}] failed ({p.returncode}), see {os.path.relpath(self.work / (log + '.log'))}")
+            sys.exit(_err(f"{log} failed (exit {p.returncode}), see {os.path.relpath(self.work / (log + '.log'))}"))
 
 class Backend:
     stage = name = None
     tools = []  # executables needed
+    vendor = None  # proprietary tool used by this step (e.g. "vivado"), shown next to the name
+    @classmethod
+    def label(cls):
+        """Name as shown to the user: open tools plain, steps that use a vendor tool marked e.g. `open_io (vivado)`."""
+        return cls.name if not cls.vendor or cls.name == cls.vendor else f"{cls.name} ({cls.vendor})"
     metric = "none"  # unit of score(): scores of different metrics are never ranked against each other
     def score(self, ctx):
         """Lower is better; used by `explore:`. Default: no preference."""
@@ -57,12 +69,17 @@ class Backend:
 def load_yaml(p):
     return yaml.safe_load(open(p))
 
-def pick(stage, flow, target, profile=None):
-    name = flow.get("stages", {}).get(stage)
-    name = (target.get("flow") or {}).get(stage, name)
-    name = (flow.get("profiles", {}).get(profile) or {}).get(stage, name) if profile else name
+AUTO = {  # `auto` in the project file (or a step not listed): first open tool that works on the board, in this order
+    "sources": ["files"], "synth": ["yosys"], "netlist": ["rapidwright_if", "yosys_json_if"], "place": ["dreamplacefpga", "in_route"],
+    "route": ["rwroute", "nextpnr_interchange"], "bitgen": ["prjxray", "prjuray"], "upload": ["openfpgaloader"]}
+
+def pick(stage, name, target):
+    """Backend instance for `name` in `stage`; `auto` resolves to the first AUTO entry the board supports (else the last one)."""
+    if name == "auto":
+        cands = AUTO[stage]
+        name = next((n for n in cands if REGISTRY[stage][n]().supports(target) is None), cands[-1])
     if name not in REGISTRY.get(stage, {}):
-        sys.exit(f"stage '{stage}': backend '{name}' unknown (have {list(REGISTRY.get(stage, {}))})")
+        sys.exit(f"step '{stage}': tool '{name}' unknown; available: {', '.join(REGISTRY.get(stage, {}))}")
     return REGISTRY[stage][name]()
 
 def apply_patches(ctx):
@@ -91,7 +108,7 @@ def explore(stage, b, ctx, variants, jobs):
         try:
             bk = REGISTRY[stage][v["backend"]]() if "backend" in v else b  # variants may pick a different tool
             why = bk.supports(ctx.target)
-            if why: print(f"   {stage} v{i} skipped: {why}"); return i, v, c, None
+            if why: print(f"    {_t().dim(f'v{i} skipped: {why}')}"); return i, v, c, None
             bk.run(c); return i, v, c, bk.score(c)
         except SystemExit as e:
             return i, v, c, None
@@ -99,12 +116,12 @@ def explore(stage, b, ctx, variants, jobs):
         res = list(ex.map(one, enumerate(variants)))
     metric = lambda v: (REGISTRY[stage][v["backend"]] if "backend" in v else type(b)).metric
     ok = [r for r in res if r[3] is not None]
-    for i, v, c, s in res: print(f"   {stage} v{i} {v} [{metric(v)}]: {'FAILED' if s is None else s}")
+    for i, v, c, s in res: print(f"    {_t().dim(f'v{i}')} {v} {_t().dim('[' + metric(v) + ']')}: {_t().red('failed') if s is None else s}")
     ok = [r for r in ok if metric(r[1]) == metric(res[0][1])] or ok  # rank only comparable scores
     if not ok: sys.exit(f"stage {stage}: every variant failed")
     i, v, c, s = min(ok, key=lambda r: r[3])
     (ctx.work / f"{stage}_best.json").write_text(json.dumps({"variant": i, "overlay": v, "score": s, "all": [[r[0], r[3]] for r in res]}))
-    print(f"   -> {stage} keeps v{i}")
+    print(f"    {_t().OK} {stage} keeps {_t().bold(f'v{i}')}")
     ctx.art.update(c.art)
 
 def find_vivado():

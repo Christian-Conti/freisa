@@ -1,53 +1,49 @@
+<!--
+  Copyright 2026 FREISA contributors
+  Apache License, Version 2.0, see LICENSE.md for details.
+  SPDX-License-Identifier: Apache-2.0
+
+  Info     : FREISA overview, quick start and documentation index.
+  Module   : README.md
+  Author   : Christian Conti
+  Contact  : christian.conti@mail.it
+-->
 # FREISA — FPGA Reusable and Extensible Infrastructure for Synthesis Automation
 
-Modular RTL → bitstream flow built from open-source tools, with optional Vivado steps. Every step is a swappable block;
-designs and boards are small YAML files, so any RTL and any supported chip can be added without touching the tools.
+FREISA takes an RTL design (Verilog, SystemVerilog, VHDL) to an FPGA bitstream using open-source tools.
+Each step of the flow is a replaceable block, and designs and boards are short YAML files.
+Vivado is optional: it is used only when you ask for it.
 
 ## Quick start
+```sh
+make install                       # one time: conda env, board files, open tools
+make flow                          # default: blinky on PYNQ-Z1/Z2 (xc7z020), RTL -> out.bit, open tools only
+make flow TARGET=zcu104            # blinky on ZCU104: open tools, Vivado only writes the bitstream
+make flow DESIGN=uart_loopback TARGET=zcu104 && make upload DESIGN=uart_loopback TARGET=zcu104 && make uart-test TARGET=zcu104
+make help                          # every command and variable
 ```
-make install                      # conda env, board files, open tools (built once)
-make example                      # blinky: RTL -> .bit on a Zynq-7000, no Vivado
-make doctor TARGET=zcu106         # which block of each step can run
-make flow DESIGN=<design> TARGET=<board>
-make upload TARGET=<board> TOOL=openfpgaloader
-make help
-```
-
-## The flow
-```
- sources -> synth -> netlist -> place -> route -> bitgen -> upload
- (RTL list) Yosys    RapidWright DREAMPlaceFPGA RWRoute   prjxray   openFPGALoader
-            Vivado   Vivado     nextpnr-xilinx nextpnr-xilinx Vivado  Vivado HW manager
-```
-Each arrow is a checkpoint (`edif`/`json`, `dcp`, `fasm`, `bit`), so open and Vivado blocks can be mixed per step.
-`PROFILE=open|vivado|vivado_ps|yosys_vivado` picks a preset, `explore:` / `EXPLORE=all` runs several variants or every supported
-backend and keeps the best, and a live monitor shows progress, time, CPU and memory. Each run writes `report/` with area,
-timing and routing reports plus all generated artifacts.
-
-## Make targets
-| Target | What it does |
-|--------|--------------|
-| `install` / `uninstall` | everything (env, boards, tools) / remove it |
-| `install-boards` | pull the supported boards from XilinxBoardStore, refresh `boards.lock` (`PIN=1` keeps it) |
-| `install-xc7`, `install-dreamplace` | build the open tools (skipped when present, `FORCE=1`) |
-| `doctor` | availability of every block for a board |
-| `flow` | run the flow (`DESIGN`, `TARGET`, `PROFILE`, `EXPLORE`, `FROM`, `TO`) |
-| `example` | run a bundled example |
-| `upload` | program the board (`TOOL=openfpgaloader\|vivado`, `BIT=`) |
-| `outdated` / `update` | compare/re-pin the tools in `tools.lock` |
-
-## Supported platforms
-Zynq UltraScale+ (ZCU104, ZCU106, Kria KV260) and Zynq-7000 (PYNQ-Z1/Z2). Full table with the tools available per step: [docs/platforms.md](docs/platforms.md).
 
 ## Documentation
-- [Example: configuration and complete flow](docs/example.md)
-- [Supported platforms and adding a board](docs/platforms.md)
-- [Architecture](docs/architecture.md) · [Extending](docs/extending.md) · [Adding and updating flow blocks](docs/adding-blocks.md)
-- [Vivado steps, PS boards and `.hwh`](docs/vivado.md) · [Install](docs/install.md)
+Read in this order:
 
-## Layout
-```
-Makefile  flow.py          entry points            designs/  targets/   one YAML per design / board
-freisa/                    flow engine and blocks  tools.lock boards.lock pinned tools / boards
-utils/                     install scripts         examples/             small RTL designs
-```
+1. [Getting started](docs/1-getting-started.md): install, first run, where the results are.
+2. [Using the flow](docs/2-usage.md): commands, variables, explore, upload, reports.
+3. [Project files](docs/3-projects.md): one file per design with sources, tools per step and board settings.
+4. [Boards](docs/4-boards.md): supported chips and boards, tools per step, adding a board.
+5. [Tools per step](docs/5-tools.md): what each block does and its limits (including Vivado and the PS / `.hwh`).
+6. [Developer guide](docs/6-developer.md): how the engine works, adding or updating a block.
+7. [Examples](docs/7-examples.md): blinky and uart_loopback on every board: build, program, test.
+8. [open_io](docs/8-open-io.md): how UltraScale+ bitstreams are made with open tools for everything except `write_bitstream`.
+
+## Repository layout
+| Path | Content |
+|------|---------|
+| `Makefile`, `flow.py` | entry points |
+| `designs/` | project files, one per design (examples: `designs/examples/blinky.yml`, `uart_loopback.yml`) |
+| `examples/` | RTL and pin files of the bundled examples |
+| `targets/` | board files |
+| `freisa/` | flow engine (`core`, `resolve`, `ui`, `report`, `term`), tools of each step (`freisa/stages/`), RapidWright scripts (`freisa/rw/`) |
+| `utils/` | install, check and helper scripts |
+| `defaults.yml` | default tool options |
+| `tools.lock`, `boards.lock` | pinned tool commits / board-file versions |
+| `build/<design>/<board>/` | outputs (created by the flow) |

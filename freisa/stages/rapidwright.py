@@ -2,22 +2,19 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : RapidWright/DREAMPlaceFPGA netlist, placement and routing backends.
+# Info     : UltraScale+ steps on the FPGA Interchange format: EDIF -> .netlist (RapidWright), placement .netlist -> .phys
+#            (DREAMPlaceFPGA), routing .phys -> .phys (RWRoute), and open_io (open I/O assembly, Vivado write_bitstream only).
 # Module   : rapidwright.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
 import json, os, pathlib, re, shutil, sys
+from .. import term as _term
 from ..core import Backend, backend
+from .. import ifx
+from ..ifx import rw
 
 US_PLUS = ("xczu", "xcvu", "xcku")  # families RapidWright/DREAMPlaceFPGA IF models cover (UltraScale+)
-
-def _jar():
-    import rapidwright
-    return next(pathlib.Path(rapidwright.__file__).parent.glob("rapidwright-*-standalone-*.jar"))
-
-def rw(ctx, cls, args, log, cwd=None):
-    ctx.sh(["java", f"-Xmx{ctx.cfg.get('java_mem', '16g')}", "-cp", _jar(), f"com.xilinx.rapidwright.{cls}", *args], log, cwd=cwd or ctx.work)
 
 class _UsPlus(Backend):
     def supports(self, target):
@@ -27,15 +24,15 @@ class _UsPlus(Backend):
 
 @backend
 class RwNetlist(_UsPlus):
-    """Yosys EDIF -> RapidWright DCP (no Vivado)."""
-    stage, name, tools = "netlist", "rapidwright_edif", ["java"]
+    """Yosys EDIF -> Interchange .netlist (+ empty .phys) through RapidWright (no Vivado)."""
+    stage, name, tools = "netlist", "rapidwright_if", ["java"]
     def run(self, ctx):
         ctx.sh([sys.executable, pathlib.Path(__file__).parent.parent / "rw" / "edif2dcp.py", ctx.art["edif"], ctx.target["part"], ctx.work / "linked.dcp"], "edif2dcp")
-        ctx.art["dcp"] = ctx.work / "linked.dcp"
+        ifx.from_dcp(ctx, ctx.work / "linked.dcp", "linked")
 
 @backend
 class DreamPlaceFpga(_UsPlus):
-    """DCP -> Interchange netlist -> Bookshelf -> DREAMPlaceFPGA (gpu or cpu) -> phys netlist -> DCP."""
+    """.netlist -> Bookshelf -> DREAMPlaceFPGA (gpu or cpu) -> placed .phys."""
     metric = "hpwl"
     stage, name, tools = "place", "dreamplacefpga", ["java"]
     def supports(self, target):
@@ -46,8 +43,7 @@ class DreamPlaceFpga(_UsPlus):
     def run(self, ctx):
         root, w, d = self._root(), ctx.work, ctx.work / "dp"
         d.mkdir(exist_ok=True); base = f"design_{abs(hash(str(w))) % 10**8}"  # unique: bookshelf dir is shared under the DREAMPlace root
-        shutil.copy(ctx.art["dcp"], d / f"{base}.dcp")
-        rw(ctx, "interchange.DcpToInterchange", [d / f"{base}.dcp"], "dcp2if", cwd=d)
+        shutil.copy(ctx.art["netlist"], d / f"{base}.netlist")
         part = ctx.target["part"]
         if not (root / "IFsupport" / f"{part}.device").exists():  # large; generated once per part
             rw(ctx, "interchange.DeviceResourcesExample", [part], "device", cwd=root / "IFsupport")
@@ -68,7 +64,7 @@ class DreamPlaceFpga(_UsPlus):
             n = sum(1 for _ in open(root / f"benchmarks/IF2bookshelf/{base}/design.nodes"))
             its = int(ctx.cfg.get("dreamplace_iterations", 150 if n < 1000 else 500 if n < 10000 else 2000))
             for st in cfg.get("global_place_stages", []): st["iteration"] = its
-            print(f"   dreamplace: {n} nodes -> {its} iterations", flush=True)
+            print("    " + _term.dim(f"dreamplace: {n} nodes → {its} iterations"), flush=True)
         # tiny designs can make the optimizer diverge (HPWL -inf/nan, then a crash): retry with a smaller step and another seed
         for attempt in range(int(ctx.cfg.get("dreamplace_retries", 3))):
             c = json.loads(json.dumps(cfg)); shutil.rmtree(d / "results", ignore_errors=True)
@@ -81,12 +77,11 @@ class DreamPlaceFpga(_UsPlus):
             except SystemExit:
                 ok = False
             if ok: break
-            print(f"   dreamplace attempt {attempt + 1} diverged or crashed; retrying with a smaller step", flush=True)
+            print("    " + _term.note(f"dreamplace attempt {attempt + 1} diverged or crashed; retrying with a smaller step"), flush=True)
         else:
             raise SystemExit(f"[dreamplace] failed after {attempt + 1} attempts, see {os.path.relpath(ctx.work / 'dreamplace.log')}")
-        phys = next((d / "results").rglob("*.phys"))
-        rw(ctx, "interchange.PhysicalNetlistToDcp", [d / f"{base}.netlist", phys, d / f"{base}.xdc", w / "placed.dcp", "--out_of_context"], "phys2dcp")
-        ctx.art["dcp"] = w / "placed.dcp"
+        shutil.copy(next((d / "results").rglob("*.phys")), w / "placed.phys")
+        ctx.art["phys"] = w / "placed.phys"
     def score(self, ctx):  # final HPWL printed by DREAMPlaceFPGA
         import re
         m = re.findall(r"HPWL\s*[:=]?\s*([0-9.eE+]+)", (ctx.work / "dreamplace.log").read_text())
@@ -94,13 +89,39 @@ class DreamPlaceFpga(_UsPlus):
 
 @backend
 class RwRoute(_UsPlus):
-    """RWRoute: open timing-driven router for UltraScale+ (runs in the RapidWright jar, multi-threaded)."""
+    """RWRoute: open router for UltraScale+: .netlist + placed .phys -> routed .phys (RWRoute writes a DCP, converted back)."""
     metric = "wirelength"
     stage, name, tools = "route", "rwroute", ["java"]
     def run(self, ctx):
-        rw(ctx, "rwroute.RWRoute", [ctx.art["dcp"], ctx.work / "routed.dcp", *ctx.cfg.get("rwroute_args", ["--nonTimingDriven", "--outOfContext"])], "rwroute")  # timing-driven needs clock constraints
-        ctx.art["dcp"] = ctx.work / "routed.dcp"
+        _, phys = ifx.pair(ctx, "route_in")  # RWRoute wants .netlist and .phys with the same root name
+        rw(ctx, "rwroute.RWRoute", [phys, ctx.work / "routed.dcp", *ctx.cfg.get("rwroute_args", ["--nonTimingDriven", "--outOfContext"])], "rwroute")  # timing-driven needs clock constraints
+        ifx.from_dcp(ctx, ctx.work / "routed.dcp", "routed")
     def score(self, ctx):  # total wirelength reported by RWRoute; unrouted/failed -> None
         import re
         m = re.findall(r"[Tt]otal wirelength:?\s*([0-9]+)", (ctx.work / "rwroute.log").read_text())
         return int(m[-1]) if m else (ctx.work / "routed.dcp").stat().st_size
+
+@backend
+class OpenIo(_UsPlus):
+    """Bitstream with the I/O done by open tools: RapidWright places the I/O buffers (from `xdc:` pins, or `pins: auto`
+    for test builds) and the clock buffers around the open placed-and-routed design, RWRoute routes only what is missing,
+    and Vivado runs nothing but `open_checkpoint` + `write_bitstream` (no open UltraScale+ bitstream writer exists)."""
+    stage, name, tools = "bitgen", "open_io", ["java", "yosys"]
+    vendor = "vivado"  # write_bitstream only
+    def supports(self, target):
+        from ..core import find_vivado
+        return super().supports(target) or (None if find_vivado() else "needs Vivado for write_bitstream only (no open UltraScale+ bitstream writer)")
+    def run(self, ctx):
+        from ..core import find_vivado
+        c = ctx.cfg
+        core = ifx.to_dcp(ctx, "core")  # the open-routed design (Interchange) as a checkpoint for the assembly
+        args = [sys.executable, pathlib.Path(__file__).parent.parent / "rw" / "io_assemble.py", core, ctx.art["json"],
+                c["top"], ctx.target["part"], ctx.work / "io", ctx.work / "assembled.dcp"]
+        if c.get("xdc"): args += ["--xdc", *[ctx.root / x for x in c["xdc"]]]
+        if c.get("pins") == "auto": args.append("--auto-pins")
+        if c.get("clocks"): args += ["--clock", *[f"{k}={v}" for k, v in c["clocks"].items()]]
+        ctx.sh(args, "io_assemble")
+        (ctx.work / "bitgen_only.tcl").write_text("open_checkpoint assembled.dcp\nreport_route_status -file bitgen_route_status.rpt\n"
+                                                  "report_drc -file bitgen_drc.rpt\nwrite_bitstream -force out.bit\n")
+        ctx.sh([find_vivado(), "-mode", "batch", "-nojournal", "-log", "bitgen_only.vivado.log", "-source", "bitgen_only.tcl"], "bitgen_only", cwd=ctx.work)
+        ctx.art.update(dcp=ctx.work / "assembled.dcp", bit=ctx.work / "out.bit")

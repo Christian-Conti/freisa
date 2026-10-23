@@ -1,4 +1,13 @@
-# ZCU104: 300 MHz user clock (CLK_300_P/N), PL LED 0. Pins from XilinxBoardStore zcu104 1.1
+# Copyright 2026 FREISA contributors
+# Solderpad Hardware License, Version 2.1, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+#
+# Info     : Pin and IO constraints of the blinky example on the ZCU104.
+# Module   : zcu104.xdc
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+
+# 300 MHz user clock (CLK_300_P/N) and PL LED 0; pins from XilinxBoardStore zcu104 1.1
 set_property PACKAGE_PIN AH18 [get_ports clk_p]
 set_property PACKAGE_PIN AH17 [get_ports clk_n]
 set_property IOSTANDARD DIFF_SSTL12 [get_ports {clk_p clk_n}]

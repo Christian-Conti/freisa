@@ -39,7 +39,8 @@ class YosysSlang(Backend):
         if sv: s += [f"read_slang {c.get('slang_args', '')} --top {c['top']} {defs} {pars} {' '.join(sv)}"]
         s += c.get("yosys_pre", [])  # raw yosys commands between read and synth
         base = f"synth_xilinx -top {c['top']} -family {t['yosys_family']} {c['synth_args']}"
-        if t.get("legalize") == "dreamplace": base += " -nowidelut -noiopad -noclkbuf"  # placer has no MUXF7/8, and no fixed-IO sites without Vivado: OOC netlist
+        if t.get("legalize") == "dreamplace": base += " -nowidelut -nodsp -noiopad -noclkbuf"  # placer: no MUXF7/8, its DSP placement fails on xczu, no IO sites: OOC netlist
+        if t.get("legalize") == "nextpnr_if": base += " -nolutram -nowidelut -nosrl -nodsp"  # what nextpnr-fpga_interchange can place
         if t.get("carry") == "none":  # placer has no carry-chain node type: adders become LUTs
             s += [base + " -nocarry"]
         elif t.get("carry") == "carry8":  # yosys only knows CARRY4 (7-series); UltraScale+ has CARRY8
@@ -47,6 +48,9 @@ class YosysSlang(Backend):
             s += [base + " -run :fine", "techmap -D LUT_SIZE=6 -map arith_map_carry8.v", base + " -run fine:"]
         else:
             s += [base]
+        if t.get("legalize") == "nextpnr_if":  # same post-processing as nextpnr-fpga_interchange's own examples
+            remap = pathlib.Path(__file__).parents[2] / "third_party/nextpnr-fpga-interchange/fpga_interchange/examples/remap_xilinx.v"
+            s += [f"techmap -map {remap}", "opt_expr -undriven", "opt_clean", "setundef -zero -params"]
         if t.get("legalize") == "dreamplace":
             (ctx.work / "dp_legal.v").write_text((pathlib.Path(__file__).parent.parent / "yosys" / "dp_legal.v").read_text())
             s += ["techmap -map dp_legal.v", "opt_clean"]

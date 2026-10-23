@@ -15,6 +15,10 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 URL = "https://github.com/Xilinx/XilinxBoardStore.git"
 CACHE = ROOT / "third_party" / "XilinxBoardStore"
 LOCK = ROOT / "boards.lock"
+LOCK_HEADER = ("# Copyright 2026 FREISA contributors\n# Apache License, Version 2.0, see LICENSE.md for details.\n"
+               "# SPDX-License-Identifier: Apache-2.0\n#\n"
+               "# Info     : Pinned XilinxBoardStore commit and board versions. `make install-boards` refreshes it.\n"
+               "# Module   : boards.lock\n# Author   : Christian Conti\n# Contact  : christian.conti@mail.it\n\n")
 
 def git(*a, cwd=CACHE):
     return subprocess.run(["git", *a], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
@@ -73,7 +77,7 @@ def main():
         found = sorted([x.name for x in d.iterdir() if x.is_dir()], key=vkey)
         if not found: sys.exit(f"board {p} not in the store at {sha[:10]}")
         vers[p] = lock_vers.get(p) if a.pin and lock_vers.get(p) in found else found[-1]
-    LOCK.write_text("# supported boards (from targets/*.yml `board_store:`); `make install-boards` refreshes, `PIN=1` keeps\n"
+    LOCK.write_text(LOCK_HEADER + "# supported boards (from targets/*.yml `board_store:`); `make install-boards` refreshes, `PIN=1` keeps\n"
                     f"store {URL} {sha}\n# store-path  version\n" + "".join(f"{p} {v}\n" for p, v in vers.items()))
     for tgt, ps in want.items():
         for p in ps:
