@@ -1,0 +1,94 @@
+diff --git a/freisa/ui.py b/freisa/ui.py
+--- a/freisa/ui.py
++++ b/freisa/ui.py
+@@ -10,4 +10,5 @@
+ import os
++import json
+ import re
+ import shutil
+ import sys
+@@ -36,4 +37,22 @@
+ def _gb(b):
+     return f"{b / 2**30:.1f}G"
+ 
++
++_TUI_EVENT_LOCK = threading.Lock()
++
++
++def _tui_event(path, event, **fields):
++    """Write one structured monitor event when FREISA is launched from the TUI."""
++    if not path:
++        return
++    record = {"event": event, "timestamp": time.time(), **fields}
++    try:
++        with _TUI_EVENT_LOCK:
++            with open(path, "a", encoding="utf-8") as stream:
++                stream.write(json.dumps(record, default=str, separators=(",", ":")) + "\n")
++                stream.flush()
++    except OSError:
++        pass
++
++
+ class Monitor:
+@@ -58,5 +77,11 @@
+         self.finished = False
+         self._display_lock = threading.RLock()
+         self.out = open(logfile, "a")
++        self.event_file = os.environ.get("FREISA_TUI_EVENTS")
++        _tui_event(
++            self.event_file, "monitor_started", stages=self.stages,
++            design=self.ctx.cfg.get("top", ""), target=self.ctx.target.get("part", ""),
++            work=str(getattr(self.ctx, "work", "")), resources_available=bool(psutil),
++        )
+ 
+         self.proc = psutil.Process() if psutil else None
+@@ -335,5 +360,16 @@
+     def _render(self):
+         cpu, rss = self._res()
+ 
++        _tui_event(
++            getattr(self, "event_file", None), "sample",
++            cpu_percent=round(cpu, 1) if self.proc else None,
++            rss_bytes=int(rss) if self.proc else None,
++            peak_rss_bytes=int(self.peak_rss) if self.proc else None,
++            resources_available=bool(self.proc), stage=self.cur,
++            elapsed_s=round(time.time() - self.t0, 1),
++            stage_elapsed_s=round(time.time() - self.t_stage, 1) if self.cur else 0,
++            completed=self.done, total=len(self.stages),
++        )
++
+         elapsed = _fmt(time.time() - self.t0)
+         stage_elapsed = _fmt(time.time() - self.t_stage)
+@@ -387,6 +423,10 @@
+             self.backend = backend
+             self.ctx.cur_log = None
+ 
++            _tui_event(
++                self.event_file, "stage_started", stage=stage, backend=backend,
++                completed=self.done, total=len(self.stages),
++            )
+             self._refresh_display()
+ 
+         self.say(f"{term.ARROW} {term.bold(stage.ljust(8))} {term.cyan(backend)}")
+@@ -396,5 +436,12 @@
+             avg = self.cpu_sum / self.cpu_n if self.cpu_n else 0
+             peak_rss = self.peak_rss
+ 
++            _tui_event(
++                self.event_file, "stage_finished", stage=stage, backend=self.backend,
++                seconds=round(dt, 2), avg_cpu_percent=round(avg, 1) if self.cpu_n else None,
++                peak_rss_bytes=int(peak_rss) if self.proc else None,
++                score=extra.removeprefix("score ") if extra else None,
++            )
++
+             self.done += 1
+             self.cur = None
+@@ -454,3 +501,8 @@
+         self.say(f"{term.OK} {term.green(term.bold('finished'))} in {t}" if ok else f"{term.FAIL} {term.red(term.bold('FAILED'))} after {t}")
+ 
++        _tui_event(
++            getattr(self, "event_file", None), "monitor_finished",
++            success=bool(ok), elapsed_s=round(time.time() - self.t0, 1),
++            completed=self.done, total=len(self.stages),
++        )
+         self.out.close()

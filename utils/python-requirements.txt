@@ -1,15 +1,7 @@
-# Copyright 2026 FREISA contributors
-# Apache License, Version 2.0, see LICENSE.md for details.
-# SPDX-License-Identifier: Apache-2.0
-#
-# Info     : Python packages of the freisa conda environment.
-# Module   : python-requirements.txt
-# Author   : Christian Conti
-# Contact  : christian.conti@mail.it
-
 pyyaml
 rapidwright==2026.1.1
 psutil
 tqdm
-re
+regex
 textwrappyserial
+textual>=0.80,<2.0
