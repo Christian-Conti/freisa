@@ -90,5 +90,20 @@ Both tools use the chosen cable. Without a terminal, several matching boards req
 While running, a progress bar shows the step, step and total time, CPU and memory of the tools, and the last log line.
 After each step: time, average CPU, peak memory, score and the last log lines. Colors only on a terminal (`NO_COLOR=1`
 disables them); `flow.log` in the build folder has the same text without colors. At the end the flow writes
-`report/` (see [Getting started](1-getting-started.md#where-the-results-are)). When Vivado is installed it also writes
-sign-off reports of the final checkpoint (`report/reports/signoff_*.rpt`); without Vivado a RapidWright utilization report is written.
+`report/` (see [Getting started](1-getting-started.md#where-the-results-are)), including
+area and timing reports of the result, made by open tools (below). Vivado reports are added only with
+`signoff: vivado` in the project file (`report/reports/signoff_*.rpt`).
+
+### Area and timing reports
+Every run writes `report/reports/area.rpt` and `report/reports/timing.rpt`; their main values also appear in
+`report/summary.md` (sections "Area" and "Timing").
+
+| Tools of the run | `area.rpt` | `timing.rpt` |
+|------------------|-----------|-------------|
+| any (after synthesis) | cells by type (Yosys) | — |
+| xc7, `nextpnr_xilinx` | used resources (nextpnr) | maximum frequency per clock, critical path (nextpnr) |
+| xc7, `nextpnr_interchange` | used resources (nextpnr) | not available: nextpnr-fpga_interchange has no timing model (use `route: nextpnr_xilinx` for timing) |
+| UltraScale+ (`rwroute`, `open_io`) | cells by type, sites used, routed nets (RapidWright) | requirement, critical path, slack, path details, wirelength (RapidWright timing model) |
+
+The clock requirement comes from `clocks:` in the project file (written into the design by `open_io`); without it only
+the critical path is reported.

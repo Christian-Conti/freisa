@@ -18,3 +18,5 @@ fpga-interchange-schema  https://github.com/chipsalliance/fpga-interchange-schem
 # prjuray: Project U-Ray (UltraScale/UltraScale+ bitstream documentation and fasm2frames/fasm2bit); prjuray-db: its database
 prjuray                  https://github.com/f4pga/prjuray                          c550b03a26b4c4a9c4453353bd642a21f710b3ec
 prjuray-db               https://github.com/f4pga/prjuray-db                       affbc5e555ebae16475f32e8fb2d6565d4204f3f
+# nextpnr-xilinx: xc7 place and route with a database from prjxray-db (open); alternative to nextpnr-fpga-interchange
+nextpnr-xilinx           https://github.com/gatecat/nextpnr-xilinx                 8f178fc6a6d4dfbc57bef66c3ccff34d558047d5

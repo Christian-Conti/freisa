@@ -34,9 +34,10 @@ class Resolved:
         # tools per step come from the project file: `steps` (all boards), then `boards.<target>` (this board);
         # a step not listed is `auto` (first open tool that works on the board); `all` explores every tool that works
         self.steps = {**(self.flow.get("steps") or {}), **((self.flow.get("boards") or {}).get(target_name) or {})}
-        self.steps["sources"] = "core" if "core" in self.flow else "files"
-        self.explore_all = sorted(s for s, v in self.steps.items() if v == "all")
-        self.sel = {s: core.pick(s, "auto" if self.steps.get(s) == "all" else self.steps.get(s, "auto"), self.target) for s in core.STAGES + ["upload"]}
+        self.steps["sources"] = "filelist" if "filelist" in self.flow else "core" if "core" in self.flow else "files"
+        # `all`: every tool that works on the board; `all_open`: the same without tools that use a vendor tool (Vivado)
+        self.explore_all = {s: v for s, v in self.steps.items() if v in ("all", "all_open")}
+        self.sel = {s: core.pick(s, "auto" if self.steps.get(s) in ("all", "all_open") else self.steps.get(s, "auto"), self.target) for s in core.STAGES + ["upload"]}
         # design overrides: `<board>` always, `<board>@<tool>` when that tool runs in some step
         pt = self.flow.get("per_target", {})
         self.flow.update(pt.get(target_name, {}))

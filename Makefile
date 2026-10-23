@@ -94,10 +94,10 @@ check-deps:
 fetch:
 	@bash utils/fetch_tools.sh $(TOOLS)
 
-## Build the prjxray bitstream tools (open xc7 bitstream)
+## Build the prjxray bitstream tools and nextpnr-xilinx (open xc7 place and route + bitstream)
 install-xc7:
 	@if [ -x install/bin/xc7frames2bit ] && [ -z "$(FORCE)" ]; then echo "[INFO] xc7 tools present (FORCE=1 to rebuild)"; else \
-	bash utils/fetch_tools.sh prjxray prjxray-db && $(CONDA_RUN) bash utils/check_deps.sh && $(CONDA_RUN) bash utils/build_xc7.sh; fi
+	bash utils/fetch_tools.sh prjxray prjxray-db nextpnr-xilinx && $(CONDA_RUN) bash utils/check_deps.sh && $(CONDA_RUN) bash utils/build_xc7.sh; fi
 
 ## Build the FPGA Interchange tools: nextpnr-fpga_interchange and python-fpga-interchange (conda env freisa-if)
 install-interchange:

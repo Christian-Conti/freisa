@@ -31,7 +31,8 @@ class YosysSlang(Backend):
         t, c = ctx.target, ctx.cfg
         sv = [f for f, ft in ctx.art["rtl"] if ft != "vhdlSource"]
         vhd = [f for f, ft in ctx.art["rtl"] if ft == "vhdlSource"]
-        defs = " ".join(f"-D {k}={v}" for k, v in c.get("defines", {}).items())
+        defs = " ".join(f"-D {k}={v}" for k, v in {**c.get("defines", {}), **ctx.art.get("defines", {})}.items())
+        defs += "".join(f" -I {d}" for d in ctx.art.get("incdirs", []))
         pars = " ".join(f"-G {k}={v}" for k, v in c.get("params", {}).items())
         s = ["plugin -i slang"]
         if vhd:  # ghdl entities become yosys modules slang can instantiate
@@ -39,7 +40,7 @@ class YosysSlang(Backend):
         if sv: s += [f"read_slang {c.get('slang_args', '')} --top {c['top']} {defs} {pars} {' '.join(sv)}"]
         s += c.get("yosys_pre", [])  # raw yosys commands between read and synth
         base = f"synth_xilinx -top {c['top']} -family {t['yosys_family']} {c['synth_args']}"
-        if t.get("legalize") == "dreamplace": base += " -nowidelut -nodsp -noiopad -noclkbuf"  # placer: no MUXF7/8, its DSP placement fails on xczu, no IO sites: OOC netlist
+        if t.get("legalize") == "dreamplace": base += " -nowidelut -nodsp -nolutram -nosrl -noiopad -noclkbuf"  # placer: no MUXF7/8, its DSP placement fails on xczu, no IO sites: OOC netlist
         if t.get("legalize") == "nextpnr_if": base += " -nolutram -nowidelut -nosrl -nodsp"  # what nextpnr-fpga_interchange can place
         if t.get("carry") == "none":  # placer has no carry-chain node type: adders become LUTs
             s += [base + " -nocarry"]

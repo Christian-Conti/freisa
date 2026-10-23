@@ -44,7 +44,7 @@ def main():
     for s in run:
         b = r.sel[s]; why = b.supports(r.target)
         chosen = r.steps.get(s, "auto")
-        tag = T.dim(" auto") if chosen == "auto" else T.dim(" all/explore") if chosen == "all" else ""
+        tag = T.dim(" auto") if chosen == "auto" else T.dim(f" {chosen}/explore") if chosen in ("all", "all_open") else ""
         lb = b.label()
         print(f"    {s:8} {lb}{tag}{' ' * max(1, 26 - len(lb) - len(T.plain(tag)))}{T.OK if not why else T.FAIL + ' ' + T.red('not available')}")
         if why: bad.append((s, b.name, why))

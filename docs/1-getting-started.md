@@ -78,7 +78,7 @@ loopback needs software on the processor or an external USB-serial adapter on PM
 build/<design>/<board>/
   out.bit, design.netlist, routed.phys, ...   generated files (.netlist/.phys: FPGA Interchange)
   report/summary.md                    one table: block, time, CPU, memory, score of every step
-  report/reports/                      area, timing, routing, power, DRC reports
+  report/reports/                      area.rpt and timing.rpt (open tools), tool reports of each step
   report/artifacts/                    links to every generated file
   report/logs/                         logs of every tool
 ```

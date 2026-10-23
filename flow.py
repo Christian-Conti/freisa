@@ -56,7 +56,7 @@ def main():
     art = ctx.work / "artifacts.json"
     if a.frm != core.STAGES[0] and art.exists():  # resume: reload what earlier stages produced
         ctx.art = {k: ([tuple(x) for x in v] if k == "rtl" else pathlib.Path(v)) for k, v in json.loads(art.read_text()).items()}
-    flow["explore"] = {**flow.get("explore", {}), **{s: "all" for s in r.explore_all}}  # `all` in steps = explore every tool
+    flow["explore"] = {**flow.get("explore", {}), **r.explore_all}  # `all` / `all_open` in steps = explore every (open) tool
     run = core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     # preflight: fail before hours of work if a middle stage cannot run; a missing last step (e.g. Vivado bitgen) just ends the run early
     if run[-1] == "bitgen" and sel["bitgen"].name == "vivado" and flow.get("ooc", not flow.get("xdc")) and len(run) > 1:

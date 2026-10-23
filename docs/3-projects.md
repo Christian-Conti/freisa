@@ -33,7 +33,8 @@ from board to board. There is no other configuration file.
 | `boards` | `{<board>: {<step>: <tool>}}`: tools for one board, merged over `steps` |
 | `per_target` | `{<board>: {...}}` or `{<board>@<tool>: {...}}`: design keys for one board (or board + tool) |
 | `xdc` | constraint files; for a bitstream every port needs `PACKAGE_PIN` and `IOSTANDARD` |
-| `clocks` | `{port: period_ns}`: clock constraints (`open_io`, sign-off timing report) |
+| `clocks` | `{port: period_ns}`: clock constraints (`open_io`, timing report) |
+| `signoff` | `vivado`: also run Vivado's reports (utilization, timing, DRC, power) on the final design; default: open reports only |
 | `pins` | `auto`: free pins picked automatically for `open_io`; only to check that a bitstream can be built, never load it |
 | `synth_args` | extra Yosys `synth_xilinx` options |
 | `defines`, `params` | Verilog defines and top-level parameters |
@@ -57,7 +58,7 @@ from board to board. There is no other configuration file.
 | `synth` | `yosys`, `vivado` |
 | `netlist` | `rapidwright_if` (UltraScale+), `yosys_json_if` (xc7), `vivado_link`, `none` |
 | `place` | `dreamplacefpga` (UltraScale+), `in_route` (xc7), `vivado` |
-| `route` | `rwroute` (UltraScale+), `nextpnr_interchange` (xc7), `vivado` |
+| `route` | `rwroute` (UltraScale+), `nextpnr_interchange` (xc7), `nextpnr_xilinx` (xc7, open chip database), `vivado` |
 | `bitgen` | `prjxray` (xc7), `prjuray` (UltraScale+, see [Tools](5-tools.md#project-u-ray-ultrascale)), `open_io (vivado)`, `vivado_wrap (vivado)`, `vivado`, `vivado_ps (vivado)` |
 | `upload` | `openfpgaloader`, `vivado` |
 

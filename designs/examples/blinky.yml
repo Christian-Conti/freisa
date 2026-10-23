@@ -35,7 +35,7 @@ synth_args: -flatten
 #         synth:   yosys | vivado
 #         netlist: rapidwright_if | yosys_json_if | vivado_link | none   (auto: rapidwright_if on UltraScale+, yosys_json_if on xc7)
 #         place:   dreamplacefpga | in_route | vivado         (auto: dreamplacefpga on UltraScale+, in_route on xc7)
-#         route:   rwroute | nextpnr_interchange | vivado     (auto: rwroute on UltraScale+, nextpnr_interchange on xc7)
+#         route:   rwroute | nextpnr_interchange | nextpnr_xilinx | vivado   (auto: rwroute on UltraScale+, nextpnr_interchange on xc7)
 #         bitgen:  prjxray | prjuray | open_io | vivado_wrap | vivado | vivado_ps   (auto: prjxray on xc7)
 #         Between steps every tool exchanges FPGA Interchange files (.netlist, .phys); names shown with (vivado) use Vivado.
 #         upload:  openfpgaloader | vivado

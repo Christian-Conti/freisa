@@ -15,7 +15,7 @@ The first tool of each cell is the one `auto` selects in a project file (open to
 
 | Chip | Boards (`TARGET`) | Synthesis | Netlist | Placement | Routing | Bitstream | Programming |
 |------|-------------------|-----------|---------|-----------|---------|-----------|-------------|
-| xc7z020 (Zynq-7000) | PYNQ-Z1, PYNQ-Z2 (`xc7z020`) | Yosys, Vivado | python-fpga-interchange, Vivado | (in routing), Vivado | nextpnr-fpga_interchange, Vivado | prjxray, Vivado | openFPGALoader, Vivado |
+| xc7z020 (Zynq-7000) | PYNQ-Z1, PYNQ-Z2 (`xc7z020`) | Yosys, Vivado | python-fpga-interchange, Vivado | (in routing), Vivado | nextpnr-fpga_interchange, nextpnr-xilinx, Vivado | prjxray, Vivado | openFPGALoader, Vivado |
 | xczu7ev (Zynq UltraScale+) | ZCU104 (`zcu104`), ZCU106 (`zcu106`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
 | xck26 (Zynq UltraScale+) | Kria KV260 (`kv260`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
 

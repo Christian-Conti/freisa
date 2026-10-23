@@ -37,6 +37,7 @@ A name followed by `(vivado)` uses Vivado for part of its work; everything else 
 | place | `in_route` | — | placement happens in the route step (nextpnr) | (xc7) |
 | place | `vivado` | Vivado `opt_design`, `place_design` | `.netlist` + `.phys` → `.phys` | Interchange ↔ DCP |
 | route | `nextpnr_interchange` | nextpnr-fpga_interchange | `.netlist` → `.phys` (placed and routed) | (xc7) |
+| route | `nextpnr_xilinx` | nextpnr-xilinx | Yosys `.json` → FASM | (xc7) alternative with an open chip database (prjxray-db); writes FASM directly, no `.phys` |
 | route | `rwroute` | RapidWright RWRoute | `.netlist` + `.phys` → `.phys` (routed) | RWRoute writes a DCP, converted back (UltraScale+) |
 | route | `vivado` | Vivado `route_design` | `.netlist` + `.phys` → `.phys` | Interchange ↔ DCP |
 | bitgen | `prjxray` | python-fpga-interchange + prjxray | `.netlist` + `.phys` → FASM → `.bit` | open, xc7 |
@@ -80,9 +81,14 @@ Tested here: an (empty) FASM for xczu3eg-sbva484 gives a bitstream. Two pieces a
   without carry chains, wide multiplexers, LUTRAM, shift registers and DSPs (board keys `carry: none`, `legalize: dreamplace`).
 - The number of placement iterations is scaled with the design size (`dreamplace_iterations`); a diverging placement is
   stopped as soon as it shows in the log and retried with a smaller step (`dreamplace_retries`).
-- RWRoute runs without timing (`rwroute_args` changes it); timing is reported by the Vivado sign-off when Vivado is installed.
+- RWRoute routes without timing (`rwroute_args` changes it); the timing of the result is reported by RapidWright's timing
+  model in `timing.rpt` (and by Vivado with `signoff: vivado`).
 
 ## Limits of the open xc7 path (Yosys, nextpnr-fpga_interchange, prjxray)
+- Two nextpnr versions can place and route xc7: `nextpnr_interchange` (default; chip database from the RapidWright/AMD
+  device description, Interchange in and out) and `nextpnr_xilinx` (chip database from prjxray-db, the open
+  documentation; reads the Yosys JSON and writes FASM directly, the one exception to the Interchange contract).
+  Choose with `route:` in the project file, or compare them with `route: all`.
 - nextpnr-fpga_interchange is pinned to the last nextpnr commit that has it (the architecture was removed upstream in 2024).
 - Synthesis runs without LUTRAM, shift registers, wide multiplexers and DSPs (board key `legalize: nextpnr_if`), and
   macro primitives such as differential I/O buffers are not supported yet by nextpnr-fpga_interchange.

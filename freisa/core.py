@@ -98,8 +98,9 @@ def explore(stage, b, ctx, variants, jobs):
     Scores are only compared within one `metric` (the first variant's); other metrics are reported, not ranked.
     Run `variants` (config overlays, optional `backend:` to swap the tool) in parallel, keep the lowest b.score(); returns winner's ctx state."""
     import concurrent.futures as cf, copy, json
-    if variants == "all":
-        variants = [{"backend": n} for n, cls in REGISTRY[stage].items() if cls().supports(ctx.target) is None]
+    if variants in ("all", "all_open"):
+        variants = [{"backend": n} for n, cls in REGISTRY[stage].items() if cls().supports(ctx.target) is None
+                    and (variants == "all" or not cls.vendor)]
         variants.sort(key=lambda v: v["backend"] != b.name)  # the selected backend first: it defines the ranking metric
     def one(i_v):
         i, v = i_v

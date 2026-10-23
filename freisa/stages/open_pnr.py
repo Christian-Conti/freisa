@@ -51,13 +51,31 @@ class NextpnrInterchange(_Xc7):
         ctx.art["phys"] = out
 
 @backend
+class NextpnrXilinx(_Xc7):
+    """nextpnr-xilinx: place and route with a chip database built from prjxray-db (open documentation), alternative to
+    nextpnr_interchange (whose database comes from the RapidWright/AMD device description). Exception to the Interchange
+    contract: it reads the Yosys JSON and writes FASM directly (no .phys); prjxray then uses that FASM."""
+    stage, name, tools = "route", "nextpnr_xilinx", ["nextpnr-xilinx"]
+    def supports(self, target):
+        db = pathlib.Path(__file__).parents[2] / "install" / "share" / "nextpnr-xilinx" / f"{target.get('part')}.bin"
+        if target.get("family") != "xc7": return "7-series (xc7) only"
+        return super(_Xc7, self).supports(target) or (None if db.exists() else f"no nextpnr-xilinx database for {target.get('part')} (make install-xc7)")
+    def run(self, ctx):
+        db = pathlib.Path(__file__).parents[2] / "install" / "share" / "nextpnr-xilinx" / f"{ctx.target['part']}.bin"
+        xdc = ctx.work / "pins.xdc"
+        xdc.write_text("".join((ctx.root / x).read_text() + "\n" for x in ctx.cfg.get("xdc", [])))
+        ctx.sh(["nextpnr-xilinx", "--chipdb", db, "--xdc", xdc, "--json", ctx.art["json"], "--fasm", ctx.work / "out.fasm"], "nextpnr_xilinx", cwd=ctx.work)
+        ctx.art["fasm"] = ctx.work / "out.fasm"; ctx.art.pop("phys", None)
+
+@backend
 class Prjxray(_Xc7):
-    """.netlist + .phys -> FASM (python-fpga-interchange) -> frames -> .bit (prjxray)."""
+    """.netlist + .phys -> FASM (python-fpga-interchange) -> frames -> .bit (prjxray); after nextpnr_xilinx its FASM is used."""
     stage, name, tools = "bitgen", "prjxray", ["fasm2frames", "xc7frames2bit"]
     def run(self, ctx):
         t = ctx.target; db = _p(t["db_root"])
-        ifx.pyif(ctx, "fasm_generator", ["--schema_dir", ifx.SCHEMA, "--family", "xc7", ifx.device(ctx), ctx.art["netlist"],
-                                         ctx.art["phys"], ctx.work / "out.fasm"], "fasm_generator")
+        if "phys" in ctx.art:  # Interchange design -> FASM; after nextpnr_xilinx the FASM is already there
+            ifx.pyif(ctx, "fasm_generator", ["--schema_dir", ifx.SCHEMA, "--family", "xc7", ifx.device(ctx), ctx.art["netlist"],
+                                             ctx.art["phys"], ctx.work / "out.fasm"], "fasm_generator")
         ctx.sh(["fasm2frames", "--db-root", db, "--part", t["part"], ctx.work / "out.fasm", ctx.work / "out.frames"], "fasm2frames")
         ctx.sh(["xc7frames2bit", "--part_file", f"{db}/{t['part']}/part.yaml", "--part_name", t["part"],
                 "--frm_file", ctx.work / "out.frames", "--output_file", ctx.work / "out.bit"], "frames2bit")
