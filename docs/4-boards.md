@@ -18,6 +18,7 @@ The first tool of each cell is the one `auto` selects in a project file (open to
 | xc7z020 (Zynq-7000) | PYNQ-Z1, PYNQ-Z2 (`xc7z020`) | Yosys, Vivado | python-fpga-interchange, Vivado | (in routing), Vivado | nextpnr-fpga_interchange, nextpnr-xilinx, Vivado | prjxray, Vivado | openFPGALoader, Vivado |
 | xczu7ev (Zynq UltraScale+) | ZCU104 (`zcu104`), ZCU106 (`zcu106`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
 | xck26 (Zynq UltraScale+) | Kria KV260 (`kv260`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
+| xczu3eg (Zynq UltraScale+) | AUP-ZU3 8 GB (`aup-zu3-8gb`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: part covered by prjuray-db, FASM generator missing | openFPGALoader, Vivado |
 
 What this means in practice:
 - **xc7z020**: the whole flow, bitstream included, runs with open tools.
@@ -25,38 +26,56 @@ What this means in practice:
   place I/O and no open bitstream writer exists for these chips yet. `bitgen: vivado_wrap` lets Vivado add only the I/O
   wrapper and write the bitstream, keeping the open placement and routing. `bitgen: open_io` goes further: the I/O is also
   done by open tools and Vivado only writes the file. Alternatively every step can run in Vivado.
-- **KV260**: the board has no PL clock oscillator; its PL clock comes from the PS, so a bitstream needs a block design
-  with the PS (`bitgen: vivado_ps`).
+- **KV260, AUP-ZU3**: no PL clock oscillator in the board files; the PL clock comes from the PS, so a running design
+  needs a block design with the PS (`bitgen: vivado_ps`). Blinky stops at the routed design there (`TO=route`).
+- **AUP-ZU3**: its chip (xczu3eg-sfvc784) is one of the two parts in prjuray-db, the open UltraScale+ bitstream database:
+  the first candidate for a fully open UltraScale+ bitstream once a `.phys` → FASM generator exists.
 
-## Board files
-One file per board in `targets/`:
+## Adding a board: boards.yml
+Boards are listed in one file, `boards.yml`, at the top of the repository. For each board you write its name, its FPGA
+part and where its board files come from; `make install-boards` does the rest:
 ```yaml
-part: xczu7ev-ffvc1156-2-e      # Vivado part name
-family: xczu                    # xczu | xcvu | xcku | xc7: selects which blocks can run
-yosys_family: xcup              # Yosys synth_xilinx family
-has_ps: true                    # the chip has a Zynq PS (information only)
-board_store: Xilinx/zcu104      # XilinxBoardStore path(s) for `make install-boards`
-ofl_board: zcu104               # openFPGALoader board name (`openFPGALoader --list-boards`)
-hw_device: "xczu7*"             # optional: Vivado hardware-manager device pattern
-uart_channel: 3                 # optional: FTDI interface of the PL UART (make uart-test)
-jtag_serial: 38138              # optional: USB serial of the board's JTAG chip when several boards/cables are connected
-carry: none                     # UltraScale+: synthesis settings needed by DREAMPlaceFPGA
-legalize: dreamplace
-# xc7 only:
-db_root: third_party/prjxray-db/zynq7
+boards:
+  aup-zu3-8gb:
+    description: AMD/RealDigital AUP-ZU3, 8 GB
+    part: xczu3eg-sfvc784-2-e
+    source: {git: https://github.com/RealDigitalOrg/aup-zu3-bsp.git, path: board-files/aup-zu3-8gb, xdc: hw/constraints/mpsoc.xdc}
+  zcu104:
+    part: xczu7ev-ffvc1156-2-e
+    source: {store: Xilinx/zcu104}
+    ofl_cable: ft4232       # extra keys are copied to the board file
+    uart_channel: 3
 ```
+| Key | Meaning |
+|-----|---------|
+| `part` | FPGA part (Vivado name); family, synthesis settings and databases are derived from it |
+| `source: {store: <Vendor>/<board>}` | board of [XilinxBoardStore](https://github.com/Xilinx/XilinxBoardStore) (a list for boards made of several, e.g. KV260) |
+| `source: {git: <url>, path: <dir>}` | any git repository: the folder holding `board.xml` / `part0_pins.xml`; `xdc:` copies the board's own constraint file |
+| `source: {..., ref: <branch>}` | optional; default: the repository's default branch (its latest version) |
+| `description` | optional |
+| other keys | copied unchanged to `targets/<name>.yml`: `ofl_board`, `ofl_cable`, `uart_channel`, `jtag_serial`, `hw_device` |
 
-## Adding a board
-1. Copy the board file closest to yours into `targets/<name>.yml` and change `part`, `board_store`, `ofl_board`.
-2. `make install-boards` downloads its files and writes `boards/<name>/.../pins.xdc`.
-3. `make doctor TARGET=<name>` shows which blocks can run.
-4. `make flow TARGET=<name>`; for a bitstream add pins (and a `wrap:` for UltraScale+) for it in `designs/examples/blinky.yml`.
-A new part gets its Interchange device description (and, for xc7, the nextpnr chip database) generated automatically on its first run, in `install/share/interchange/`.
+```sh
+make install-boards                      # every board of boards.yml
+make install-boards BOARD=aup-zu3-8gb    # one board
+make doctor TARGET=aup-zu3-8gb           # what can run on it
+```
+For each board this writes:
+- `boards/<name>/<board>/board.xml`, `part0_pins.xml`, `pins.xdc` (all board pins with their I/O standards);
+- `boards/<name>/board.xdc` (the board's own constraints, with `xdc:`);
+- `targets/<name>.yml` (generated: edit `boards.yml`, not this file).
 
-## Board files from XilinxBoardStore
-`boards.lock` pins the XilinxBoardStore commit and one version per board. The boards are those named by `board_store:` in
-`targets/*.yml`. `make install-boards` updates the lock to the newest store and downloads only those boards;
-`make install-boards PIN=1` downloads exactly what the lock says.
+`boards.lock` records the commit of each repository that was fetched. A new FPGA part gets its Interchange device
+description (and, for xc7, the nextpnr chip database) automatically on its first run, in `install/share/interchange/`.
+
+### Generated board file
+Keys derived from `part`, for reference:
+
+| Part | Keys |
+|------|------|
+| `xc7*` | `family: xc7`, `yosys_family: xc7`, `legalize: nextpnr_if`, `package` (from the part), `db_root` (prjxray-db series) |
+| `xczu*`, `xck*` | `family: xczu`, `yosys_family: xcup`, `has_ps: true`, `carry: none`, `legalize: dreamplace` |
+| `xcvu*`, `xcku*` | `family: xcvu`/`xcku`, `yosys_family: xcup`, `carry: none`, `legalize: dreamplace` |
 
 ## Programming permissions (Linux)
 The JTAG cable must be accessible to your user. Install the cable rules once, then replug the board (or reload udev):

@@ -57,7 +57,7 @@ class YosysSlang(Backend):
             s += ["techmap -map dp_legal.v", "opt_clean"]
         s += ["rename -enumerate -pattern n%",  # '$auto$' names are illegal in EDIF/bookshelf
 
-              "hierarchy -top " + c["top"], "tee -o stats.txt stat", "write_edif -pvector bra out.edif", "write_json out.json"]
+              "hierarchy -top " + c["top"] + " -purge_lib", "tee -o stats.txt stat", "write_edif -pvector bra out.edif", "write_json out.json"]
         (ctx.work / "synth.ys").write_text("\n".join(s) + "\n")
         ctx.sh(["yosys", "-l", "yosys.full.log", "-s", "synth.ys"], "synth", cwd=ctx.work)
         ctx.art["edif"], ctx.art["json"] = ctx.work / "out.edif", ctx.work / "out.json"

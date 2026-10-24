@@ -41,8 +41,8 @@ BIT ?=
 ## @param FORCE `1` = rebuild tools that are already built (install-xc7, install-dreamplace)
 FORCE ?=
 
-## @param PIN `1` = keep boards.lock / do not move pins (for `install-boards`)
-PIN ?=
+## @param BOARD One board of boards.yml (for `install-boards`)
+BOARD ?=
 
 ## @param JTAG USB serial of the JTAG cable to program (`make upload`), when several boards are connected
 JTAG ?=
@@ -82,9 +82,9 @@ outdated:
 update:
 	@bash utils/tool_version.sh update $(NAME) $(REF)
 
-## Pull board files (+ generated pins.xdc) for the boards in targets/*.yml from XilinxBoardStore and refresh boards.lock; PIN=1 keeps the lock as is
+## Install the boards listed in boards.yml (board files, pin file, targets/<name>.yml); BOARD=<name> for one board only
 install-boards:
-	@$(CONDA_RUN) python utils/boards.py install $(if $(PIN),--pin)
+	@$(CONDA_RUN) python utils/boards.py install $(if $(BOARD),--only $(BOARD))
 
 ## Check build dependencies (git, cmake, g++, boost, eigen, python deps); runs before every build
 check-deps:

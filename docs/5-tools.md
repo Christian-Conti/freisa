@@ -58,6 +58,7 @@ project file.
 | xc7z020 | PYNQ-Z1, PYNQ-Z2 | yes | prjxray (database prjxray-db) |
 | xczu7ev | ZCU104, ZCU106 | no | `open_io (vivado)`: only `write_bitstream` is Vivado |
 | xck26 | KV260 | no | `open_io (vivado)`, but blinky has no PL clock there |
+| xczu3eg | AUP-ZU3 8 GB | no | `open_io (vivado)`; no PL clock oscillator for blinky. Its part is in prjuray-db (see below) |
 
 ### Project U-Ray (UltraScale+)
 [Project U-Ray](https://github.com/f4pga/prjuray) documents the UltraScale+ bitstream and turns a FASM file into a
@@ -67,7 +68,7 @@ bitstream (`fasm2bit`, installed as `prjuray-fasm2bit`, with `xcframes2bit`). It
 | Part in prjuray-db | Boards using it |
 |--------------------|-----------------|
 | xczu3eg-sbva484-1-e | Ultra96, Ultra96-V2 |
-| xczu3eg-sfvc784-1-e | xczu3eg modules in the sfvc784 package (e.g. Trenz TE0820) |
+| xczu3eg-sfvc784-1-e | AUP-ZU3 (`aup-zu3-8gb`, speed grade -2: same tile grid), xczu3eg modules in the sfvc784 package (e.g. Trenz TE0820) |
 
 Tested here: an (empty) FASM for xczu3eg-sbva484 gives a bitstream. Two pieces are still missing for a design:
 1. a generator from Interchange `.phys` to Project U-Ray FASM for UltraScale+ (python-fpga-interchange only has xc7 and Nexus);

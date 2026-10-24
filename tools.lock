@@ -2,21 +2,22 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : Pinned source tools: name, repository, commit. `make fetch` clones exactly these.
+# Info     : Source tools: name, repository, ref. `make fetch` clones them. ref = HEAD follows the repository's default
+#            branch (latest version); a commit pins it. Only the tools that do not work at their latest version are pinned.
 # Module   : tools.lock
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
-# dreamplacefpga: commit named in the RapidWright tutorial (master HEAD imports an unbuilt timing op)
+# dreamplacefpga: PINNED, commit named in the RapidWright tutorial (its master imports a timing op it never builds)
 dreamplacefpga        https://github.com/rachelselinar/DREAMPlaceFPGA             fb6d086ed082f8404123679ec59d53e7116b3f2e
-prjxray               https://github.com/f4pga/prjxray                            c9f02d8576042325425824647ab5555b1bc77833
-prjxray-db            https://github.com/SymbiFlow/prjxray-db                     0a0addedd73e7e4139d52a6d8db4258763e0f1f3
-# nextpnr-fpga-interchange: last nextpnr commit with the fpga_interchange architecture (removed upstream on 2024-09-30)
+prjxray               https://github.com/f4pga/prjxray                            HEAD
+prjxray-db            https://github.com/SymbiFlow/prjxray-db                     HEAD
+# nextpnr-fpga-interchange: PINNED, last nextpnr commit with the fpga_interchange architecture (removed from master on 2024-09-30)
 nextpnr-fpga-interchange https://github.com/YosysHQ/nextpnr                     1967db170d23bc978d678912ec81c6814818983b
-python-fpga-interchange  https://github.com/chipsalliance/python-fpga-interchange 04a02101d1f7f03a2d33716192fb478e1e8605af
-fpga-interchange-schema  https://github.com/chipsalliance/fpga-interchange-schema c985b4648e66414b250261c1ba4cbe45a2971b1c
+python-fpga-interchange  https://github.com/chipsalliance/python-fpga-interchange HEAD
+fpga-interchange-schema  https://github.com/chipsalliance/fpga-interchange-schema HEAD
 # prjuray: Project U-Ray (UltraScale/UltraScale+ bitstream documentation and fasm2frames/fasm2bit); prjuray-db: its database
-prjuray                  https://github.com/f4pga/prjuray                          c550b03a26b4c4a9c4453353bd642a21f710b3ec
-prjuray-db               https://github.com/f4pga/prjuray-db                       affbc5e555ebae16475f32e8fb2d6565d4204f3f
+prjuray                  https://github.com/f4pga/prjuray                          HEAD
+prjuray-db               https://github.com/f4pga/prjuray-db                       HEAD
 # nextpnr-xilinx: xc7 place and route with a database from prjxray-db (open); alternative to nextpnr-fpga-interchange
-nextpnr-xilinx           https://github.com/gatecat/nextpnr-xilinx                 8f178fc6a6d4dfbc57bef66c3ccff34d558047d5
+nextpnr-xilinx           https://github.com/gatecat/nextpnr-xilinx                 HEAD

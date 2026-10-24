@@ -29,7 +29,7 @@ Read in this order:
 1. [Getting started](docs/1-getting-started.md): install, first run, where the results are.
 2. [Using the flow](docs/2-usage.md): commands, variables, explore, upload, reports.
 3. [Project files](docs/3-projects.md): one file per design with sources, tools per step and board settings.
-4. [Boards](docs/4-boards.md): supported chips and boards, tools per step, adding a board.
+4. [Boards](docs/4-boards.md): supported boards (PYNQ-Z1/Z2, ZCU104, ZCU106, KV260, AUP-ZU3 8 GB), tools per step, adding a board in `boards.yml`.
 5. [Tools per step](docs/5-tools.md): what each block does and its limits (including Vivado and the PS / `.hwh`).
 6. [Developer guide](docs/6-developer.md): how the engine works, adding or updating a block.
 7. [Examples](docs/7-examples.md): blinky and uart_loopback on every board: build, program, test.
@@ -41,9 +41,10 @@ Read in this order:
 | `Makefile`, `flow.py` | entry points |
 | `designs/` | project files, one per design (examples: `designs/examples/blinky.yml`, `uart_loopback.yml`) |
 | `examples/` | RTL and pin files of the bundled examples |
-| `targets/` | board files |
+| `targets/` | board files (generated from `boards.yml`) |
 | `freisa/` | flow engine (`core`, `resolve`, `ui`, `report`, `term`), tools of each step (`freisa/stages/`), RapidWright scripts (`freisa/rw/`) |
 | `utils/` | install, check and helper scripts |
 | `defaults.yml` | default tool options |
-| `tools.lock`, `boards.lock` | pinned tool commits / board-file versions |
+| `boards.yml` | the boards to install (you edit it; `make install-boards`) |
+| `tools.lock`, `boards.lock` | source tools (latest version or pinned commit) / commits of the fetched board files |
 | `build/<design>/<board>/` | outputs (created by the flow) |

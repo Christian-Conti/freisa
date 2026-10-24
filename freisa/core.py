@@ -112,7 +112,10 @@ def explore(stage, b, ctx, variants, jobs):
             if why: print(f"    {_t().dim(f'v{i} skipped: {why}')}"); return i, v, c, None
             bk.run(c); return i, v, c, bk.score(c)
         except SystemExit as e:
-            return i, v, c, None
+            msg = (_t().plain(str(e)).splitlines() or [""])[0][:120]
+            print("    " + _t().dim(f"v{i} {v.get('backend', '')} failed: {msg}")); return i, v, c, None
+        except Exception as e:  # any error of one variant only fails that variant
+            print("    " + _t().dim(f"v{i} {v.get('backend', '')} failed: {type(e).__name__}: {e}"[:140])); return i, v, c, None
     with cf.ThreadPoolExecutor(jobs) as ex:
         res = list(ex.map(one, enumerate(variants)))
     metric = lambda v: (REGISTRY[stage][v["backend"]] if "backend" in v else type(b)).metric

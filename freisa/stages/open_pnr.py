@@ -9,7 +9,7 @@
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
-import os, pathlib
+import os, pathlib, re
 from ..core import Backend, backend
 from .. import ifx
 
@@ -93,7 +93,8 @@ class Prjuray(Backend):
     and a FASM of the design; the FASM generator from Interchange .phys for UltraScale+ does not exist yet."""
     stage, name, tools = "bitgen", "prjuray", ["prjuray-fasm2bit", "xcframes2bit"]
     def _db(self, target):
-        return next((p for p in prjuray_parts() if p.endswith("/" + target["part"])), None)
+        dev = lambda part: re.sub(r"-[0-9a-z]+-[a-z]$", "", part.lower())  # tile grid depends on device+package, not speed/temperature
+        return next((p for p in prjuray_parts() if dev(p.split("/")[-1]) == dev(target["part"])), None)
     def supports(self, target):
         if target.get("family") not in ("xczu", "xcvu", "xcku"): return "UltraScale+ only"
         if not PRJURAY_DB.exists(): return "prjuray not installed (make install-prjuray)"

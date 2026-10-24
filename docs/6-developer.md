@@ -56,18 +56,22 @@ compare it with the current block: `explore: {place: [{backend: dreamplacefpga},
 `ctx.sh(cmd, log, watch=regex)` stops a tool as soon as `regex` appears in its log.
 If the check script should suggest how to install it, add a line to `HINTS` in `utils/check_flow.py`.
 
-## Pinned tools
-Tools built from source are pinned in `tools.lock` (`name url commit`). `make fetch TOOLS=<name>` clones only what is
-asked, and skips tools already at the pinned commit. To update one:
+## Source tools: tools.lock
+Tools built from source are listed in `tools.lock` (`name url ref`). `ref: HEAD` follows the repository's default branch
+(latest version, updated by `make fetch`); a commit pins the tool. Only two are pinned, because their latest version
+does not work in this flow:
+- DREAMPlaceFPGA: the commit named in the RapidWright tutorial (its master imports an operator that is never built);
+- nextpnr-fpga-interchange: the last nextpnr commit with the `fpga_interchange` architecture (removed from master in 2024).
+
 ```sh
-make outdated                         # pinned commit vs upstream
-make update NAME=dreamplacefpga       # or REF=<tag/branch/commit>
-make install-dreamplace FORCE=1       # rebuild (install-interchange for nextpnr-fpga_interchange, install-xc7 for prjxray)
+make outdated                         # which tools follow their latest version, which are pinned
+make fetch                            # update the ones that follow HEAD (pinned ones are left alone)
+make update NAME=<tool> REF=<commit>  # pin a tool (REF=HEAD to follow its latest version again)
+make install-dreamplace FORCE=1       # rebuild after an update (install-interchange, install-xc7, install-prjuray likewise)
 make flow TARGET=zcu104               # smoke test (`make flow` alone for the xc7 tools)
 ```
-RapidWright comes from pip (`utils/python-requirements.txt`). DREAMPlaceFPGA is pinned to the commit named in the
-RapidWright tutorial; `utils/build_dreamplace.sh` and `freisa/stages/rapidwright.py` contain workarounds for it,
-each with a comment. Check whether they are still needed after an update.
+RapidWright comes from pip (`utils/python-requirements.txt`). `utils/build_dreamplace.sh` and
+`freisa/stages/rapidwright.py` contain workarounds for DREAMPlaceFPGA, each with a comment.
 
 ## Exchange formats between steps
 Between steps only FPGA Interchange files travel: `.netlist` (logical netlist) and `.phys` (physical netlist, partial or

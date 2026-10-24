@@ -29,7 +29,7 @@ from board to board. There is no other configuration file.
 | `top` | top-level module or entity |
 | `rtl` | source files as glob patterns; language from the extension (`.v`, `.sv`, `.vhd`, `.vhdl`) |
 | `core`, `core_target` | instead of `rtl`: a FuseSoC `.core` file and its target |
-| `steps` | tool of each step for every board (`auto`, `all` or a tool name, see below) |
+| `steps` | tool of each step for every board (`auto`, `all`, `all_open` or a tool name, see below) |
 | `boards` | `{<board>: {<step>: <tool>}}`: tools for one board, merged over `steps` |
 | `per_target` | `{<board>: {...}}` or `{<board>@<tool>: {...}}`: design keys for one board (or board + tool) |
 | `xdc` | constraint files; for a bitstream every port needs `PACKAGE_PIN` and `IOSTANDARD` |
@@ -51,6 +51,7 @@ from board to board. There is no other configuration file.
 |-------|---------|
 | `auto` | first open-source tool that works on the board (default of a step that is not listed) |
 | `all` | every tool that works on the board for this step is run, the best result is kept |
+| `all_open` | like `all`, with open tools only (no `(vivado)` tools) |
 | a name | that tool. `make doctor TARGET=<board>` lists every tool of every step |
 
 | Step | Tools (`auto` picks the first that works) |

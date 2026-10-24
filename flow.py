@@ -54,8 +54,12 @@ def main():
     if a.cmd == "doctor":
         doctor(r, a.target); return
     art = ctx.work / "artifacts.json"
-    if a.frm != core.STAGES[0] and art.exists():  # resume: reload what earlier stages produced
-        ctx.art = {k: ([tuple(x) for x in v] if k == "rtl" else pathlib.Path(v)) for k, v in json.loads(art.read_text()).items()}
+    if a.frm != core.STAGES[0]:  # resume: reload what the stages before FROM produced (not what later stages wrote)
+        prev = ctx.work / f"artifacts_{core.STAGES[core.STAGES.index(a.frm) - 1]}.json"
+        src = prev if prev.exists() else art
+        if src.exists():
+            ctx.art = {k: ([tuple(x) for x in v] if k == "rtl" else v if isinstance(v, (dict, list)) else pathlib.Path(v))
+                       for k, v in json.loads(src.read_text()).items()}
     flow["explore"] = {**flow.get("explore", {}), **r.explore_all}  # `all` / `all_open` in steps = explore every (open) tool
     run = core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     # preflight: fail before hours of work if a middle stage cannot run; a missing last step (e.g. Vivado bitgen) just ends the run early
@@ -74,7 +78,8 @@ def main():
         except SystemExit as e:
             mon.finish(False); raise
         if s == "sources": core.apply_patches(ctx)
-        art.write_text(json.dumps({k: v if k == "rtl" else str(v) for k, v in ctx.art.items()}))
+        snap = json.dumps({k: v if isinstance(v, (list, dict)) else str(v) for k, v in ctx.art.items()})
+        art.write_text(snap); (ctx.work / f"artifacts_{s}.json").write_text(snap)  # per-step snapshot for FROM=
         best = ctx.work / f"{s}_best.json"
         try: sc = json.loads(best.read_text())["score"] if s in flow.get("explore", {}) else (b.score(ctx) if s in ("synth", "place", "route") else None)
         except Exception: sc = None

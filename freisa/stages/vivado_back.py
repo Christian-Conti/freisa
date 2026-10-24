@@ -7,7 +7,7 @@
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
-import os, re
+import os, pathlib, re
 from ..core import Backend, backend, find_vivado
 from .. import ifx
 
@@ -27,6 +27,23 @@ def _wns(rpt):
 def _xdc(ctx):
     """read_xdc lines of the project's constraints (they do not travel inside the Interchange files)."""
     return "".join(f"read_xdc {{{ctx.root / x}}}\n" for x in ctx.cfg.get("xdc", []))
+
+def _edif_for_vivado(ctx, edif):
+    """Copy of a Yosys EDIF that Vivado can link: named after the top (<top>.edf, as Vivado requires), and without the
+    duplicate declaration of the top that Yosys also writes into its primitive library (external LIB)."""
+    txt, top = pathlib.Path(edif).read_text(), ctx.cfg["top"]
+    lib = max(txt.find("(external LIB"), txt.find("(library LIB"))
+    end_lib = txt.find("(library DESIGN")
+    i = txt.find(f"(cell {top}\n", lib) if lib >= 0 else -1
+    if i >= 0 and (end_lib < 0 or i < end_lib):
+        depth, j = 0, i
+        while True:  # end of the balanced (cell ...) block
+            depth += (txt[j] == "(") - (txt[j] == ")"); j += 1
+            if depth == 0: break
+        txt = txt[:i] + txt[j:]
+    out = ctx.work / f"{top}.edf"
+    out.write_text(txt)
+    return out
 
 def _ooc(ctx):
     return ctx.cfg.get("ooc", not ctx.cfg.get("xdc"))  # no pin constraints -> out of context
@@ -64,7 +81,7 @@ class VivadoLink(_Viv):
     stage, name = "netlist", "vivado_link"
     def run(self, ctx):
         xdc = "".join(f"read_xdc {{{ctx.root / x}}}\n" for x in ctx.cfg.get("xdc", []))
-        _run(ctx, f"read_edif {{{ctx.art['edif']}}}\nlink_design -mode out_of_context -part {ctx.target['part']} -top {ctx.cfg['top']}\n{xdc}write_checkpoint -force linked.dcp\n", "viv_link")
+        _run(ctx, f"read_edif {{{_edif_for_vivado(ctx, ctx.art['edif'])}}}\nlink_design -mode out_of_context -part {ctx.target['part']} -top {ctx.cfg['top']}\n{xdc}write_checkpoint -force linked.dcp\nwrite_edif -force linked.edf\n", "viv_link")
         ifx.from_dcp(ctx, ctx.work / "linked.dcp", "linked")
 
 @backend
@@ -74,9 +91,13 @@ class VivadoPlace(_Viv):
     def run(self, ctx):
         c = ctx.cfg
         po = "phys_opt_design\n" if c.get("phys_opt", False) else ""
-        dcp = ifx.to_dcp(ctx, "place_in", ooc=_ooc(ctx))
-        _run(ctx, f"open_checkpoint {{{dcp}}}\n{_xdc(ctx)}opt_design -directive {c.get('opt_directive', 'Default')}\n"
-             f"place_design -directive {c.get('place_directive', 'Default')}\n{po}report_timing_summary -file place_timing.rpt\nreport_utilization -file place_util.rpt\nreport_clock_utilization -file place_clock_util.rpt\nreport_design_analysis -congestion -file place_congestion.rpt\nwrite_checkpoint -force placed.dcp\n", "viv_place")
+        if "phys" in ctx.art:  # Interchange design from the previous step
+            load = f"open_checkpoint {{{ifx.to_dcp(ctx, 'place_in', ooc=_ooc(ctx))}}}\n"
+        else:                  # xc7 path: nothing placed yet, start from the synthesized EDIF
+            load = (f"read_edif {{{_edif_for_vivado(ctx, ctx.art['edif'])}}}\nlink_design {'-mode out_of_context ' if _ooc(ctx) else ''}"
+                    f"-part {ctx.target['part']} -top {ctx.cfg['top']}\n")
+        _run(ctx, f"{load}{_xdc(ctx)}opt_design -directive {c.get('opt_directive', 'Default')}\n"
+             f"place_design -directive {c.get('place_directive', 'Default')}\n{po}report_timing_summary -file place_timing.rpt\nreport_utilization -file place_util.rpt\nreport_clock_utilization -file place_clock_util.rpt\nreport_design_analysis -congestion -file place_congestion.rpt\nwrite_checkpoint -force placed.dcp\nwrite_edif -force placed.edf\n", "viv_place")
         ifx.from_dcp(ctx, ctx.work / "placed.dcp", "placed")
 
 @backend
@@ -86,9 +107,10 @@ class VivadoRoute(_Viv):
     def run(self, ctx):
         c = ctx.cfg
         po = f"phys_opt_design -directive {c.get('post_route_phys_opt', 'Default')}\n" if c.get("post_route_phys_opt") else ""
+        if "phys" not in ctx.art: raise SystemExit("vivado route: no placed design (the place step did not place: use place: vivado)")
         dcp = ifx.to_dcp(ctx, "route_in", ooc=_ooc(ctx))
         _run(ctx, f"open_checkpoint {{{dcp}}}\n{_xdc(ctx)}route_design -directive {c.get('route_directive', 'Default')}\n{po}"
-             "report_timing_summary -max_paths 20 -file route_timing.rpt\nreport_utilization -file route_util.rpt\nreport_route_status -file route_status.rpt\nreport_drc -file route_drc.rpt\nreport_power -file route_power.rpt\nreport_methodology -file route_methodology.rpt\nwrite_checkpoint -force routed.dcp\n", "viv_route")
+             "report_timing_summary -max_paths 20 -file route_timing.rpt\nreport_utilization -file route_util.rpt\nreport_route_status -file route_status.rpt\nreport_drc -file route_drc.rpt\nreport_power -file route_power.rpt\nreport_methodology -file route_methodology.rpt\nwrite_checkpoint -force routed.dcp\nwrite_edif -force routed.edf\n", "viv_route")
         ifx.from_dcp(ctx, ctx.work / "routed.dcp", "routed")
 
 @backend
@@ -100,6 +122,7 @@ class VivadoBitgen(_Viv):
             raise SystemExit("design has a block design (bd_tcl, e.g. with the PS): set `bitgen: vivado_ps` in the project file to get .bit + .hwh + .xsa")
         if ctx.cfg.get("ooc", not ctx.cfg.get("xdc")):
             raise SystemExit("out-of-context design (no `xdc:` pin constraints): Vivado cannot write a bitstream for it; add pin constraints and run place/route with Vivado (project file)")
+        if "phys" not in ctx.art: raise SystemExit("vivado bitgen: no placed and routed design (route with vivado or rwroute)")
         dcp = ifx.to_dcp(ctx, "bitgen_in", ooc=False)
         _run(ctx, f"open_checkpoint {{{dcp}}}\n{_xdc(ctx)}write_bitstream -force out.bit\n", "viv_bitgen")
         ctx.art["bit"] = ctx.work / "out.bit"

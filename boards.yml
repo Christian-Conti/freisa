@@ -1,0 +1,52 @@
+# Copyright 2026 FREISA contributors
+# Apache License, Version 2.0, see LICENSE.md for details.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Info     : The boards FREISA installs. Add a board here and run `make install-boards`: its board files are fetched
+#            (default branch of the repository: its latest version), its pin file is generated in boards/<name>/ and targets/<name>.yml is written for you.
+# Module   : boards.yml
+# Author   : Christian Conti
+# Contact  : christian.conti@mail.it
+#
+# Keys of a board:
+#   part         FPGA part (Vivado name). Family, synthesis settings and databases are derived from it.
+#   source       where the board files come from (default branch; `ref: <branch>` to choose another):
+#                  store: <Vendor>/<board>         a board of https://github.com/Xilinx/XilinxBoardStore (list for several)
+#                  git: <url>, path: <dir>         any git repository: the folder with board.xml (+ part0_pins.xml)
+#                  xdc: <file>                     optional, git only: the board's own constraint file (copied as board.xdc)
+#   description  optional, shown in the generated board file
+#   any other key is copied unchanged into targets/<name>.yml, e.g.
+#     ofl_board / ofl_cable   openFPGALoader board name / cable type (make upload)
+#     uart_channel            FTDI interface of a PL UART (make uart-test)
+#     jtag_serial             force one JTAG cable when several are connected
+
+boards:
+  xc7z020:
+    description: PYNQ-Z1 / PYNQ-Z2 (Zynq-7000)
+    part: xc7z020clg400-1
+    source: {store: TUL/pynq-z2}
+    ofl_board: pynq_z2
+
+  zcu104:
+    description: ZCU104 (Zynq UltraScale+)
+    part: xczu7ev-ffvc1156-2-e
+    source: {store: Xilinx/zcu104}
+    ofl_cable: ft4232
+    uart_channel: 3
+
+  zcu106:
+    description: ZCU106 (Zynq UltraScale+)
+    part: xczu7ev-ffvc1156-2-e
+    source: {store: Xilinx/zcu106}
+    ofl_board: zcu106
+    uart_channel: 3
+
+  kv260:
+    description: Kria KV260 starter kit (Zynq UltraScale+)
+    part: xck26-sfvc784-2LV-c
+    source: {store: [Xilinx/kv260_som, Xilinx/kv260_carrier]}
+
+  aup-zu3-8gb:
+    description: AMD/RealDigital AUP-ZU3, 8 GB (Zynq UltraScale+)
+    part: xczu3eg-sfvc784-2-e
+    source: {git: https://github.com/RealDigitalOrg/aup-zu3-bsp.git, path: board-files/aup-zu3-8gb, xdc: hw/constraints/mpsoc.xdc}

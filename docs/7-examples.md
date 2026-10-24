@@ -13,10 +13,10 @@
 Two examples come with FREISA. Each one is a project file in `designs/examples/` plus its RTL and pin files in
 `examples/<name>/`.
 
-| Example | What it does | xc7z020 (PYNQ-Z1/Z2) | ZCU104 | ZCU106 | KV260 |
-|---------|--------------|----------------------|--------|--------|-------|
-| `blinky` | LED 0 blinks | `.bit`, open tools | `.bit` (`open_io`) | `.bit` (`open_io`) | routed checkpoint only |
-| `uart_loopback` | echoes the PL UART | — | `.bit` + `make uart-test` | `.bit` + `make uart-test` | — |
+| Example | What it does | xc7z020 (PYNQ-Z1/Z2) | ZCU104 | ZCU106 | KV260 | AUP-ZU3 8 GB |
+|---------|--------------|----------------------|--------|--------|-------|--------------|
+| `blinky` | LED 0 blinks | `.bit`, open tools | `.bit` (`open_io`) | `.bit` (`open_io`) | routed checkpoint only | routed checkpoint only |
+| `uart_loopback` | echoes the PL UART | — | `.bit` + `make uart-test` | `.bit` + `make uart-test` | — | — |
 
 `open_io` ([details](8-open-io.md)): every step is done by open tools, I/O included; Vivado only runs `write_bitstream` (no open bitstream writer
 exists for UltraScale+). A dash means the board cannot run the example (see the notes of each example).
@@ -60,7 +60,7 @@ make uart-test TARGET=zcu104 BAUD=921600    # or a given board / baud rate; PORT
 Expected: `✔ echo matches: sent 256, received 256`. If nothing comes back, check that uart_loopback (not blinky) is
 loaded on the board.
 
-Not available on PYNQ-Z1/Z2 and KV260: their USB serial port is wired only to the processor (PS), not to FPGA pins, so a
+Not available on PYNQ-Z1/Z2, KV260 and AUP-ZU3: their USB serial port is wired only to the processor (PS), not to FPGA pins, so a
 design in the FPGA cannot reach it. There a loopback needs software on the processor, or an external USB-serial adapter
 on PMOD pins (with its own pin file).
 

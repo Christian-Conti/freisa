@@ -27,8 +27,11 @@ def if_python():
     return None
 
 def jar():
-    import rapidwright
-    return next(pathlib.Path(rapidwright.__file__).parent.glob("rapidwright-*-standalone-*.jar"))
+    """Path of the RapidWright jar, found without importing the package: importing it starts a JVM in this process
+    (blocks when called from an explore thread, and keeps the flow from exiting)."""
+    import importlib.util
+    spec = importlib.util.find_spec("rapidwright")
+    return next(pathlib.Path(spec.submodule_search_locations[0]).glob("rapidwright-*-standalone-*.jar"))
 
 def rw(ctx, cls, args, log, cwd=None):
     """Run a RapidWright command-line class."""
@@ -74,6 +77,8 @@ def from_dcp(ctx, dcp, name):
     """DCP -> <work>/<name>.netlist + <name>.phys (RapidWright); sets ctx.art['netlist'/'phys']."""
     d = ctx.work / f"{name}.dcp"
     if pathlib.Path(dcp).resolve() != d.resolve(): shutil.copy(dcp, d)
+    edf = pathlib.Path(dcp).with_suffix(".edf")  # Vivado DCPs hold an encrypted netlist: RapidWright reads the EDIF next to it
+    if edf.exists() and edf.resolve() != d.with_suffix(".edf").resolve(): shutil.copy(edf, d.with_suffix(".edf"))
     rw(ctx, "interchange.DcpToInterchange", [d], f"{name}_to_if")
     ctx.art.update(netlist=ctx.work / f"{name}.netlist", phys=ctx.work / f"{name}.phys")
 

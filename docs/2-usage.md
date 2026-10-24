@@ -25,9 +25,9 @@ Each step has one or more tools. The project file chooses the tool of every step
 | `make uart-test` | send data on the board's PL UART and check the echo (uart_loopback example; `PORT=`, `BAUD=`) |
 | `make upload` | program `build/<d>/<b>/out.bit` on the board |
 | `make install`, `make uninstall` | install / remove everything |
-| `make install-boards` | download board files, refresh `boards.lock` (`PIN=1` keeps the lock) |
+| `make install-boards [BOARD=<name>]` | install the boards of `boards.yml` (board files, pin file, `targets/<name>.yml`) |
 | `make install-xc7`, `make install-interchange`, `make install-prjuray`, `make install-dreamplace` | build one open tool (`FORCE=1` to rebuild) |
-| `make outdated`, `make update NAME=<tool> [REF=<commit>]` | compare / re-pin tools in `tools.lock` |
+| `make outdated`, `make update NAME=<tool> [REF=<commit>]` | show which tools follow their latest version and which are pinned / pin one |
 | `make clean` | delete `build/` |
 | `make help` | this list with every variable |
 
@@ -46,7 +46,8 @@ steps:   {synth: yosys, netlist: auto, place: auto, route: auto, bitgen: auto, u
 boards:
   zcu104: {bitgen: open_io}
 ```
-`auto` picks the first open tool that works on the board; `all` runs every tool that works and keeps the best; a step not
+`auto` picks the first open tool that works on the board; `all` runs every tool that works and keeps the best;
+`all_open` does the same with open tools only (no tool marked `(vivado)`); a step not
 listed is `auto`. All values and tools: [Project files](3-projects.md#values-of-steps--boards).
 
 `make check` validates the choice for the board: for every step whose tool cannot run it prints why, how to install it,
@@ -61,7 +62,10 @@ explore:
   synth: [{synth_args: -flatten}, {synth_args: -flatten -abc9}]   # same tool, different options
   route: all                                                        # every block available on the board
 ```
-To explore every tool that works for a step, set that step to `all` in the project file (`steps:` or `boards:`):
+To explore every tool that works for a step, set that step to `all` (or `all_open`, without Vivado) in the project file
+(`steps:` or `boards:`). Results are compared only between tools that measure the same thing: the tool `auto` would
+pick is run first and sets the metric, so with `all` a Vivado variant is run and reported but kept only if it is
+comparable (for example, on xc7 nextpnr places during routing, so Vivado's placement is reported and not kept):
 ```yaml
 steps: {place: all}
 ```

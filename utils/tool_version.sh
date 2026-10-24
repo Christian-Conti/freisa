@@ -16,7 +16,9 @@ case "${1:-}" in
   outdated)
     grep -vE '^#|^[[:space:]]*$' tools.lock | while read -r name url sha; do
       head=$(git ls-remote "$url" HEAD | cut -c1-40)
-      [[ $head == "$sha" ]] && echo "ok        $name ${sha:0:10}" || echo "NEWER     $name pinned ${sha:0:10} upstream ${head:0:10}"
+      if [[ ! $sha =~ ^[0-9a-f]{40}$ ]]; then echo "latest    $name follows $sha (upstream ${head:0:10}; make fetch updates it)"
+      elif [[ $head == "$sha" ]]; then echo "ok        $name ${sha:0:10}"
+      else echo "pinned    $name ${sha:0:10}, upstream ${head:0:10}"; fi
     done ;;
 
   update)
