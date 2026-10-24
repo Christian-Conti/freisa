@@ -41,26 +41,13 @@ def main():
     if a.tool: r.sel["upload"] = core.pick("upload", a.tool, r.target); r.steps["upload"] = a.tool
     run = ["upload"] if a.upload else core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     print(f"{T.ARROW} {T.bold('check'.ljust(8))} {T.cyan(r.name)} → {T.cyan(a.target)}  {T.dim('tools from ' + __import__('os').path.relpath(r.dpath))}")
-    bad = []
+    bad = r.problems(run)
     for s in run:
-        b = r.sel[s]; why = b.supports(r.target)
+        b = r.sel[s]; why = next((w for st, _, w in bad if st == s), None)
         chosen = r.steps.get(s, "auto")
         tag = T.dim(" auto") if chosen == "auto" else T.dim(f" {chosen}/explore") if chosen in ("all", "all_open") else ""
         lb = b.label()
-        print(f"    {s:8} {lb}{tag}{' ' * max(1, 26 - len(lb) - len(T.plain(tag)))}{T.OK if not why else T.FAIL + ' ' + T.red('not available')}")
-        if why: bad.append((s, b.name, why))
-
-    # cross-step rule: Vivado can only write the bitstream of an in-context design (pins in `xdc:`, Vivado placement)
-    if "bitgen" in run and r.sel["bitgen"].name == "vivado" and not bad:
-        if not r.flow.get("xdc"):
-            bad.append(("bitgen", "vivado", "the design has no pin constraints (`xdc:`): Vivado refuses bitstreams of out-of-context designs"))
-        elif r.sel["place"].name != "vivado":
-            bad.append(("bitgen", "vivado", f"place uses {r.sel['place'].name}, which builds the design without I/O; Vivado needs to place and route it"))
-
-    if "bitgen" in run and r.sel["bitgen"].name == "open_io" and not r.flow.get("xdc") and r.flow.get("pins") != "auto":
-        bad.append(("bitgen", "open_io", "the design has no pin constraints (`xdc:` with PACKAGE_PIN/IOSTANDARD per port); `pins: auto` only for test builds"))
-    if "bitgen" in run and r.sel["bitgen"].name == "vivado_wrap" and not r.flow.get("wrap"):
-        bad.append(("bitgen", "vivado_wrap", "the design has no `wrap:` (I/O wrapper top, its rtl, and the core instance name)"))
+        print(f"    {s:8} {lb}{tag}{' ' * max(1, 26 - len(lb) - len(T.plain(tag)))}{T.OK if not why else T.FAIL + ' ' + T.red('cannot run')}")
     if not bad:
         print(f"  {T.OK} {T.green('all tools available')}"); return
     dfile = __import__("os").path.relpath(r.dpath)

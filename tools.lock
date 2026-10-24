@@ -9,11 +9,11 @@
 # Contact  : christian.conti@mail.it
 
 # dreamplacefpga: PINNED, commit named in the RapidWright tutorial (its master imports a timing op it never builds)
-dreamplacefpga        https://github.com/rachelselinar/DREAMPlaceFPGA             fb6d086ed082f8404123679ec59d53e7116b3f2e
+dreamplacefpga        https://github.com/rachelselinar/DREAMPlaceFPGA             004494318453ba4ad7053b12d0c924a2a2a34356
 prjxray               https://github.com/f4pga/prjxray                            HEAD
 prjxray-db            https://github.com/SymbiFlow/prjxray-db                     HEAD
 # nextpnr-fpga-interchange: PINNED, last nextpnr commit with the fpga_interchange architecture (removed from master on 2024-09-30)
-nextpnr-fpga-interchange https://github.com/YosysHQ/nextpnr                     1967db170d23bc978d678912ec81c6814818983b
+nextpnr-fpga-interchange https://github.com/YosysHQ/nextpnr                     22c5adf423ecb602dfc1250d10f740ccfff0786a
 python-fpga-interchange  https://github.com/chipsalliance/python-fpga-interchange HEAD
 fpga-interchange-schema  https://github.com/chipsalliance/fpga-interchange-schema HEAD
 # prjuray: Project U-Ray (UltraScale/UltraScale+ bitstream documentation and fasm2frames/fasm2bit); prjuray-db: its database

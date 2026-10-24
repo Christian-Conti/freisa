@@ -9,7 +9,7 @@
 # Module   : tui.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
-import collections, curses, os, pathlib, re, shutil, signal, subprocess, tempfile, threading, time
+import collections, curses, os, textwrap, pathlib, re, shutil, signal, subprocess, tempfile, threading, time
 import yaml
 from . import cli, core, resolve, term as T
 from .stages import upload
@@ -103,15 +103,22 @@ def tone(line):
     if l.startswith(("│", "|")): return C["dim"]
     return 0
 
+def wrap(line, n):
+    """A long line as several rows of n columns; continuation rows keep the indentation (+2)."""
+    if len(line) <= n or n < 10: return [line]
+    ind = " " * min(len(line) - len(line.lstrip()) + 2, n // 3)
+    return textwrap.wrap(line, n, subsequent_indent=ind, break_on_hyphens=False) or [line]
+
 def textpane(w, y, x, h, wd, lines, title="", focus=False, scroll=0, colorize=True):
-    """Box with lines; scroll = lines up from the end (0 = follow the end)."""
+    """Box with lines (long ones wrapped); scroll = rows up from the end (0 = follow the end)."""
     box(w, y, x, h, wd, title, focus)
     n = h - 2
-    end = max(n, len(lines) - scroll)
-    for r, l in enumerate(lines[max(0, end - n):end]):
-        put(w, y + 1 + r, x + 2, l, tone(l) if colorize else 0, wd - 4)
-    if len(lines) > n:
-        put(w, y + h - 1, x + wd - 14, f" {max(0, end - n) + 1}-{min(end, len(lines))}/{len(lines)} ", C["dim"])
+    rows = [(r, tone(l) if colorize else 0) for l in lines for r in wrap(l, wd - 4)]
+    end = max(n, len(rows) - scroll)
+    for i, (l, a) in enumerate(rows[max(0, end - n):end]):
+        put(w, y + 1 + i, x + 2, l, a, wd - 4)
+    if len(rows) > n:
+        put(w, y + h - 1, x + wd - 14, f" {max(0, end - n) + 1}-{min(end, len(rows))}/{len(rows)} ", C["dim"])
 
 WIDE = 110  # below this width panes are stacked instead of side by side
 
@@ -318,11 +325,22 @@ class Flow(Tab):
         self.frm, self.to, self.over, self.row, self.si, self.res, self.err = core.STAGES[0], core.STAGES[-1], {}, 0, 0, None, ""
         self.toollog, self.toollog_t, self.wide, self.logview = [], 0, True, "flow"
         self.resolve()
+    def run_stages(self): return core.STAGES[core.STAGES.index(self.frm):core.STAGES.index(self.to) + 1]
     def resolve(self):
         try:
             self.res = resolve.Resolved(self.design, self.board, {k: v for k, v in self.over.items() if k != "upload"}); self.err = ""
+            self.bad = {s: why for s, _, why in self.res.problems(self.run_stages())}
         except SystemExit as e:
-            self.res, self.err = None, T.plain(str(e))
+            self.res, self.err, self.bad = None, T.plain(str(e)), {}
+    def problem_with(self, s, v):
+        """Why step s cannot run with value v (same rules as `make check`), or None."""
+        if s == "upload": return core.REGISTRY["upload"][v]().supports(target(self.board)) if v in core.REGISTRY["upload"] else None
+        try:
+            r = resolve.Resolved(self.design, self.board, {**{k: x for k, x in self.over.items() if k != "upload"}, s: v})
+        except SystemExit as e:
+            return T.plain(str(e)).splitlines()[0]
+        run = self.run_stages() if s in self.run_stages() else [s]
+        return next((why for st, _, why in r.problems(run) if st == s), None)
     def options(self, s):
         """Every value of one step: auto/all/all_open and the tools, with availability on this board."""
         t = target(self.board); core.load_backends()
@@ -332,8 +350,8 @@ class Flow(Tab):
             out += [("all", "all", "every tool that works, keep the best", C["accent"]),
                     ("all_open", "all_open", "every open tool that works, keep the best", C["accent"])]
         for n, cls in core.REGISTRY[s].items():
-            why = cls().supports(t)
-            out.append((cls.label(), n, "✔ available" if not why else f"✘ {why}", C["ok"] if not why else C["bad"]))
+            why = cls().supports(t) or self.problem_with(s, n)
+            out.append((cls.label(), n, "✔ can run" if not why else f"✘ {why}", C["ok"] if not why else C["bad"]))
         return out
     def value(self, s):
         if s == "upload": return self.over.get("upload") or (self.res.steps.get("upload", "auto") if self.res else "auto")
@@ -345,7 +363,7 @@ class Flow(Tab):
         if not self.res: return v, None, self.err or "?"
         name = self.res.sel[s].name if v in ("auto", "all", "all_open") else v
         cls = core.REGISTRY.get(s, {}).get(name)
-        return v, cls, (cls().supports(target(self.board)) if cls else f"unknown tool {name}")
+        return v, cls, (self.bad.get(s) or (cls().supports(target(self.board)) if cls else f"unknown tool {name}"))
     def cycle(self, d):
         r = self.ROWS[self.row]
         if r == "design": ds = list(designs()); self.design = ds[(ds.index(self.design) + d) % len(ds)] if self.design in ds else ds[0]; self.over = {}
@@ -378,6 +396,9 @@ class Flow(Tab):
         return [f"STEPS={' '.join(f'{k}={v}' for k, v in o.items())}"] if o else []
     def base(self): return [f"DESIGN={self.design}", f"TARGET={self.board}"]
     def go(self, to=None):
+        bad = {k: v for k, v in self.bad.items() if k in self.run_stages()[:self.run_stages().index(to) + 1 if to in self.run_stages() else None]}
+        if bad and modal_pick(self.app, f"{', '.join(bad)} cannot run: run anyway?",
+                              [("no", False, "", 0)] + [(f"  {k}:", None, v, C["bad"]) for k, v in bad.items()] + [("yes, run", True, "", C["warn"])]) is not True: return
         self.run(["make", "flow", *self.base(), f"FROM={self.frm}", f"TO={to or self.to}", *self.steps_arg()],
                  f"flow {self.design} → {self.board}")
     def check(self): self.run(["make", "check", *self.base(), f"FROM={self.frm}", f"TO={self.to}", *self.steps_arg()], f"check {self.design} → {self.board}")
@@ -841,6 +862,16 @@ class App:
             put(s, y + 1, 2, f"cannot draw this tab: {type(e).__name__}: {e}", C["bad"], w - 4)
         self.footer(h - 2, w); s.refresh()
 
+    def shutdown(self):
+        """Stop running commands (they run in their own process group, Ctrl+C does not reach them) and close UARTs."""
+        for j in self.jobs: j.kill()
+        for j in self.jobs:
+            try: j.p.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try: os.killpg(j.p.pid, signal.SIGKILL)
+                except ProcessLookupError: pass
+        for tb in self.tabs:
+            if getattr(tb, "uart", None): tb.uart.close()
     def mouse(self, t):
         try: _, mx, my, _, b = curses.getmouse()
         except curses.error: return
@@ -865,11 +896,7 @@ class App:
             if t.capture: t.key(k); continue
             if k == ord("q"):
                 run = [j for j in self.jobs if j.running]
-                if not run or confirm(self, f"{len(run)} command(s) running: stop them and quit?"):
-                    for j in run: j.kill()
-                    for tb in self.tabs:
-                        if getattr(tb, "uart", None): tb.uart.close()
-                    return
+                if not run or confirm(self, f"{len(run)} command(s) running: stop them and quit?"): return
             elif k == 9: self.cur = (self.cur + 1) % len(self.tabs)
             elif k == curses.KEY_BTAB: self.cur = (self.cur - 1) % len(self.tabs)
             elif ord("1") <= k < ord("1") + len(self.tabs): self.cur = k - ord("1")
@@ -879,4 +906,13 @@ class App:
 
 def main():
     os.environ.setdefault("ESCDELAY", "25")  # Esc reacts at once
-    curses.wrapper(lambda scr: App(scr).loop())
+    app = None
+    def run(scr):
+        nonlocal app
+        app = App(scr); app.loop()
+    try:
+        curses.wrapper(run)
+    except KeyboardInterrupt:  # Ctrl+C: leave like q, without the traceback
+        pass
+    finally:
+        if app: app.shutdown()

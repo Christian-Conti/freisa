@@ -45,3 +45,19 @@ class Resolved:
             self.flow.update(pt.get(f"{target_name}@{tool}", {}))
         r = (self.dpath.parent / self.flow["repo"]).resolve()
         self.root = r if r.exists() else (HERE / "designs" / self.flow["repo"]).resolve()
+
+    def problems(self, run):
+        """[(step, tool, reason)] that stop the flow over the steps in `run`: tools that cannot run on this board, and the
+        rules between steps (shared by `make check` and the interactive interface)."""
+        bad = [(s, self.sel[s].name, why) for s in run if (why := self.sel[s].supports(self.target))]
+        if "bitgen" in run and not bad:  # Vivado only writes bitstreams of in-context designs (pins in `xdc:`, Vivado placement)
+            b = self.sel["bitgen"].name
+            if b == "vivado" and not self.flow.get("xdc"):
+                bad.append(("bitgen", b, "the design has no pin constraints (`xdc:`) for this board: Vivado refuses bitstreams of out-of-context designs"))
+            elif b == "vivado" and self.sel["place"].name != "vivado":
+                bad.append(("bitgen", b, f"place uses {self.sel['place'].name}, which builds the design without I/O; Vivado needs to place and route it"))
+            elif b == "open_io" and not self.flow.get("xdc") and self.flow.get("pins") != "auto":
+                bad.append(("bitgen", b, "the design has no pin constraints (`xdc:` with PACKAGE_PIN/IOSTANDARD per port); `pins: auto` only for test builds"))
+            elif b == "vivado_wrap" and not self.flow.get("wrap"):
+                bad.append(("bitgen", b, "the design has no `wrap:` (I/O wrapper top, its rtl, and the core instance name)"))
+        return bad
