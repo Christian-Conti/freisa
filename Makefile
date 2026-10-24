@@ -59,12 +59,20 @@ TOOLS ?=
 ## @param REF Branch/tag/commit to pin (for `update`, default upstream HEAD)
 REF ?=
 
-.PHONY: install-prjuray install-interchange uart-test check install-boards upload outdated update uninstall install-dreamplace check-deps help install conda-env fetch install-xc7 doctor flow synth clean
+.PHONY: status show install-prjuray install-interchange uart-test check install-boards upload outdated update uninstall install-dreamplace check-deps help install conda-env fetch install-xc7 doctor flow synth clean
 
 ## @section Help
 ## Show this guide
 help:
 	@FILE_FOR_HELP="$(firstword $(MAKEFILE_LIST))" bash "$(MAKEFILE_DIR)utils/MakeHelp"
+
+## Dashboard: environment, tools, boards, projects and latest builds (PART=env|tools|boards|projects|builds for one panel)
+status:
+	@$(CONDA_RUN) python -m freisa.cli $(or $(PART),status)
+
+## Details of one build: steps, area, timing and files of DESIGN on TARGET
+show:
+	@$(CONDA_RUN) python -m freisa.cli show $(DESIGN) $(TARGET)
 
 ## @section Install
 ## Everything: conda env (python deps + RapidWright), board files, pinned tools built from source (xc7 tools, DREAMPlaceFPGA); skips what is already built
