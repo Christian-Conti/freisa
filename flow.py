@@ -33,13 +33,14 @@ def main():
     ap.add_argument("--to", default=core.STAGES[-1])
     ap.add_argument("-j", "--jobs", type=int, default=4, help="parallel explore variants")
     ap.add_argument("-o", "--out", default=HERE / "build")
+    ap.add_argument("--step", action="append", default=[], metavar="STAGE=TOOL", help="tool of one step, overriding the project file")
     ap.add_argument("--all-boards", action="store_true", help="doctor: every board in targets/")
     a = ap.parse_args()
     if a.cmd == "doctor" and a.all_boards:  # one table per board
         for tf in sorted((HERE / "targets").glob("*.yml")):
             doctor(resolve.Resolved(a.design, tf.stem), tf.stem); print()
         return
-    r = resolve.Resolved(a.design, a.target)
+    r = resolve.Resolved(a.design, a.target, dict(s.split("=", 1) for s in a.step))
     flow, target, name = r.flow, r.target, r.name
     ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, r.root)
     if a.cmd == "upload":

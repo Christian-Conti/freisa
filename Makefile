@@ -50,6 +50,8 @@ JTAG ?=
 PORT ?=
 ## @param BAUD Baud rate for `make uart-test` (default 115200)
 BAUD ?=
+## @param STEPS Tools per step overriding the project file, e.g. STEPS="place=dreamplacefpga route=rwroute"
+STEPS ?=
 ## @param NAME Tool name in tools.lock (for `update`)
 NAME ?=
 
@@ -128,7 +130,7 @@ upload:
 
 ## Check that the tools chosen in the project file for TARGET are available; stops and suggests how to change the command if not
 check:
-	@$(CONDA_RUN) python utils/check_flow.py -d $(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO)
+	@$(CONDA_RUN) python utils/check_flow.py -d $(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO) $(foreach s,$(STEPS),--step $(s))
 ## UART loopback test: send data on the board's PL UART and check the echo (PORT=/dev/ttyUSBx, BAUD=115200 to override)
 uart-test:
 	@$(CONDA_RUN) JTAG=$(JTAG) python utils/uart_test.py $(if $(filter command line environment,$(origin TARGET)),-t $(TARGET)) $(if $(PORT),--port $(PORT)) $(if $(BAUD),--baud $(BAUD))
@@ -138,8 +140,8 @@ doctor:
 
 ## Run the flow for DESIGN on TARGET (FROM..TO stages)
 flow:
-	@$(CONDA_RUN) python utils/check_flow.py -d $(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO)
-	@$(CONDA_RUN) python flow.py run -d $(DESIGN_DIR)$(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO)
+	@$(CONDA_RUN) python utils/check_flow.py -d $(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO) $(foreach s,$(STEPS),--step $(s))
+	@$(CONDA_RUN) python flow.py run -d $(DESIGN_DIR)$(DESIGN) -t $(TARGET) --from $(FROM) --to $(TO) $(foreach s,$(STEPS),--step $(s))
 
 ## Open synthesis only (yosys)
 synth:

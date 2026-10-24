@@ -35,8 +35,9 @@ def main():
     ap.add_argument("--from", dest="frm", default=core.STAGES[0]); ap.add_argument("--to", default=core.STAGES[-1])
     ap.add_argument("--upload", action="store_true", help="check the upload step only")
     ap.add_argument("--tool", help="upload tool overriding the project file")
+    ap.add_argument("--step", action="append", default=[], metavar="STAGE=TOOL", help="tool of one step, overriding the project file")
     a = ap.parse_args()
-    r = resolve.Resolved(a.design, a.target)
+    r = resolve.Resolved(a.design, a.target, dict(s.split("=", 1) for s in a.step))
     if a.tool: r.sel["upload"] = core.pick("upload", a.tool, r.target); r.steps["upload"] = a.tool
     run = ["upload"] if a.upload else core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
     print(f"{T.ARROW} {T.bold('check'.ljust(8))} {T.cyan(r.name)} → {T.cyan(a.target)}  {T.dim('tools from ' + __import__('os').path.relpath(r.dpath))}")

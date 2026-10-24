@@ -19,9 +19,9 @@ Each step has one or more tools. The project file chooses the tool of every step
 ## Commands
 | Command | What it does |
 |---------|--------------|
-| `make flow DESIGN=<d> TARGET=<b>` | run the flow |
+| `make flow DESIGN=<d> TARGET=<b>` | run the flow; `STEPS="place=dreamplacefpga route=rwroute"` changes the tool of some steps for this run only |
 | `make check` | check that the selected tools are available; suggest fixes if not |
-| `python freisa.py` | interactive interface: dashboard panels, build details, and every command below from a menu (parameters chosen from lists) |
+| `python freisa.py` | interactive interface, see below |
 | `make status` | dashboard: environment, tools (commit, pinned or latest), installed boards, projects and latest builds; `PART=env\|tools\|boards\|projects\|builds` for one panel |
 | `make show DESIGN=<d> TARGET=<b>` | one build: time/cpu/memory of each step, area, timing and output files |
 | `make doctor` | every tool of every step and whether it can run: for all boards, or only `TARGET=<b>` |
@@ -114,3 +114,21 @@ Every run writes `report/reports/area.rpt` and `report/reports/timing.rpt`; thei
 
 The clock requirement comes from `clocks:` in the project file (written into the design by `open_io`); without it only
 the critical path is reported.
+
+## Interactive interface
+
+`python freisa.py` opens a terminal interface (it switches to the FREISA conda env by itself). Tabs, switched with
+`1`-`6` or `Tab`; the bottom line lists the keys of the current tab, `?` shows them all.
+
+| Tab | What it does |
+|---|---|
+| 1 Home | overview: tools built, boards installed, projects, builds, Vivado; the open flow `auto` picks for each board family; latest builds |
+| 2 Flow | choose design, board, FROM/TO and the tool of every step (Enter on a step: every tool with whether it can run on that board); `r` run, `s` synthesis only, `c` check, `u` upload, `e` edit the project file. Progress per step and two live logs: the flow and the tool running now |
+| 3 Builds | every build: steps, area, timing, flow log, summary (`←→`); `u` programs its bitstream, `r` runs it again |
+| 4 Boards | boards.yml: installed or not, part, source, generated settings and board files; `i` installs one board, `a` all, `e` edits boards.yml |
+| 5 Hardware | JTAG cables found on USB with their FPGA and boards, and their serial ports (the PL UART is marked); `p` programs a bitstream, `R` resets the FPGA (openFPGALoader), `Y` resets the whole board (PS and PL, Vivado xsdb); `o` opens a UART monitor (`b` baud, `i` type and send, `h` hex), `t` loopback test |
+| 6 Tools | tools.lock: commit, pinned or latest, built or not; `i` installs one, `u` moves it to the latest commit, `o` lists the outdated ones; environment |
+
+Commands run in the background: you can change tab while a flow runs; `x` stops the command of the tab, `q` quits
+(asking first if something still runs). Tools chosen in the Flow tab apply to that run only (`STEPS=`); to keep them,
+write them in the project file (`e`).

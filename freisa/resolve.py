@@ -13,7 +13,7 @@ HERE = pathlib.Path(__file__).resolve().parent.parent
 os.environ["PATH"] = f"{HERE / 'install' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}"  # tools built by `make install`
 
 class Resolved:
-    def __init__(self, design, target_name):
+    def __init__(self, design, target_name, steps=None):
         core.load_backends()
         # `design` may be a project name (any designs/**/<name>.yml), a relative or an absolute path to a yml
         d = design.strip('"')
@@ -33,7 +33,7 @@ class Resolved:
         self.target_name, self.name = target_name, self.dpath.stem
         # tools per step come from the project file: `steps` (all boards), then `boards.<target>` (this board);
         # a step not listed is `auto` (first open tool that works on the board); `all` explores every tool that works
-        self.steps = {**(self.flow.get("steps") or {}), **((self.flow.get("boards") or {}).get(target_name) or {})}
+        self.steps = {**(self.flow.get("steps") or {}), **((self.flow.get("boards") or {}).get(target_name) or {}), **(steps or {})}  # steps: command line (STEPS=)
         self.steps["sources"] = "filelist" if "filelist" in self.flow else "core" if "core" in self.flow else "files"
         # `all`: every tool that works on the board; `all_open`: the same without tools that use a vendor tool (Vivado)
         self.explore_all = {s: v for s, v in self.steps.items() if v in ("all", "all_open")}

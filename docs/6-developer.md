@@ -88,9 +88,13 @@ read `xdc:` from the project file.
 
 ## Adding to the interactive interface
 
-`python freisa.py` (code in `freisa/tui.py`) is driven by three tables at the top of the file:
+`python freisa.py` runs `freisa/tui.py`. Each tab is a class derived from `Tab`, listed in `TABS`:
 
-- `VIEWS`: menu label → function returning the text shown on the right (the panels of `freisa/cli.py`).
-- `ACTIONS`: `(label, make target, parameters, confirm)`; the interface asks the parameters and runs `make <target> VAR=value`.
-  A new `make` target becomes a menu entry with one line here.
-- `PARAMS`: make variable → function returning its choices (`None`: typed by hand).
+- `keys()` returns `(key, hint, function)` entries: a new command is one line there, and the footer shows its hint.
+- `draw(w, y, x, h, wd)` draws the tab in its area with the helpers `box`, `put`, `textpane` and `ListView`.
+- `self.run(cmd, title)` starts a command in the background (usually a `make` target); `self.log(...)` shows its output.
+- Popups: `modal_pick` (list), `modal_text` (one line), `confirm`.
+
+A new tab: subclass `Tab`, set `title` and `icon`, write `keys()` and `draw()`, and append the class to `TABS`.
+Data shown by more than one interface (environment, tools, builds) comes from `freisa/cli.py`, which also prints
+`make status`.

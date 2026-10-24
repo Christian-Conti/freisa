@@ -2,165 +2,805 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : Interactive terminal interface (curses): browse the dashboard panels and run every make target from a menu.
-#            Start it with `python freisa.py`. To add something, add one line to VIEWS, ACTIONS or PARAMS below.
+# Info     : Interactive terminal interface (curses), started with `python freisa.py`. One tab per job: Home, Flow (choose
+#            design, board and the tool of every step, run with live logs), Builds, Boards, Hardware (JTAG cables,
+#            programming, reset, UART monitor) and Tools. Commands run in the background through the make targets.
+#            To add a tab: subclass Tab and append it to TABS; to add a command to a tab: one line in its keys().
 # Module   : tui.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
-import curses, os, subprocess, yaml
-from . import cli, term as T
-from .core import STAGES
+import collections, curses, os, pathlib, re, shutil, signal, subprocess, tempfile, threading, time
+import yaml
+from . import cli, core, resolve, term as T
+from .stages import upload
 
 ROOT = cli.ROOT
+SPIN = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+BAUDS = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
+CHIP = ["  ┌┴┴┴┴┴┴┴┴┴┐ ",
+        " ─┤ ▓▓▓▓▓▓▓ ├─",
+        " ─┤ ▓ LUT ▓ ├─",
+        " ─┤ ▓▓▓▓▓▓▓ ├─",
+        "  └┬┬┬┬┬┬┬┬┬┘ "]
 
-# ------------------------------------------------------------------ what the menu offers (edit here)
-# PARAMS: make variable -> function giving its choices (None: free text, empty = default)
-def _designs(): return sorted(f.stem for f in (ROOT / "designs").rglob("*.yml"))
-def _boards():  return list(((yaml.safe_load(open(ROOT / "boards.yml")) or {}).get("boards") or {}))
-def _tools():   return [l.split()[0] for l in (ROOT / "tools.lock").read_text().splitlines() if l.strip() and not l.startswith("#")]
-def _builds():  return sorted(f"{p.parent.name}/{p.name}" for p in (ROOT / "build").glob("*/*") if (p / "flow.log").exists())
+# ------------------------------------------------------------------ data
+def designs():  return {f.stem: f for f in sorted((ROOT / "designs").rglob("*.yml"))}
+def boards_cfg(): return (yaml.safe_load(open(ROOT / "boards.yml")) or {}).get("boards") or {}
+def installed(): return sorted(p.stem for p in (ROOT / "targets").glob("*.yml"))
+def target(name): return core.load_yaml(ROOT / "targets" / f"{name}.yml")
+def rel(p): return os.path.relpath(p, ROOT)
 
-PARAMS = {
-    "DESIGN": _designs, "TARGET": _boards, "BOARD": _boards, "NAME": _tools,
-    "FROM": lambda: STAGES, "TO": lambda: STAGES[::-1],
-    "TOOL": lambda: ["openfpgaloader", "vivado"],
-    "JTAG": None, "PORT": None, "BAUD": None, "REF": None, "BUILD": _builds,
-}
+def builds():
+    """Build directories build/<design>/<board>, newest first."""
+    ds = [p for p in (ROOT / "build").glob("*/*") if (p / "flow.log").exists()]
+    return sorted(ds, key=lambda p: (p / "flow.log").stat().st_mtime, reverse=True)
 
-# VIEWS: menu label -> function returning the text shown on the right
-VIEWS = {
-    "Environment": cli.env, "Tools": cli.tools, "Boards": cli.boards, "Projects": cli.projects, "Builds": lambda: cli.builds(50),
-}
+def fpga_want(part):
+    """Prefix of the FPGA model JTAG reports for this part (same rule as `make upload`)."""
+    return re.sub(r"(ev|eg|cg|dr)$", "", upload._model(part))
 
-# ACTIONS: (menu label, make target, parameters asked, ask for confirmation)
-ACTIONS = [
-    ("Run flow",             "flow",           ["DESIGN", "TARGET", "FROM", "TO"], False),
-    ("Check tools",          "check",          ["DESIGN", "TARGET"],               False),
-    ("Doctor (all boards)",  "doctor",         ["DESIGN"],                         False),
-    ("Synthesis only",       "synth",          ["DESIGN", "TARGET"],               False),
-    ("Program board",        "upload",         ["DESIGN", "TARGET", "TOOL", "JTAG"], False),
-    ("UART test",            "uart-test",      ["TARGET", "PORT", "BAUD"],         False),
-    ("Install everything",   "install",        [],                                 True),
-    ("Install boards",       "install-boards", ["BOARD"],                          False),
-    ("Outdated tools",       "outdated",       [],                                 False),
-    ("Update a tool",        "update",         ["NAME", "REF"],                    True),
-    ("Remove build outputs", "clean",          [],                                 True),
-]
+def ports():
+    """[(tty, usb serial, interface number)] of every USB serial port."""
+    out = []
+    for t in sorted(pathlib.Path("/sys/class/tty").glob("ttyUSB*"), key=lambda p: int(p.name[6:])):
+        try:
+            intf = (t / "device").resolve().parent
+            out.append((f"/dev/{t.name}", (intf.parent / "serial").read_text().strip(), int((intf / "bInterfaceNumber").read_text(), 16)))
+        except (OSError, ValueError):
+            pass
+    return out
 
-# ------------------------------------------------------------------ interface
-def _menu():
-    items = [("head", "VIEW")] + [("view", k) for k in VIEWS] + [("view", "Build details")]
-    return items + [("head", "RUN")] + [("act", a) for a in ACTIONS] + [("head", ""), ("quit", "Quit")]
-
-def _label(kind, x): return x[0] if kind == "act" else x
-
-def _pick(scr, title, choices):
-    """Popup list; returns the choice, "" for the default, None on Esc."""
-    choices = ["(default)"] + choices
-    i = 0
-    while True:
-        h, w = scr.getmaxyx()
-        n = min(len(choices), h - 4); bw = min(w - 4, max(len(title), *map(len, choices)) + 6)
-        win = curses.newwin(n + 2, bw, (h - n - 2) // 2, (w - bw) // 2); win.keypad(True); win.box()
-        win.addstr(0, 2, f" {title} ", curses.color_pair(1) | curses.A_BOLD)
-        top = max(0, i - n + 1)
-        for r, c in enumerate(choices[top:top + n]):
-            win.addstr(r + 1, 2, c[:bw - 4], curses.A_REVERSE if top + r == i else 0)
-        k = win.getch()
-        if k in (curses.KEY_UP, ord("k")): i = (i - 1) % len(choices)
-        elif k in (curses.KEY_DOWN, ord("j")): i = (i + 1) % len(choices)
-        elif k in (10, 13, curses.KEY_ENTER): return "" if i == 0 else choices[i]
-        elif k == 27: return None
-
-def _ask(scr, title):
-    """Popup text field; empty = default, None on Esc."""
-    h, w = scr.getmaxyx(); bw = min(w - 4, 60)
-    win = curses.newwin(3, bw, h // 2 - 1, (w - bw) // 2); win.box()
-    win.addstr(0, 2, f" {title} (empty = default, Esc = cancel) "[:bw - 4], curses.color_pair(1) | curses.A_BOLD)
-    curses.curs_set(1); s = ""
-    while True:
-        win.addstr(1, 2, s.ljust(bw - 4)[:bw - 4]); win.move(1, 2 + min(len(s), bw - 5))
-        k = win.getch()
-        if k == 27: curses.curs_set(0); return None
-        if k in (10, 13): curses.curs_set(0); return s.strip()
-        if k in (8, 127, curses.KEY_BACKSPACE): s = s[:-1]
-        elif 32 <= k < 127: s += chr(k)
-
-def _param(scr, name):
-    src = PARAMS.get(name)
-    return _pick(scr, name, src()) if src else _ask(scr, name)
-
-def _run(scr, cmd):
-    """Leave curses, run the command in the normal terminal (its own colors and progress), come back on Enter."""
-    curses.endwin()
-    print(T.orange("▶ ") + T.bold(" ".join(cmd)) + "\n", flush=True)
-    rc = subprocess.call(cmd, cwd=ROOT)
-    print("\n" + (T.OK + " done" if rc == 0 else T.FAIL + f" exit code {rc}"))
-    input(T.dim("Enter to go back to FREISA "))
-    scr.refresh()
-
-def _content(kind, x):
+def tail(path, n=400):
+    """Last lines of a text file (reads only its end)."""
     try:
-        if kind == "view" and x in VIEWS: return VIEWS[x]()
-        if kind == "view": return "Enter: choose a build and show its steps, area, timing and files."
-        if kind == "act":
-            label, target, ps, _ = x
-            return f"make {target}" + "".join(f" {p}=…" for p in ps) + "\n\nEnter: choose the parameters and run it."
-    except Exception as e:  # a broken view must not close the interface
-        return f"cannot show this: {e}"
-    return ""
+        with open(path, "rb") as f:
+            f.seek(0, 2); f.seek(max(0, f.tell() - 64 * 1024))
+            return [T.plain(l) for l in f.read().decode(errors="replace").splitlines()[-n:]]
+    except OSError:
+        return []
 
-def _draw(scr, items, sel, text, scroll):
-    scr.erase(); h, w = scr.getmaxyx()
-    for r, l in enumerate(cli.BANNER_PLAIN.strip("\n").splitlines()[:5]):
-        scr.addstr(r, 1, l[:w - 2], curses.color_pair(1) | curses.A_BOLD)
-    scr.addstr(5, 1, cli.TAGLINE[:w - 2], curses.A_DIM)
-    mw = 26; y0 = 7
-    for r, (kind, x) in enumerate(items[:h - y0 - 1]):
-        if kind == "head": scr.addstr(y0 + r, 1, x, curses.color_pair(1) | curses.A_BOLD); continue
-        attr = curses.A_REVERSE if r == sel else 0
-        scr.addstr(y0 + r, 2, (" " + _label(kind, x)).ljust(mw - 2)[:mw - 2], attr)
-    lines = T.plain(text).splitlines()
-    for r, l in enumerate(lines[scroll:scroll + h - y0 - 1]):
-        scr.addstr(y0 + r, mw + 1, l[:w - mw - 2])
-    scr.addstr(h - 1, 1, "↑↓ move  Enter select  PgUp/PgDn scroll  r refresh  q quit"[:w - 2], curses.A_DIM)
-    scr.refresh()
+def fmt(s):
+    s = int(s)
+    return f"{s // 3600}h{s % 3600 // 60:02d}m" if s >= 3600 else f"{s // 60}m{s % 60:02d}s" if s >= 60 else f"{s}s"
 
-def _loop(scr):
-    curses.curs_set(0); curses.use_default_colors()
-    curses.init_pair(1, 214 if curses.COLORS >= 256 else curses.COLOR_YELLOW, -1)
-    items = _menu(); sel = 1; scroll = 0; cache = {}
+# ------------------------------------------------------------------ drawing
+C = {}
+
+def init_colors():
+    curses.start_color(); curses.use_default_colors()
+    rich = curses.COLORS >= 256
+    spec = {"accent": 214 if rich else curses.COLOR_YELLOW, "ok": curses.COLOR_GREEN, "bad": curses.COLOR_RED,
+            "warn": curses.COLOR_YELLOW, "info": curses.COLOR_CYAN, "dim": 244 if rich else curses.COLOR_WHITE}
+    for i, (k, c) in enumerate(spec.items(), 1):
+        curses.init_pair(i, c, -1); C[k] = curses.color_pair(i)
+    curses.init_pair(10, curses.COLOR_BLACK, spec["accent"]); C["tab"] = curses.color_pair(10) | curses.A_BOLD
+    C["grad"] = []
+    for i, g in enumerate([226, 220, 214, 208, 202, 196] if rich else [curses.COLOR_YELLOW] * 6):
+        curses.init_pair(20 + i, g, -1); C["grad"].append(curses.color_pair(20 + i) | curses.A_BOLD)
+
+def put(w, y, x, s, attr=0, n=None):
+    """addstr clipped to the window (and to n columns); never raises."""
+    H, W = w.getmaxyx()
+    if y < 0 or y >= H or x < 0 or x >= W: return
+    s = str(s)[:max(0, min(W - x, n if n is not None else W))]
+    try: w.addstr(y, x, s, attr)
+    except curses.error: pass  # the bottom-right cell raises after drawing
+
+def box(w, y, x, h, wd, title="", focus=False):
+    a = C["accent"] if focus else C["dim"]
+    put(w, y, x, "╭" + "─" * (wd - 2) + "╮", a)
+    for r in range(1, h - 1): put(w, y + r, x, "│", a); put(w, y + r, x + wd - 1, "│", a)
+    put(w, y + h - 1, x, "╰" + "─" * (wd - 2) + "╯", a)
+    if title: put(w, y, x + 2, f" {title} ", (C["accent"] | curses.A_BOLD) if focus else curses.A_BOLD, wd - 4)
+
+def tone(line):
+    """Color of a log line from its content."""
+    l = line.lower().lstrip()
+    if re.search(r"\bfail|\berror|✘|exit code [1-9]|traceback|denied", l): return C["bad"]
+    if re.match(r"(ok|✔)\b", l) or re.search(r"finished|done in|programmed|echo matches|keeps v", l): return C["ok"]
+    if l.startswith((">>", "▶", "$ ")): return C["accent"] | curses.A_BOLD
+    if l.startswith(("!", "warning")) or "warning" in l: return C["warn"]
+    if l.startswith(("│", "|")): return C["dim"]
+    return 0
+
+def textpane(w, y, x, h, wd, lines, title="", focus=False, scroll=0, colorize=True):
+    """Box with lines; scroll = lines up from the end (0 = follow the end)."""
+    box(w, y, x, h, wd, title, focus)
+    n = h - 2
+    end = max(n, len(lines) - scroll)
+    for r, l in enumerate(lines[max(0, end - n):end]):
+        put(w, y + 1 + r, x + 2, l, tone(l) if colorize else 0, wd - 4)
+    if len(lines) > n:
+        put(w, y + h - 1, x + wd - 14, f" {max(0, end - n) + 1}-{min(end, len(lines))}/{len(lines)} ", C["dim"])
+
+class ListView:
+    """Selectable list: rows are lists of (text, attr) segments."""
+    def __init__(self): self.i = 0
+    def move(self, k, n):
+        d = {curses.KEY_UP: -1, ord("k"): -1, curses.KEY_DOWN: 1, ord("j"): 1, curses.KEY_PPAGE: -10, curses.KEY_NPAGE: 10,
+             curses.KEY_HOME: -10**6, curses.KEY_END: 10**6}.get(k)
+        if d is None or not n: return False
+        self.i = max(0, min(n - 1, self.i + d)); return True
+    def draw(self, w, y, x, h, wd, rows, focus=True):
+        self.i = max(0, min(self.i, len(rows) - 1))
+        top = max(0, self.i - h + 1)
+        for r, segs in enumerate(rows[top:top + h]):
+            sel = top + r == self.i
+            col = x
+            if sel: put(w, y + r, x, " " * wd, curses.A_REVERSE if focus else C["dim"] | curses.A_REVERSE)
+            for text, attr in segs:
+                put(w, y + r, col, text, (attr | curses.A_REVERSE) if sel and focus else attr, x + wd - col)
+                col += len(text)
+
+# ------------------------------------------------------------------ background commands
+class Job:
+    """A command running in the background; its output is kept for the log panes."""
+    def __init__(self, cmd, title):
+        self.cmd, self.title, self.t0, self.t1, self.rc = [str(c) for c in cmd], title, time.time(), None, None
+        self.lines = collections.deque(["$ " + " ".join(self.cmd)], maxlen=5000)
+        self.p = subprocess.Popen(self.cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                                  env={**os.environ, "NO_COLOR": "1", "COLUMNS": "160"}, start_new_session=True)
+        threading.Thread(target=self._read, daemon=True).start()
+    def _read(self):
+        buf = b""
+        for chunk in iter(lambda: self.p.stdout.read1(4096), b""):
+            *done, buf = (buf + chunk).split(b"\n")
+            for l in done:
+                s = T.plain(l.rstrip(b"\r").split(b"\r")[-1].decode(errors="replace")).rstrip()  # \r: progress bars, keep the last
+                if s: self.lines.append(s)
+        self.rc = self.p.wait(); self.t1 = time.time()
+        self.lines.append(("✔ done" if self.rc == 0 else f"✘ exit code {self.rc}") + f" in {fmt(self.t1 - self.t0)}")
+    @property
+    def running(self): return self.rc is None
+    def elapsed(self): return (self.t1 or time.time()) - self.t0
+    def kill(self):
+        if self.running:
+            try: os.killpg(self.p.pid, signal.SIGTERM)
+            except ProcessLookupError: pass
+
+class Uart:
+    """Serial port monitor: a thread keeps the last 64 KB received."""
+    def __init__(self, port, baud):
+        import serial
+        self.port, self.baud, self.err = port, baud, None
+        self.s = serial.Serial(port, baud, timeout=0.1)
+        self.data, self.sent, self.alive = bytearray(), 0, True
+        threading.Thread(target=self._read, daemon=True).start()
+    def _read(self):
+        while self.alive:
+            try: b = self.s.read(4096)
+            except Exception as e: self.err = str(e); return
+            if b: self.data += b; del self.data[:-65536]
+    def send(self, b): self.s.write(b); self.sent += len(b)
+    def close(self):
+        self.alive = False; time.sleep(0.15); self.s.close()
+
+# ------------------------------------------------------------------ popups
+KEYNAMES = {"Enter": (10, 13, curses.KEY_ENTER), "Del": (curses.KEY_DC,), "Space": (32,)}
+
+def modal_pick(app, title, options, current=None):
+    """options: [(label, value, note, attr)]; returns the value or None (Esc)."""
+    i = next((n for n, o in enumerate(options) if o[1] == current), 0)
     while True:
-        kind, x = items[sel]
-        key = _label(kind, x)
-        if key not in cache: cache[key] = _content(kind, x)
-        _draw(scr, items, sel, cache[key], scroll)
-        k = scr.getch()
-        if k in (ord("q"), 27): return
-        step = {curses.KEY_UP: -1, ord("k"): -1, curses.KEY_DOWN: 1, ord("j"): 1}.get(k)
-        if step:
-            sel = (sel + step) % len(items)
-            while items[sel][0] == "head": sel = (sel + step) % len(items)
-            scroll = 0
-        elif k == curses.KEY_NPAGE: scroll += 10
-        elif k == curses.KEY_PPAGE: scroll = max(0, scroll - 10)
-        elif k == ord("r"): cache.clear()
-        elif k in (10, 13, curses.KEY_ENTER):
-            if kind == "quit": return
-            if kind == "view" and x == "Build details":
-                b = _pick(scr, "build", _builds())
-                if b: cache[key] = cli.show(*b.split("/"))
-            elif kind == "act":
-                label, target, ps, confirm = x
-                args = []
-                for p in ps:
-                    v = _param(scr, p)
-                    if v is None: break
-                    if v: args.append(f"{p}={v}")
-                else:
-                    if confirm and _pick(scr, f"{label}: sure?", ["yes"]) != "yes": continue
-                    _run(scr, ["make", target, *args]); cache.clear()
+        h, w = app.scr.getmaxyx()
+        lw = max([len(title) + 4] + [len(o[0]) + len(o[2]) + 6 for o in options]); bw = min(w - 4, lw + 4)
+        n = min(len(options), h - 6); bh = n + 2
+        y, x = (h - bh) // 2, (w - bw) // 2
+        win = curses.newwin(bh, bw, y, x); win.keypad(True); win.erase()
+        box(win, 0, 0, bh, bw, title, True)
+        top = max(0, i - n + 1)
+        for r, (label, _, note, attr) in enumerate(options[top:top + n]):
+            sel = top + r == i
+            put(win, r + 1, 1, " " * (bw - 2), curses.A_REVERSE if sel else 0)
+            put(win, r + 1, 2, label, (attr or 0) | (curses.A_REVERSE if sel else 0), bw - 4)
+            put(win, r + 1, 4 + len(label), note, C["dim"] | (curses.A_REVERSE if sel else 0), bw - 6 - len(label))
+        win.refresh()
+        k = win.getch()
+        if k in (curses.KEY_UP, ord("k")): i = (i - 1) % len(options)
+        elif k in (curses.KEY_DOWN, ord("j")): i = (i + 1) % len(options)
+        elif k in KEYNAMES["Enter"]: return options[i][1]
+        elif k in (27, ord("q")): return None
+
+def modal_text(app, title, value=""):
+    """One-line text field; returns the text or None (Esc)."""
+    h, w = app.scr.getmaxyx(); bw = min(w - 4, max(60, len(title) + 8))
+    win = curses.newwin(3, bw, h // 2 - 1, (w - bw) // 2); win.keypad(True)
+    curses.curs_set(1); s = value
+    try:
+        while True:
+            win.erase(); box(win, 0, 0, 3, bw, title + "  (Enter ok · Esc cancel)", True)
+            put(win, 1, 2, s[-(bw - 5):]); win.move(1, 2 + min(len(s), bw - 5))
+            k = win.get_wch()
+            if k in ("\x1b",): return None
+            if k in ("\n", "\r", curses.KEY_ENTER): return s
+            if k in (curses.KEY_BACKSPACE, "\x7f", "\b"): s = s[:-1]
+            elif isinstance(k, str) and k.isprintable(): s += k
+    finally:
+        curses.curs_set(0)
+
+def confirm(app, msg):
+    return modal_pick(app, msg, [("no", False, "", 0), ("yes", True, "", C["warn"] | curses.A_BOLD)]) is True
+
+# ------------------------------------------------------------------ tabs
+class Tab:
+    """One tab. keys() lists the commands: (key, hint, function); the footer shows the hints."""
+    title = icon = ""
+    capture = False  # True while the tab reads text (every key goes to it)
+    def __init__(self, app): self.app, self.job, self.scroll = app, None, 0
+    def keys(self): return []
+    def draw(self, w, y, x, h, wd): pass
+    def key(self, k):
+        if k in (curses.KEY_SR, ord("K")): self.scroll += 5; return True  # Shift+↑/↓ scroll the log
+        if k in (curses.KEY_SF, ord("J")): self.scroll = max(0, self.scroll - 5); return True
+        for kn, _, fn in self.keys():
+            if k in (KEYNAMES[kn] if kn in KEYNAMES else (ord(kn),)): fn(); return True
+        return False
+    def run(self, cmd, title):
+        if self.job and self.job.running and not confirm(self.app, f"'{self.job.title}' is running: stop it?"): return
+        if self.job: self.job.kill()
+        self.job = self.app.start(cmd, title); self.scroll = 0
+    def stop(self):
+        if self.job and self.job.running: self.job.kill(); self.app.flash("stopped", C["warn"])
+    def log(self, w, y, x, h, wd, title="log"):
+        j = self.job
+        if j is None: textpane(w, y, x, h, wd, ["", "  nothing run yet"], title); return
+        st = f"{SPIN[int(time.time() * 8) % 10]} {fmt(j.elapsed())}" if j.running else ("✔" if j.rc == 0 else f"✘ {j.rc}")
+        textpane(w, y, x, h, wd, list(j.lines), f"{title}: {j.title}  {st}", j.running, self.scroll)
+
+class Home(Tab):
+    title, icon = "Home", "⌂"
+    def draw(self, w, y, x, h, wd):
+        a = self.app
+        tools, bs, ds, bl = a.cache("tools", cli.tool_status), boards_cfg(), designs(), builds()
+        inst = installed(); env = a.env
+        viv = next((e for e in env or [] if e[0].startswith("Vivado")), None)
+        cards = [("TOOLS", f"{sum(t['ok'] for t in tools)}/{len(tools)}", "fetched and built"),
+                 ("BOARDS", f"{len([b for b in bs if b in inst])}/{len(bs)}", "installed"),
+                 ("PROJECTS", str(len(ds)), "in designs/"),
+                 ("BUILDS", str(len(bl)), f"{sum('FAILED' in T.plain(cli.build_info(d)[0]) for d in bl[:20])} failed (last 20)"),
+                 ("VIVADO", (viv[2] if viv and viv[1] else "none") if env else "…", "optional, closed")]
+        cw = (wd - 2) // len(cards)
+        for i, (t, v, sub) in enumerate(cards):
+            cx = x + 1 + i * cw
+            box(w, y, cx, 5, cw - 1, t, i == 0)
+            put(w, y + 1, cx + 2, v, C["accent"] | curses.A_BOLD, cw - 5)
+            put(w, y + 3, cx + 2, sub, C["dim"], cw - 5)
+        # open flow per family, as `auto` resolves it on the installed boards
+        yy = y + 6
+        put(w, yy, x + 2, "OPEN FLOW  (auto, per installed board family)", curses.A_BOLD); yy += 1
+        seen = {}
+        for b in inst:
+            try: t = target(b)
+            except Exception: continue
+            core.load_backends()
+            chain = tuple((b_.label(), b_.supports(t) is None) for b_ in (core.pick(s, "auto", t) for s in core.STAGES[1:] + ["upload"]))
+            seen.setdefault(chain, []).append(b)
+        for chain, bnames in seen.items():
+            put(w, yy, x + 2, ", ".join(bnames), C["info"], wd - 4); yy += 1
+            col = x + 4
+            for i, (lb, ok) in enumerate((("RTL", True),) + chain):
+                seg = f"[{lb}]"
+                if col + len(seg) + 4 > x + wd: yy += 1; col = x + 6
+                put(w, yy, col, seg, (C["ok"] if ok else C["bad"]) if i else C["dim"]); col += len(seg)
+                if i < len(chain): put(w, yy, col, " ─▶ ", C["dim"]); col += 4
+            yy += 2
+        # latest builds
+        n = max(0, h - (yy - y) - 1)
+        if n >= 4:
+            rows = []
+            for d in bl[:n - 2]:
+                st, bit, tm, ts = cli.build_info(d)
+                st = T.plain(st)
+                rows.append(f"{'✔' if st == 'finished' else '✘' if st == 'FAILED' else '…'} {d.parent.name + '/' + d.name:<34} {st:<9} "
+                            f"{cli.ago(ts):<10} {'bit' if bit else '   '}  {tm}")
+            textpane(w, yy, x + 1, min(n, len(rows) + 2), wd - 2, rows or ["no builds yet: tab 2 (Flow)"], "LATEST BUILDS")
+
+class Flow(Tab):
+    """Choose design, board, FROM/TO and the tool of every step; run with live progress and logs."""
+    title, icon = "Flow", "⚙"
+    ROWS = ["design", "board", "from", "to", "steps"]
+    def __init__(self, app):
+        super().__init__(app)
+        self.design = "blinky" if "blinky" in designs() else next(iter(designs()), "")
+        self.board = "xc7z020" if "xc7z020" in installed() else next(iter(installed()), "")
+        self.frm, self.to, self.over, self.row, self.si, self.res, self.err = core.STAGES[0], core.STAGES[-1], {}, 0, 0, None, ""
+        self.toollog, self.toollog_t = [], 0
+        self.resolve()
+    def resolve(self):
+        try:
+            self.res = resolve.Resolved(self.design, self.board, {k: v for k, v in self.over.items() if k != "upload"}); self.err = ""
+        except SystemExit as e:
+            self.res, self.err = None, T.plain(str(e))
+    def options(self, s):
+        """Every value of one step: auto/all/all_open and the tools, with availability on this board."""
+        t = target(self.board); core.load_backends()
+        auto = core.pick(s, "auto", t).label()
+        out = [("auto", "auto", f"first open tool that works: {auto}", C["info"])]
+        if s != "upload":
+            out += [("all", "all", "every tool that works, keep the best", C["accent"]),
+                    ("all_open", "all_open", "every open tool that works, keep the best", C["accent"])]
+        for n, cls in core.REGISTRY[s].items():
+            why = cls().supports(t)
+            out.append((cls.label(), n, "✔ available" if not why else f"✘ {why}", C["ok"] if not why else C["bad"]))
+        return out
+    def value(self, s):
+        if s == "upload": return self.over.get("upload") or (self.res.steps.get("upload", "auto") if self.res else "auto")
+        return self.over.get(s) or (self.res.steps.get(s, "auto") if self.res else "auto")
+    def stages(self): return core.STAGES[1:] + ["upload"]
+    def status(self, s):
+        """(value, tool that runs, reason it cannot run or None) of one step."""
+        v = self.value(s)
+        if not self.res: return v, None, self.err or "?"
+        name = self.res.sel[s].name if v in ("auto", "all", "all_open") else v
+        cls = core.REGISTRY.get(s, {}).get(name)
+        return v, cls, (cls().supports(target(self.board)) if cls else f"unknown tool {name}")
+    def cycle(self, d):
+        r = self.ROWS[self.row]
+        if r == "design": ds = list(designs()); self.design = ds[(ds.index(self.design) + d) % len(ds)] if self.design in ds else ds[0]; self.over = {}
+        elif r == "board": bs = installed(); self.board = bs[(bs.index(self.board) + d) % len(bs)] if self.board in bs else bs[0]; self.over = {}
+        elif r == "from":
+            i = (core.STAGES.index(self.frm) + d) % len(core.STAGES); self.frm = core.STAGES[i]
+            if i > core.STAGES.index(self.to): self.to = self.frm
+        elif r == "to":
+            i = (core.STAGES.index(self.to) + d) % len(core.STAGES); self.to = core.STAGES[i]
+            if i < core.STAGES.index(self.frm): self.frm = self.to
+        elif r == "steps": self.si = (self.si + d) % len(self.stages()); return
+        self.resolve()
+    def enter(self):
+        r = self.ROWS[self.row]
+        if r == "design":
+            v = modal_pick(self.app, "design", [(k, k, rel(p), 0) for k, p in designs().items()], self.design)
+            if v: self.design, self.over = v, {}
+        elif r == "board":
+            bs = boards_cfg()
+            v = modal_pick(self.app, "board", [(b, b, bs.get(b, {}).get("part", ""), 0) for b in installed()], self.board)
+            if v: self.board, self.over = v, {}
+        elif r == "steps":
+            s = self.stages()[self.si]
+            v = modal_pick(self.app, f"tool for {s} on {self.board}", self.options(s), self.value(s))
+            if v: self.over[s] = v
+        else: self.cycle(1); return
+        self.resolve()
+    def steps_arg(self):
+        o = {k: v for k, v in self.over.items() if k != "upload"}
+        return [f"STEPS={' '.join(f'{k}={v}' for k, v in o.items())}"] if o else []
+    def base(self): return [f"DESIGN={self.design}", f"TARGET={self.board}"]
+    def go(self, to=None):
+        self.run(["make", "flow", *self.base(), f"FROM={self.frm}", f"TO={to or self.to}", *self.steps_arg()],
+                 f"flow {self.design} → {self.board}")
+    def check(self): self.run(["make", "check", *self.base(), f"FROM={self.frm}", f"TO={self.to}", *self.steps_arg()], f"check {self.design} → {self.board}")
+    def doctor(self): self.run(["make", "doctor", *self.base()], f"doctor {self.board}")
+    def upload(self):
+        tool = self.over.get("upload")
+        self.run(["make", "upload", *self.base(), *([f"TOOL={tool}"] if tool and tool != "auto" else [])], f"upload {self.design} → {self.board}")
+    def edit(self):
+        p = designs().get(self.design)
+        if p: self.app.edit(p); self.resolve()
+    def keys(self):
+        return [("Enter", "choose", self.enter), ("r", "run", self.go), ("s", "synth only", lambda: self.go("synth")),
+                ("c", "check", self.check), ("u", "upload", self.upload), ("d", "doctor", self.doctor), ("e", "edit project", self.edit),
+                ("0", "reset tools", lambda: (self.over.clear(), self.resolve())), ("x", "stop", self.stop)]
+    def key(self, k):
+        if k in (curses.KEY_UP, curses.KEY_DOWN):
+            self.row = (self.row + (1 if k == curses.KEY_DOWN else -1)) % len(self.ROWS); return True
+        if k in (curses.KEY_LEFT, curses.KEY_RIGHT): self.cycle(1 if k == curses.KEY_RIGHT else -1); return True
+        return super().key(k)
+    def progress(self):
+        """(started, done) stages parsed from the flow output."""
+        ls = list(self.job.lines) if self.job else []
+        st = [m.group(1) for l in ls if (m := re.match(r"\s*(?:>>|▶)\s+(\w+)\s", l)) and m.group(1) in core.STAGES]
+        dn = [m.group(1) for l in ls if (m := re.match(r"\s*(?:ok|✔)\s+(\w+)\s+done in", l))]
+        return st, dn
+    def draw(self, w, y, x, h, wd):
+        bcfg = boards_cfg().get(self.board, {})
+        p = designs().get(self.design)
+        lab = lambda r, t: put(w, yy, x + 2, f" {t:<7}", (C["tab"] if self.row == self.ROWS.index(r) else curses.A_BOLD))
+        yy = y; box(w, y, x, 6, wd, "CONFIGURATION", self.row < 4)
+        yy += 1; lab("design", "design"); put(w, yy, x + 11, f"◀ {self.design} ▶", C["accent"] | curses.A_BOLD); put(w, yy, x + 17 + len(self.design), rel(p) if p else "", C["dim"])
+        yy += 1; lab("board", "board"); put(w, yy, x + 11, f"◀ {self.board} ▶", C["accent"] | curses.A_BOLD)
+        put(w, yy, x + 17 + len(self.board), f"{bcfg.get('part', '')}  {bcfg.get('description', '')}", C["dim"], wd - 20 - len(self.board))
+        yy += 1; lab("from", "from"); put(w, yy, x + 11, f"◀ {self.frm} ▶", C["accent"] | curses.A_BOLD)
+        yy += 1; lab("to", "to"); put(w, yy, x + 11, f"◀ {self.to} ▶", C["accent"] | curses.A_BOLD)
+        put(w, yy - 1, x + 30, "stages:", C["dim"])
+        put(w, yy, x + 30, " ".join(s for s in core.STAGES[core.STAGES.index(self.frm):core.STAGES.index(self.to) + 1]), C["dim"], wd - 32)
+        # pipeline: one box per step with its tool
+        yy = y + 6; ss = self.stages(); focus = self.ROWS[self.row] == "steps"
+        box(w, yy, x, 7, wd, "STEPS  ←→ step · Enter tool · 0 back to the project file", focus)
+        st, dn = self.progress()
+        bw = max(10, (wd - 4 - 3 * (len(ss) - 1)) // len(ss))
+        for i, s in enumerate(ss):
+            bx = x + 2 + i * (bw + 3)
+            v, cls, why = self.status(s)
+            name = f"auto:{cls.name}" if v == "auto" and cls else v
+            col = C["accent"] if v in ("all", "all_open") else C["ok"] if not why else C["bad"]
+            if s in dn: mark, mc = "✔", C["ok"]
+            elif self.job and self.job.running and st and st[-1] == s: mark, mc = SPIN[int(time.time() * 8) % 10], C["accent"]
+            elif self.job and not self.job.running and self.job.rc and st and st[-1] == s: mark, mc = "✘", C["bad"]
+            else: mark, mc = " ", 0
+            sel = focus and i == self.si
+            box(w, yy + 1, bx, 4, bw, "", sel)
+            put(w, yy + 2, bx + 2, f"{mark} {s}", (mc or curses.A_BOLD) | curses.A_BOLD, bw - 3)
+            put(w, yy + 3, bx + 2, name + (" *" if s in self.over else ""), col, bw - 3)
+            if i < len(ss) - 1: put(w, yy + 3, bx + bw, " ▶ ", C["dim"])
+        s = ss[self.si]; v, cls, why = self.status(s)
+        info = self.err or (f"{s}: {v}" + (f" → {cls.label()}" if cls and v != cls.name else "") + ("   ✔ can run" if not why else f"   ✘ {why}"))
+        put(w, yy + 5, x + 2, info, C["bad"] if (self.err or why) else C["dim"], wd - 4)
+        # logs: flow output, and the log of the tool running now
+        ly = yy + 7; lh = h - (ly - y)
+        if lh < 4: return
+        if time.time() - self.toollog_t > 1.5:
+            self.toollog_t = time.time(); d = ROOT / "build" / self.design / self.board
+            logs = [q for q in d.rglob("*.log") if q.name != "flow.log"] if d.exists() else []
+            newest = max(logs, key=lambda q: q.stat().st_mtime, default=None)
+            self.toollog = ([f"── {rel(newest)}"] + tail(newest)) if newest else []
+        if wd >= 120:
+            lw = wd // 2
+            self.log(w, ly, x, lh, lw, "flow")
+            textpane(w, ly, x + lw, lh, wd - lw, self.toollog or ["", "  no tool log yet"], "tool log", False)
+        else:
+            self.log(w, ly, x, lh, wd, "flow")
+
+class Builds(Tab):
+    """Every build: steps, area, timing, flow log; program its bitstream."""
+    title, icon = "Builds", "▤"
+    VIEWS = ["summary", "flow.log", "area", "timing", "summary.md"]
+    def __init__(self, app): super().__init__(app); self.lv, self.view = ListView(), 0
+    def cur(self):
+        bl = builds(); return bl[self.lv.i] if bl and self.lv.i < len(bl) else None
+    def text(self, d):
+        rp = d / "report"
+        v = self.VIEWS[self.view]
+        if v == "summary":
+            os.environ["COLUMNS"] = str(self.width)  # cli panels size themselves to the terminal: here, to this pane
+            try: return T.plain(cli.show(d.parent.name, d.name, banner=False)).splitlines()
+            finally: os.environ.pop("COLUMNS", None)
+        f = {"flow.log": d / "flow.log", "area": rp / "reports" / "area.rpt", "timing": rp / "reports" / "timing.rpt", "summary.md": rp / "summary.md"}[v]
+        return tail(f, 2000) or [f"no {rel(f)}"]
+    def upload(self):
+        d = self.cur()
+        if not d: return
+        bit = cli.build_info(d)[1]
+        if not bit: self.app.flash("this build has no bitstream", C["bad"]); return
+        design = d.parent.name if d.parent.name in designs() else next(iter(designs()))
+        self.run(["make", "upload", f"DESIGN={design}", f"TARGET={d.name}", f"BIT={rel(bit)}"], f"upload {d.parent.name} → {d.name}")
+    def rerun(self):
+        d = self.cur()
+        if d and d.parent.name in designs():
+            self.run(["make", "flow", f"DESIGN={d.parent.name}", f"TARGET={d.name}"], f"flow {d.parent.name} → {d.name}")
+    def keys(self):
+        return [("v", "next view", lambda: setattr(self, "view", (self.view + 1) % len(self.VIEWS))),
+                ("u", "program board", self.upload), ("r", "run again", self.rerun), ("x", "stop", self.stop)]
+    def key(self, k):
+        if k in (curses.KEY_LEFT, curses.KEY_RIGHT): self.view = (self.view + (1 if k == curses.KEY_RIGHT else -1)) % len(self.VIEWS); self.scroll = 0; return True
+        if self.lv.move(k, len(builds())): self.scroll = 0; return True
+        return super().key(k)
+    def draw(self, w, y, x, h, wd):
+        bl = builds(); lw = min(52, wd // 3)
+        box(w, y, x, h, lw, f"BUILDS ({len(bl)})", True)
+        rows = []
+        for d in bl:
+            st, bit, _, ts = cli.build_info(d); st = T.plain(st)
+            ic, c = ("✔", C["ok"]) if st == "finished" else ("✘", C["bad"]) if st == "FAILED" else ("…", C["warn"])
+            rows.append([(f" {ic} ", c), (f"{d.parent.name}/{d.name}"[:lw - 21].ljust(lw - 21), 0), (cli.ago(ts).replace(" ago", "").rjust(9), C["dim"]), (" ◆" if bit else "  ", C["accent"])])
+        self.lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows or [[(" no builds yet", C["dim"])]])
+        d = self.cur(); self.width = wd - lw - 4
+        tabs = "  ".join(f"[{v}]" if i == self.view else v for i, v in enumerate(self.VIEWS))
+        rh = h - (12 if self.job else 0)
+        if d: textpane(w, y, x + lw, rh, wd - lw, self.text(d), f"{d.parent.name}/{d.name}   ←→ {tabs}", False, self.scroll, self.VIEWS[self.view] != "summary.md")
+        if self.job: self.log(w, y + rh, x + lw, 12, wd - lw)
+
+class Boards(Tab):
+    """boards.yml: install boards, see their files and settings, edit the list."""
+    title, icon = "Boards", "▣"
+    def __init__(self, app): super().__init__(app); self.lv = ListView()
+    def cur(self): bs = list(boards_cfg()); return bs[self.lv.i] if bs else None
+    def keys(self):
+        return [("i", "install this board", lambda: self.cur() and self.run(["make", "install-boards", f"BOARD={self.cur()}"], f"install {self.cur()}")),
+                ("a", "install all", lambda: self.run(["make", "install-boards"], "install all boards")),
+                ("e", "edit boards.yml", lambda: self.app.edit(ROOT / "boards.yml")),
+                ("d", "doctor", lambda: self.cur() and self.run(["make", "doctor", f"TARGET={self.cur()}"], f"doctor {self.cur()}")),
+                ("x", "stop", self.stop)]
+    def key(self, k):
+        if self.lv.move(k, len(boards_cfg())): return True
+        return super().key(k)
+    def draw(self, w, y, x, h, wd):
+        bs = boards_cfg(); inst = installed(); lw = min(46, wd // 3)
+        box(w, y, x, h, lw, f"BOARDS.YML ({len([b for b in bs if b in inst])}/{len(bs)} installed)", True)
+        rows = [[(" ● " if b in inst else " ○ ", C["ok"] if b in inst else C["bad"]), (b.ljust(14), curses.A_BOLD), (c.get("part", "")[:lw - 20], C["dim"])] for b, c in bs.items()]
+        self.lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows)
+        name = self.cur()
+        if not name: return
+        c = bs[name]; src = c.get("source", {})
+        part = c.get("part", "")
+        lines = [f"{name}  ·  {c.get('description', '')}", "",
+                 f"part        {part}",
+                 f"installed   {'yes' if name in inst else 'no: i installs it'}",
+                 f"bitstream   {'open (prjxray)' if part.startswith('xc7') else 'open place and route; Vivado only writes the bitstream (open_io)'}",
+                 f"source      {'XilinxBoardStore: ' + ', '.join([src['store']] if isinstance(src.get('store'), str) else src.get('store', [])) if src.get('store') else src.get('git', '-')}"]
+        if src.get("path"): lines.append(f"            path {src['path']}" + (f", xdc {src['xdc']}" if src.get("xdc") else ""))
+        extra = {k: v for k, v in c.items() if k not in ("source", "part", "description")}
+        if extra: lines += ["", "board settings"] + [f"  {k}: {v}" for k, v in extra.items()]
+        if name in inst:
+            files = sorted(rel(p) for p in (ROOT / "boards" / name).rglob("*") if p.is_file())
+            lines += ["", f"targets/{name}.yml"] + ["  " + l for l in (ROOT / "targets" / f"{name}.yml").read_text().splitlines() if l and not l.startswith("#")]
+            lines += ["", "board files"] + [f"  {f}" for f in files]
+        rh = h - (12 if self.job else 0)
+        textpane(w, y, x + lw, rh, wd - lw, lines, name, False, colorize=False)
+        if self.job: self.log(w, y + rh, x + lw, 12, wd - lw)
+
+class Hardware(Tab):
+    """JTAG cables (scan, program, reset) and the UART monitor of their serial ports."""
+    title, icon = "Hardware", "⚡"
+    def __init__(self, app):
+        super().__init__(app)
+        self.lv, self.cables, self.scanning, self.uart, self.baud, self.hex, self.line = ListView(), [], False, None, 115200, False, ""
+        self.scan()
+    def scan(self):
+        if self.scanning: return
+        self.scanning = True
+        def go():
+            try: self.cables = upload._scan()
+            finally: self.scanning = False
+        threading.Thread(target=go, daemon=True).start()
+    def items(self):
+        """Cables and, under each, its serial ports: [(kind, cable, port)]."""
+        out, ps = [], ports()
+        for c in self.cables:
+            out.append(("cable", c, None))
+            out += [("port", c, p) for p in ps if p[1] == c["serial"]]
+        known = {c["serial"] for c in self.cables}
+        out += [("port", None, p) for p in ps if p[1] not in known]
+        return out
+    def sel(self):
+        it = self.items(); return it[self.lv.i] if it and self.lv.i < len(it) else (None, None, None)
+    def boards_of(self, c):
+        """Installed boards whose FPGA this cable reports."""
+        out = []
+        for b in installed():
+            try:
+                if any(m.startswith(fpga_want(target(b)["part"])) for m in c["models"]): out.append(b)
+            except Exception: pass
+        return out
+    def uart_name(self, c, p):
+        for b in self.boards_of(c) if c else []:
+            if str(target(b).get("uart_channel", "")) == str(p[2]): return f"PL UART of {b}"
+        return ""
+    def program(self):
+        k, c, _ = self.sel()
+        if not c: self.app.flash("select a JTAG cable", C["warn"]); return
+        bs = self.boards_of(c)
+        opts = []
+        for d in builds():
+            bit = cli.build_info(d)[1]
+            if bit and (d.name in bs or not bs): opts.append((f"{d.parent.name}/{d.name}", str(bit), rel(bit), 0))
+        opts.append(("other file…", "", "type a path", C["dim"]))
+        v = modal_pick(self.app, f"bitstream for {c['serial']} ({', '.join(c['models']) or '?'})", opts)
+        if v == "": v = modal_text(self.app, "bitstream file")
+        if v: self.run(["openFPGALoader", "-c", c["cable"], "--busdev-num", c["busdev"], v], f"program {c['serial']}")
+    def reset_pl(self):
+        k, c, _ = self.sel()
+        if c and confirm(self.app, f"reset the FPGA on {c['serial']}? (clears the loaded bitstream)"):
+            self.run(["openFPGALoader", "-c", c["cable"], "--busdev-num", c["busdev"], "--reset"], f"reset PL {c['serial']}")
+    def reset_sys(self):
+        k, c, _ = self.sel()
+        viv = core.find_vivado()
+        xsdb = shutil.which("xsdb") or (str(pathlib.Path(shutil.which(viv) or viv).parent / "xsdb") if viv else None)
+        if not c or not xsdb or not os.path.exists(xsdb): self.app.flash("system reset needs a cable and Vivado's xsdb", C["bad"]); return
+        if not confirm(self.app, f"reset the whole board (PS and PL) on {c['serial']}? (xsdb, vivado)"): return
+        tcl = pathlib.Path(tempfile.mkdtemp()) / "reset.tcl"
+        tcl.write_text("connect\n"
+                       f"targets -set -nocase -filter {{jtag_cable_serial =~ \"*{c['serial'].rstrip('A')}*\" && (name =~ \"PSU\" || name =~ \"APU\")}}\n"
+                       "rst -system\nafter 500\ndisconnect\n")
+        self.run([xsdb, tcl], f"reset system {c['serial']} (vivado)")
+    def toggle_uart(self):
+        if self.uart: self.uart.close(); self.uart = None; return
+        k, c, p = self.sel()
+        if k != "port": self.app.flash("select a serial port (under its cable)", C["warn"]); return
+        try: self.uart = Uart(p[0], self.baud)
+        except Exception as e: self.app.flash(f"cannot open {p[0]}: {e}", C["bad"])
+    def set_baud(self):
+        v = modal_pick(self.app, "baud rate", [(str(b), b, "", 0) for b in BAUDS], self.baud)
+        if v:
+            self.baud = v
+            if self.uart: p = self.uart.port; self.uart.close(); self.uart = Uart(p, v)
+    def loopback(self):
+        k, c, p = self.sel()
+        if self.uart: self.uart.close(); self.uart = None  # the test opens the port itself
+        self.run(["make", "uart-test", *([f"PORT={p[0]}"] if p else []), f"BAUD={self.baud}"], "uart loopback test")
+    def keys(self):
+        return [("s", "scan", self.scan), ("p", "program", self.program), ("R", "reset PL", self.reset_pl), ("Y", "reset system (vivado)", self.reset_sys),
+                ("o", "open/close UART", self.toggle_uart), ("b", "baud", self.set_baud), ("i", "type", self.typing),
+                ("h", "hex", lambda: setattr(self, "hex", not self.hex)), ("t", "loopback test", self.loopback),
+                ("C", "clear", lambda: self.uart and self.uart.data.clear()), ("x", "stop", self.stop)]
+    def typing(self):
+        if not self.uart: self.app.flash("open a UART first (o)", C["warn"]); return
+        self.capture, self.line = True, ""
+    def key(self, k):
+        if self.capture:
+            if k == 27: self.capture = False
+            elif k in KEYNAMES["Enter"]: self.uart.send((self.line + "\n").encode()); self.line = ""
+            elif k in (curses.KEY_BACKSPACE, 127, 8): self.line = self.line[:-1]
+            elif 32 <= k < 127: self.line += chr(k)
+            return True
+        if self.lv.move(k, len(self.items())): return True
+        return super().key(k)
+    def draw(self, w, y, x, h, wd):
+        lw = min(60, wd // 2 - 4)
+        its = self.items()
+        box(w, y, x, h, lw, ("JTAG cables " + SPIN[int(time.time() * 8) % 10] + " scanning") if self.scanning else f"JTAG CABLES ({len(self.cables)})", True)
+        rows = []
+        for kind, c, p in its:
+            if kind == "cable":
+                ok = bool(c["models"])
+                rows.append([(" ◆ ", C["accent"] if ok else C["bad"]), (c["serial"].ljust(14), curses.A_BOLD), (", ".join(c["models"]) or ("no access: permissions?" if re.search(r"denied|usb_open|claim", c["err"]) else "no FPGA answered"), C["ok"] if ok else C["bad"])])
+                bs = self.boards_of(c)
+                if bs: rows.append([("     ", 0), (f"{c['product'][:22]} · USB {c['busdev']} · {', '.join(bs)}", C["dim"])])
+                else: rows.append([("     ", 0), (f"{c['product'][:22]} · USB {c['busdev']}", C["dim"])])
+            else:
+                u = self.uart_name(c, p) if c else ""
+                rows.append([("   └ ", C["dim"]), (p[0].ljust(14), C["info"]), (f"if {p[2]}  {u}", C["ok"] if u else C["dim"])])
+        # the list moves on items; the cable rows take two lines: map selection to the drawn rows
+        drawn, sel_row, r = [], 0, 0
+        for i, (kind, _, _) in enumerate(its):
+            if i == self.lv.i: sel_row = r
+            r += 2 if kind == "cable" else 1
+        lv = ListView(); lv.i = sel_row
+        lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows or [[(" no FTDI JTAG cable found (s rescans)" if not self.scanning else " scanning USB…", C["dim"])]])
+        # UART monitor
+        rx = x + lw; rw = wd - lw; uh = h - 10
+        if self.uart:
+            data = bytes(self.uart.data)
+            if self.hex: lines = [" ".join(f"{b:02x}" for b in data[i:i + 16]) + "  " + "".join(chr(b) if 32 <= b < 127 else "." for b in data[i:i + 16]) for i in range(max(0, len(data) - 16 * 400), len(data), 16)]
+            else: lines = data.decode(errors="replace").replace("\r\n", "\n").replace("\r", "\n").split("\n")[-2000:]
+            title = f"UART {self.uart.port} · {self.baud} baud · rx {len(data)} B · tx {self.uart.sent} B" + ("  · HEX" if self.hex else "") + (f"  ✘ {self.uart.err}" if self.uart.err else "")
+            textpane(w, y, rx, uh - 3, rw, lines, title, True, self.scroll, colorize=False)
+            box(w, y + uh - 3, rx, 3, rw, "send  (i to type · Enter sends · Esc stops)" if not self.capture else "typing: Enter sends the line, Esc stops", self.capture)
+            put(w, y + uh - 2, rx + 2, ("› " + self.line + ("█" if self.capture else "")), C["accent"] if self.capture else C["dim"], rw - 4)
+        else:
+            textpane(w, y, rx, uh, rw, ["", "  UART closed.", "", f"  select a port under its cable and press o   (baud {self.baud}, b to change)",
+                                        "  ports marked 'PL UART of <board>' are wired to the FPGA (uart_loopback example)"], "UART", False, colorize=False)
+        self.log(w, y + uh, rx, 10, rw, "jtag")
+
+class Tools(Tab):
+    """tools.lock: status, install, update to the latest version; environment; doctor."""
+    title, icon = "Tools", "⚒"
+    INSTALL = {"prjxray": "install-xc7", "prjxray-db": "install-xc7", "nextpnr-xilinx": "install-xc7", "dreamplacefpga": "install-dreamplace",
+               "nextpnr-fpga-interchange": "install-interchange", "python-fpga-interchange": "install-interchange",
+               "fpga-interchange-schema": "install-interchange", "prjuray": "install-prjuray", "prjuray-db": "install-prjuray"}
+    def __init__(self, app): super().__init__(app); self.lv = ListView()
+    def cur(self):
+        ts = self.app.cache("tools", cli.tool_status); return ts[self.lv.i] if ts else None
+    def install(self):
+        t = self.cur()
+        if t: self.run(["make", self.INSTALL.get(t["name"], "install")], f"{self.INSTALL.get(t['name'], 'install')} ({t['name']})"); self.app.uncache("tools")
+    def update(self):
+        t = self.cur()
+        if t and confirm(self.app, f"move {t['name']} to its latest upstream commit in tools.lock?"):
+            self.run(["make", "update", f"NAME={t['name']}"], f"update {t['name']}"); self.app.uncache("tools")
+    def keys(self):
+        return [("i", "install this", self.install),
+                ("I", "install everything", lambda: confirm(self.app, "run make install (long)?") and self.run(["make", "install"], "install everything")),
+                ("o", "outdated", lambda: self.run(["make", "outdated"], "outdated tools")), ("u", "update", self.update),
+                ("k", "check deps", lambda: self.run(["make", "check-deps"], "check deps")),
+                ("d", "doctor", lambda: self.run(["make", "doctor"], "doctor, all boards")),
+                ("r", "refresh", lambda: (self.app.uncache("tools"), self.app.load_env())), ("x", "stop", self.stop)]
+    def key(self, k):
+        if self.lv.move(k, len(self.app.cache("tools", cli.tool_status))): return True
+        return super().key(k)
+    def draw(self, w, y, x, h, wd):
+        ts = self.app.cache("tools", cli.tool_status); lw = min(64, wd // 2)
+        lh = len(ts) + 2
+        box(w, y, x, lh, lw, "TOOLS.LOCK", True)
+        rows = [[(" ● " if t["ok"] else " ○ ", C["ok"] if t["ok"] else C["bad"]), (t["name"].ljust(26), curses.A_BOLD),
+                 ((t["sha"] or "-").ljust(11), C["dim"]), ("pinned" if t["pinned"] else "latest", C["warn"] if t["pinned"] else C["info"])] for t in ts]
+        self.lv.draw(w, y + 1, x + 1, lh - 2, lw - 2, rows)
+        t = self.cur()
+        if t:
+            info = [f"{t['name']}", f"  role      {t['role']}", f"  source    {t['url']}",
+                    f"  follows   {'pinned commit ' + t['ref'][:12] + ' (kept on purpose)' if t['pinned'] else 'default branch, latest commit'}",
+                    f"  checkout  {t['sha'] or 'not fetched'}", f"  status    {'ready' if t['ok'] else 'missing: i installs it'}",
+                    f"  install   make {self.INSTALL.get(t['name'], 'install')}"]
+            textpane(w, y + lh, x, min(len(info) + 2, h - lh), lw, info, "DETAILS", False, colorize=False)
+        env = self.app.env
+        er = [f"{'●' if ok else '○'} {n:<18} {v:<10} {wh.replace(os.path.expanduser('~'), '~')}" for n, ok, v, wh in env] if env else ["  checking…"]
+        textpane(w, y, x + lw, len(er) + 2, wd - lw, er, "ENVIRONMENT", False, colorize=False)
+        self.log(w, y + len(er) + 2, x + lw, h - len(er) - 2, wd - lw)
+
+TABS = [Home, Flow, Builds, Boards, Hardware, Tools]  # add a tab here
+
+# ------------------------------------------------------------------ application
+class App:
+    def __init__(self, scr):
+        self.scr, self.jobs, self.msg, self._cache, self.env = scr, [], ("", 0, 0), {}, None
+        init_colors(); curses.curs_set(0); scr.keypad(True); scr.timeout(200)
+        self.sha = cli.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"])
+        self.load_env()
+        self.tabs = [cls(self) for cls in TABS]; self.cur = 0
+    def load_env(self):
+        def go(): self.env = cli.env_status()
+        threading.Thread(target=go, daemon=True).start()
+    def cache(self, k, fn):
+        if k not in self._cache: self._cache[k] = fn()
+        return self._cache[k]
+    def uncache(self, k): self._cache.pop(k, None)
+    def start(self, cmd, title):
+        j = Job(cmd, title); self.jobs.append(j); self.flash(f"▶ {title}", C["accent"]); return j
+    def flash(self, text, attr=0): self.msg = (text, attr, time.time())
+    def edit(self, path):
+        """Open a file in $EDITOR (outside curses), then come back."""
+        curses.endwin()
+        subprocess.call([os.environ.get("EDITOR") or shutil.which("nano") or "vi", str(path)])
+        self.scr.refresh(); self._cache.clear()
+    def header(self, w):
+        h = self.scr.getmaxyx()[0]
+        if h < 34:
+            put(self.scr, 0, 1, "◆ FREISA", C["accent"] | curses.A_BOLD); put(self.scr, 0, 11, cli.TAGLINE, C["dim"], w - 12)
+            return 1
+        art = cli.BANNER.strip("\n").splitlines()
+        for r, l in enumerate(art):
+            for c0 in range(0, len(l), 8):  # gradient left to right
+                put(self.scr, r, 2 + c0, l[c0:c0 + 8], C["grad"][min(5, c0 // 8)])
+        ax = 2 + max(map(len, art)) + 3
+        if w > ax + 60:
+            for r, l in enumerate(CHIP): put(self.scr, r, ax, l, C["dim"])
+            ax += 18
+        put(self.scr, 1, ax, cli.TAGLINE, curses.A_BOLD, w - ax - 1)
+        put(self.scr, 2, ax, "open-source RTL → bitstream, step by step, on FPGA Interchange", C["dim"], w - ax - 1)
+        put(self.scr, 4, ax, f"{str(ROOT).replace(os.path.expanduser('~'), '~')}  ·  commit {self.sha or '-'}", C["dim"], w - ax - 1)
+        return len(art) + 1
+    def tabbar(self, y, w):
+        x = 1
+        for i, t in enumerate(self.tabs):
+            busy = t.job and t.job.running
+            s = f" {i + 1} {t.icon} {t.title}{' ' + SPIN[int(time.time() * 8) % 10] if busy else ''} "
+            put(self.scr, y, x, s, C["tab"] if i == self.cur else (C["accent"] if busy else C["dim"]))
+            x += len(s) + 1
+        put(self.scr, y + 1, 0, "─" * w, C["accent"])
+    def footer(self, y, w):
+        t = self.tabs[self.cur]
+        parts = [(k, hnt) for k, hnt, _ in t.keys()] + [("1-6/Tab", "tabs"), ("?", "help"), ("q", "quit")]
+        x = 1
+        for k, hnt in parts:
+            if x + len(k) + len(hnt) + 3 > w - 2: break
+            put(self.scr, y, x, f" {k} ", C["tab"]); x += len(k) + 2
+            put(self.scr, y, x, f" {hnt}  ", C["dim"]); x += len(hnt) + 3
+        text, attr, ts = self.msg
+        if text and time.time() - ts < 4: put(self.scr, y - 1, 2, f" {text} ", attr | curses.A_BOLD, w - 4)
+    def draw(self):
+        s = self.scr; s.erase(); h, w = s.getmaxyx()
+        if h < 24 or w < 90:
+            put(s, 0, 0, f"FREISA needs at least 90x24 (now {w}x{h}): enlarge the terminal", C["warn"]); s.refresh(); return
+        y = self.header(w); self.tabbar(y, w); y += 2
+        try:
+            self.tabs[self.cur].draw(s, y, 0, h - y - 2, w)
+        except Exception as e:  # a broken tab must not close the interface
+            put(s, y + 1, 2, f"cannot draw this tab: {type(e).__name__}: {e}", C["bad"], w - 4)
+        self.footer(h - 1, w); s.refresh()
+    def help(self):
+        lines = [("1-6, Tab, Shift+Tab", "switch tab"), ("↑↓ / j k", "move in lists"), ("Shift+↑↓ / J K", "scroll the log or the text"),
+                 ("Enter", "choose"), ("x", "stop the command of this tab"), ("q", "quit (stops running commands)"),
+                 ("", ""), ("add a tab", "freisa/tui.py: subclass Tab, add it to TABS"), ("add a command", "one line in the tab's keys()")]
+        modal_pick(self, "FREISA keys", [(f"{a:<20}", None, b, C["accent"]) for a, b in lines])
+    def loop(self):
+        while True:
+            self.draw()
+            k = self.scr.getch()
+            if k == -1 or k == curses.KEY_RESIZE: continue
+            t = self.tabs[self.cur]
+            if t.capture: t.key(k); continue
+            if k == ord("q"):
+                run = [j for j in self.jobs if j.running]
+                if not run or confirm(self, f"{len(run)} command(s) running: stop them and quit?"):
+                    for j in run: j.kill()
+                    for tb in self.tabs:
+                        if getattr(tb, "uart", None): tb.uart.close()
+                    return
+            elif k == 9: self.cur = (self.cur + 1) % len(self.tabs)
+            elif k == curses.KEY_BTAB: self.cur = (self.cur - 1) % len(self.tabs)
+            elif ord("1") <= k < ord("1") + len(self.tabs): self.cur = k - ord("1")
+            elif k == ord("?"): self.help()
+            else: t.key(k)
 
 def main():
     os.environ.setdefault("ESCDELAY", "25")  # Esc reacts at once
-    curses.wrapper(_loop)
+    curses.wrapper(lambda scr: App(scr).loop())

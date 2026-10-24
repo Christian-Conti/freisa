@@ -76,19 +76,22 @@ def ago(ts):
     return f"{h}h {m}m ago" if h else f"{m}m ago"
 
 # ------------------------------------------------------------------ sections
-def env():
+def env_status():
+    """[(name, found, version, where)] of the programs FREISA runs."""
     from .core import find_vivado
     viv = find_vivado()
     vver = re.search(r"/(\d{4}\.\d)/", viv or "")
     rw = run([sys.executable, "-c", "import importlib.metadata as m; print(m.version('rapidwright'))"])
-    rows = [
-        ["conda env", YES, os.environ.get("CONDA_DEFAULT_ENV", "-"), sys.executable],
-        ["Yosys", YES if shutil.which("yosys") else NO, (run(["yosys", "-V"]).split(" (")[0] or "-").replace("Yosys ", ""), shutil.which("yosys") or "not on PATH"],
-        ["Java", YES if shutil.which("java") else NO, (re.findall(r'"([^"]+)"', run(["java", "-version"])) or ["-"])[0], "RapidWright " + (rw or "?")],
-        ["openFPGALoader", YES if shutil.which("openFPGALoader") else NO, (run(["openFPGALoader", "-V"]).split() or ["-"])[-1], "board programming"],
-        ["Vivado (optional)", YES if viv else NO, vver.group(1) if vver else "-", viv or "not found: open tools only"],
+    return [
+        ("conda env", True, os.environ.get("CONDA_DEFAULT_ENV", "-"), sys.executable),
+        ("Yosys", bool(shutil.which("yosys")), (run(["yosys", "-V"]).split(" (")[0] or "-").replace("Yosys ", ""), shutil.which("yosys") or "not on PATH"),
+        ("Java", bool(shutil.which("java")), (re.findall(r'"([^"]+)"', run(["java", "-version"])) or ["-"])[0], "RapidWright " + (rw or "?")),
+        ("openFPGALoader", bool(shutil.which("openFPGALoader")), (run(["openFPGALoader", "-V"]).split() or ["-"])[-1], "board programming"),
+        ("Vivado (optional)", bool(viv), vver.group(1) if vver else "-", viv or "not found: open tools only"),
     ]
-    return panel("Environment", rows, ["", "", "version", "where"])
+
+def env():
+    return panel("Environment", [[n, YES if ok else NO, v, w] for n, ok, v, w in env_status()], ["", "", "version", "where"])
 
 TOOL_BIN = {  # tools.lock name -> what shows it is built
     "dreamplacefpga": "third_party/dreamplacefpga/install/dreamplacefpga/Placer.py",
@@ -101,9 +104,10 @@ TOOL_ROLE = {"dreamplacefpga": "place (UltraScale+)", "nextpnr-fpga-interchange"
              "prjxray": "bitstream (xc7)", "prjxray-db": "xc7 bitstream database", "python-fpga-interchange": "Interchange (xc7, FASM)",
              "fpga-interchange-schema": "Interchange schemas", "prjuray": "bitstream (UltraScale+)", "prjuray-db": "UltraScale+ database"}
 
-def tools():
+def tool_status():
+    """One dict per tools.lock entry: name, url, ref, sha (checked out), ok (fetched and built), pinned, role."""
     from . import ifx
-    rows = []
+    out = []
     for line in (ROOT / "tools.lock").read_text().splitlines():
         if not line.strip() or line.startswith("#"): continue
         name, url, ref = line.split()[:3]
@@ -112,8 +116,12 @@ def tools():
         built = TOOL_BIN.get(name)
         ok = (d / ".git").exists() and (built is None or (ROOT / built).exists())
         if name == "python-fpga-interchange": ok = ok and ifx.if_python() is not None
-        pin = T.yellow("pinned") if re.fullmatch(r"[0-9a-f]{40}", ref) else T.cyan("latest")
-        rows.append([name, YES if ok else NO, sha or "-", pin, TOOL_ROLE.get(name, "")])
+        out.append(dict(name=name, url=url, ref=ref, sha=sha, ok=ok, pinned=bool(re.fullmatch(r"[0-9a-f]{40}", ref)), role=TOOL_ROLE.get(name, "")))
+    return out
+
+def tools():
+    rows = [[t["name"], YES if t["ok"] else NO, t["sha"] or "-", T.yellow("pinned") if t["pinned"] else T.cyan("latest"), t["role"]]
+            for t in tool_status()]
     return panel("Tools  (tools.lock)", rows, ["", "", "commit", "follows", "role"])
 
 def boards():
@@ -159,11 +167,11 @@ def builds(limit=12):
     return panel(f"Builds  (latest {min(limit, len(dirs))} of {len(dirs)})", rows or ["no builds yet: make flow"],
                  ["design", "board", "result", "when", ".bit", "timing"])
 
-def show(design, board):
+def show(design, board, banner=True):
     d = ROOT / "build" / design / board
     if not d.exists(): sys.exit(T.error(f"no build {os.path.relpath(d, ROOT)}"))
     state, bit, timing, ts = build_info(d)
-    out = [header(), ""]
+    out = [header(), ""] if banner else []
     sj = d / "report" / "summary.json"
     rows = []
     if sj.exists():
