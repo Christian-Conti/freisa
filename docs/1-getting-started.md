@@ -88,6 +88,7 @@ Every `make flow` and `make upload` first runs a check. If a selected tool is no
 it stops and prints what to install or which variable to change. You can run it alone:
 ```sh
 make check TARGET=zcu104
+python freisa.py                              # interactive interface: browse everything, run every command from a menu
 make status                                  # dashboard: tools, boards, projects, builds
 make doctor                                   # every tool of every step, yes/no, for every board (TARGET=<b> for one)
 ```

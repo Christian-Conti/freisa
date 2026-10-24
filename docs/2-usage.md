@@ -21,6 +21,7 @@ Each step has one or more tools. The project file chooses the tool of every step
 |---------|--------------|
 | `make flow DESIGN=<d> TARGET=<b>` | run the flow |
 | `make check` | check that the selected tools are available; suggest fixes if not |
+| `python freisa.py` | interactive interface: dashboard panels, build details, and every command below from a menu (parameters chosen from lists) |
 | `make status` | dashboard: environment, tools (commit, pinned or latest), installed boards, projects and latest builds; `PART=env\|tools\|boards\|projects\|builds` for one panel |
 | `make show DESIGN=<d> TARGET=<b>` | one build: time/cpu/memory of each step, area, timing and output files |
 | `make doctor` | every tool of every step and whether it can run: for all boards, or only `TARGET=<b>` |

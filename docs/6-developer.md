@@ -85,3 +85,12 @@ complete). See [Tools per step](5-tools.md#the-exchange-format-fpga-interchange)
 
 The helpers are in `freisa/ifx.py`. Constraints (pins, clocks) are not part of the Interchange files: steps that need them
 read `xdc:` from the project file.
+
+## Adding to the interactive interface
+
+`python freisa.py` (code in `freisa/tui.py`) is driven by three tables at the top of the file:
+
+- `VIEWS`: menu label → function returning the text shown on the right (the panels of `freisa/cli.py`).
+- `ACTIONS`: `(label, make target, parameters, confirm)`; the interface asks the parameters and runs `make <target> VAR=value`.
+  A new `make` target becomes a menu entry with one line here.
+- `PARAMS`: make variable → function returning its choices (`None`: typed by hand).
