@@ -113,6 +113,14 @@ def textpane(w, y, x, h, wd, lines, title="", focus=False, scroll=0, colorize=Tr
     if len(lines) > n:
         put(w, y + h - 1, x + wd - 14, f" {max(0, end - n) + 1}-{min(end, len(lines))}/{len(lines)} ", C["dim"])
 
+WIDE = 110  # below this width panes are stacked instead of side by side
+
+def split(y, x, h, wd, side, top):
+    """Two areas (y, x, h, w): side by side when wide (left one `side` columns), stacked when narrow (top one `top` rows)."""
+    if wd >= WIDE: return (y, x, h, side), (y, x + side, h, wd - side)
+    top = max(3, min(top, h - 6))
+    return (y, x, top, wd), (y + top, x, h - top, wd)
+
 class ListView:
     """Selectable list: rows are lists of (text, attr) segments."""
     def __init__(self): self.i = 0
@@ -254,20 +262,24 @@ class Home(Tab):
         tools, bs, ds, bl = a.cache("tools", cli.tool_status), boards_cfg(), designs(), builds()
         inst = installed(); env = a.env
         viv = next((e for e in env or [] if e[0].startswith("Vivado")), None)
+        hw = next((t for t in a.tabs if isinstance(t, Hardware)), None)
+        found = sorted({b for c in (hw.cables if hw else []) for b in hw.boards_of(c)})
         cards = [("TOOLS", f"{sum(t['ok'] for t in tools)}/{len(tools)}", "fetched and built"),
                  ("BOARDS", f"{len([b for b in bs if b in inst])}/{len(bs)}", "installed"),
                  ("PROJECTS", str(len(ds)), "in designs/"),
-                 ("BUILDS", str(len(bl)), f"{sum('FAILED' in T.plain(cli.build_info(d)[0]) for d in bl[:20])} failed (last 20)"),
+                 ("BUILDS", str(len(bl)), f"{sum('FAILED' in T.plain(cli.build_info(d)[0]) for d in bl[:20])} failed"),
+                 ("JTAG", "…" if hw and hw.scanning else f"{len(hw.cables) if hw else 0} cables", ", ".join(found) or "no known board"),
                  ("VIVADO", (viv[2] if viv and viv[1] else "none") if env else "…", "optional, closed")]
-        cw = (wd - 2) // len(cards)
+        per = len(cards) if wd >= WIDE else 3
+        cw = (wd - 1) // per
         for i, (t, v, sub) in enumerate(cards):
-            cx = x + 1 + i * cw
-            box(w, y, cx, 5, cw - 1, t, i == 0)
-            put(w, y + 1, cx + 2, v, C["accent"] | curses.A_BOLD, cw - 5)
-            put(w, y + 3, cx + 2, sub, C["dim"], cw - 5)
+            cx, cy = x + 1 + (i % per) * cw, y + (i // per) * 4
+            box(w, cy, cx, 4, cw - 1, t, i == 0)
+            put(w, cy + 1, cx + 2, v, C["accent"] | curses.A_BOLD, cw - 5)
+            put(w, cy + 2, cx + 2, sub, C["dim"], cw - 5)
         # open flow per family, as `auto` resolves it on the installed boards
-        yy = y + 6
-        put(w, yy, x + 2, "OPEN FLOW  (auto, per installed board family)", curses.A_BOLD); yy += 1
+        yy = y + 4 * -(-len(cards) // per) + 1
+        put(w, yy, x + 2, "OPEN FLOW", C["accent"] | curses.A_BOLD); put(w, yy, x + 12, "auto, per installed board family", C["dim"]); yy += 1
         seen = {}
         for b in inst:
             try: t = target(b)
@@ -285,13 +297,13 @@ class Home(Tab):
                 if i < len(chain): put(w, yy, col, " ─▶ ", C["dim"]); col += 4
             yy += 2
         # latest builds
-        n = max(0, h - (yy - y) - 1)
+        n = max(0, h - (yy - y))
         if n >= 4:
-            rows = []
+            nw = max(16, min(34, wd - 40)); rows = []
             for d in bl[:n - 2]:
                 st, bit, tm, ts = cli.build_info(d)
                 st = T.plain(st)
-                rows.append(f"{'✔' if st == 'finished' else '✘' if st == 'FAILED' else '…'} {d.parent.name + '/' + d.name:<34} {st:<9} "
+                rows.append(f"{'✔' if st == 'finished' else '✘' if st == 'FAILED' else '…'} {(d.parent.name + '/' + d.name)[:nw]:<{nw}} {st:<9} "
                             f"{cli.ago(ts):<10} {'bit' if bit else '   '}  {tm}")
             textpane(w, yy, x + 1, min(n, len(rows) + 2), wd - 2, rows or ["no builds yet: tab 2 (Flow)"], "LATEST BUILDS")
 
@@ -304,7 +316,7 @@ class Flow(Tab):
         self.design = "blinky" if "blinky" in designs() else next(iter(designs()), "")
         self.board = "xc7z020" if "xc7z020" in installed() else next(iter(installed()), "")
         self.frm, self.to, self.over, self.row, self.si, self.res, self.err = core.STAGES[0], core.STAGES[-1], {}, 0, 0, None, ""
-        self.toollog, self.toollog_t = [], 0
+        self.toollog, self.toollog_t, self.wide, self.logview = [], 0, True, "flow"
         self.resolve()
     def resolve(self):
         try:
@@ -379,12 +391,19 @@ class Flow(Tab):
     def keys(self):
         return [("Enter", "choose", self.enter), ("r", "run", self.go), ("s", "synth only", lambda: self.go("synth")),
                 ("c", "check", self.check), ("u", "upload", self.upload), ("d", "doctor", self.doctor), ("e", "edit project", self.edit),
-                ("0", "reset tools", lambda: (self.over.clear(), self.resolve())), ("x", "stop", self.stop)]
+                ("0", "reset tools", lambda: (self.over.clear(), self.resolve())),
+                ("l", "flow/tool log", lambda: setattr(self, "logview", "tool" if self.logview == "flow" else "flow")), ("x", "stop", self.stop)]
     def key(self, k):
         if k in (curses.KEY_UP, curses.KEY_DOWN):
-            self.row = (self.row + (1 if k == curses.KEY_DOWN else -1)) % len(self.ROWS); return True
+            d = 1 if k == curses.KEY_DOWN else -1
+            if self.ROWS[self.row] == "steps" and not self.wide and 0 <= self.si + d < len(self.stages()):
+                self.si += d; return True  # narrow: steps are a vertical list
+            self.row = (self.row + d) % len(self.ROWS)
+            if self.ROWS[self.row] == "steps" and not self.wide: self.si = 0 if d > 0 else len(self.stages()) - 1
+            return True
         if k in (curses.KEY_LEFT, curses.KEY_RIGHT): self.cycle(1 if k == curses.KEY_RIGHT else -1); return True
         return super().key(k)
+
     def progress(self):
         """(started, done) stages parsed from the flow output."""
         ls = list(self.job.lines) if self.job else []
@@ -395,50 +414,61 @@ class Flow(Tab):
         bcfg = boards_cfg().get(self.board, {})
         p = designs().get(self.design)
         lab = lambda r, t: put(w, yy, x + 2, f" {t:<7}", (C["tab"] if self.row == self.ROWS.index(r) else curses.A_BOLD))
-        yy = y; box(w, y, x, 6, wd, "CONFIGURATION", self.row < 4)
-        yy += 1; lab("design", "design"); put(w, yy, x + 11, f"◀ {self.design} ▶", C["accent"] | curses.A_BOLD); put(w, yy, x + 17 + len(self.design), rel(p) if p else "", C["dim"])
-        yy += 1; lab("board", "board"); put(w, yy, x + 11, f"◀ {self.board} ▶", C["accent"] | curses.A_BOLD)
-        put(w, yy, x + 17 + len(self.board), f"{bcfg.get('part', '')}  {bcfg.get('description', '')}", C["dim"], wd - 20 - len(self.board))
-        yy += 1; lab("from", "from"); put(w, yy, x + 11, f"◀ {self.frm} ▶", C["accent"] | curses.A_BOLD)
-        yy += 1; lab("to", "to"); put(w, yy, x + 11, f"◀ {self.to} ▶", C["accent"] | curses.A_BOLD)
-        put(w, yy - 1, x + 30, "stages:", C["dim"])
-        put(w, yy, x + 30, " ".join(s for s in core.STAGES[core.STAGES.index(self.frm):core.STAGES.index(self.to) + 1]), C["dim"], wd - 32)
-        # pipeline: one box per step with its tool
+        val = lambda v: put(w, yy, x + 11, f"◀ {v} ▶", C["accent"] | curses.A_BOLD)
+        yy = y; box(w, y, x, 6, wd, "CONFIGURATION  ↑↓ field · ←→ change · Enter list", self.row < 4)
+        yy += 1; lab("design", "design"); val(self.design); put(w, yy, x + 17 + len(self.design), rel(p) if p else "", C["dim"], wd - 19 - len(self.design))
+        yy += 1; lab("board", "board"); val(self.board)
+        put(w, yy, x + 17 + len(self.board), f"{bcfg.get('part', '')}  {bcfg.get('description', '')}", C["dim"], wd - 19 - len(self.board))
+        yy += 1; lab("from", "from"); val(self.frm)
+        yy += 1; lab("to", "to"); val(self.to)
+        run = core.STAGES[core.STAGES.index(self.frm):core.STAGES.index(self.to) + 1]
+        put(w, yy - 1, x + 30, "runs", C["dim"]); put(w, yy, x + 30, " → ".join(run), C["info"], wd - 32)
+        # steps: one box per step when wide, one line per step when narrow
+        self.wide = wd >= 100
         yy = y + 6; ss = self.stages(); focus = self.ROWS[self.row] == "steps"
-        box(w, yy, x, 7, wd, "STEPS  ←→ step · Enter tool · 0 back to the project file", focus)
+        sh = 7 if self.wide else len(ss) + 3
+        box(w, yy, x, sh, wd, "STEPS  " + ("←→" if self.wide else "↑↓") + " step · Enter tool · 0 project file", focus)
         st, dn = self.progress()
         bw = max(10, (wd - 4 - 3 * (len(ss) - 1)) // len(ss))
         for i, s in enumerate(ss):
-            bx = x + 2 + i * (bw + 3)
             v, cls, why = self.status(s)
             name = f"auto:{cls.name}" if v == "auto" and cls else v
             col = C["accent"] if v in ("all", "all_open") else C["ok"] if not why else C["bad"]
             if s in dn: mark, mc = "✔", C["ok"]
             elif self.job and self.job.running and st and st[-1] == s: mark, mc = SPIN[int(time.time() * 8) % 10], C["accent"]
             elif self.job and not self.job.running and self.job.rc and st and st[-1] == s: mark, mc = "✘", C["bad"]
-            else: mark, mc = " ", 0
+            else: mark, mc = "·", C["dim"]
             sel = focus and i == self.si
-            box(w, yy + 1, bx, 4, bw, "", sel)
-            put(w, yy + 2, bx + 2, f"{mark} {s}", (mc or curses.A_BOLD) | curses.A_BOLD, bw - 3)
-            put(w, yy + 3, bx + 2, name + (" *" if s in self.over else ""), col, bw - 3)
-            if i < len(ss) - 1: put(w, yy + 3, bx + bw, " ▶ ", C["dim"])
+            if self.wide:
+                bx = x + 2 + i * (bw + 3)
+                box(w, yy + 1, bx, 4, bw, "", sel)
+                put(w, yy + 2, bx + 2, f"{mark} {s}", (mc if s in dn or mark != "·" else 0) | curses.A_BOLD, bw - 3)
+                put(w, yy + 3, bx + 2, name + (" *" if s in self.over else ""), col, bw - 3)
+                if i < len(ss) - 1: put(w, yy + 3, bx + bw, " ▶ ", C["dim"])
+            else:
+                ry, rv = yy + 1 + i, curses.A_REVERSE if sel else 0
+                put(w, ry, x + 1, " " * (wd - 2), rv)
+                put(w, ry, x + 2, mark, mc | rv); put(w, ry, x + 4, f"{s:<8}", curses.A_BOLD | rv)
+                nm = (name + (" *" if s in self.over else ""))[:24]
+                put(w, ry, x + 13, f"{nm:<25}", col | rv)
+                put(w, ry, x + 39, "✔ can run" if not why else f"✘ {why}", (C["ok"] if not why else C["bad"]) | rv, wd - 41)
         s = ss[self.si]; v, cls, why = self.status(s)
         info = self.err or (f"{s}: {v}" + (f" → {cls.label()}" if cls and v != cls.name else "") + ("   ✔ can run" if not why else f"   ✘ {why}"))
-        put(w, yy + 5, x + 2, info, C["bad"] if (self.err or why) else C["dim"], wd - 4)
+        put(w, yy + sh - 2, x + 2, info, C["bad"] if (self.err or why) else C["dim"], wd - 4)
         # logs: flow output, and the log of the tool running now
-        ly = yy + 7; lh = h - (ly - y)
+        ly = yy + sh; lh = h - (ly - y)
         if lh < 4: return
         if time.time() - self.toollog_t > 1.5:
             self.toollog_t = time.time(); d = ROOT / "build" / self.design / self.board
             logs = [q for q in d.rglob("*.log") if q.name != "flow.log"] if d.exists() else []
             newest = max(logs, key=lambda q: q.stat().st_mtime, default=None)
             self.toollog = ([f"── {rel(newest)}"] + tail(newest)) if newest else []
+        tl = lambda X, W, t: textpane(w, ly, X, lh, W, self.toollog or ["", "  no tool log yet"], t, False, self.scroll if self.logview == "tool" else 0)
         if wd >= 120:
             lw = wd // 2
-            self.log(w, ly, x, lh, lw, "flow")
-            textpane(w, ly, x + lw, lh, wd - lw, self.toollog or ["", "  no tool log yet"], "tool log", False)
-        else:
-            self.log(w, ly, x, lh, wd, "flow")
+            self.log(w, ly, x, lh, lw, "flow"); tl(x + lw, wd - lw, "tool log")
+        elif self.logview == "tool": tl(x, wd, "tool log  (l: flow log)")
+        else: self.log(w, ly, x, lh, wd, "flow  (l: tool log)")
 
 class Builds(Tab):
     """Every build: steps, area, timing, flow log; program its bitstream."""
@@ -475,19 +505,20 @@ class Builds(Tab):
         if self.lv.move(k, len(builds())): self.scroll = 0; return True
         return super().key(k)
     def draw(self, w, y, x, h, wd):
-        bl = builds(); lw = min(52, wd // 3)
-        box(w, y, x, h, lw, f"BUILDS ({len(bl)})", True)
+        bl = builds()
+        (ly, lx, lh, lw), (ry, rx, rh, rw) = split(y, x, h, wd, min(52, wd // 3), min(len(bl) + 2, max(5, h // 3)))
+        box(w, ly, lx, lh, lw, f"BUILDS ({len(bl)})  ↑↓", True)
         rows = []
         for d in bl:
             st, bit, _, ts = cli.build_info(d); st = T.plain(st)
             ic, c = ("✔", C["ok"]) if st == "finished" else ("✘", C["bad"]) if st == "FAILED" else ("…", C["warn"])
             rows.append([(f" {ic} ", c), (f"{d.parent.name}/{d.name}"[:lw - 21].ljust(lw - 21), 0), (cli.ago(ts).replace(" ago", "").rjust(9), C["dim"]), (" ◆" if bit else "  ", C["accent"])])
-        self.lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows or [[(" no builds yet", C["dim"])]])
-        d = self.cur(); self.width = wd - lw - 4
-        tabs = "  ".join(f"[{v}]" if i == self.view else v for i, v in enumerate(self.VIEWS))
-        rh = h - (12 if self.job else 0)
-        if d: textpane(w, y, x + lw, rh, wd - lw, self.text(d), f"{d.parent.name}/{d.name}   ←→ {tabs}", False, self.scroll, self.VIEWS[self.view] != "summary.md")
-        if self.job: self.log(w, y + rh, x + lw, 12, wd - lw)
+        self.lv.draw(w, ly + 1, lx + 1, lh - 2, lw - 2, rows or [[(" no builds yet", C["dim"])]])
+        d = self.cur(); self.width = rw - 4
+        tabs = " ".join(f"[{v}]" if i == self.view else v for i, v in enumerate(self.VIEWS))
+        jh = min(12, rh // 3) if self.job else 0
+        if d: textpane(w, ry, rx, rh - jh, rw, self.text(d), f"←→ {tabs}", False, self.scroll, self.VIEWS[self.view] != "summary.md")
+        if self.job: self.log(w, ry + rh - jh, rx, jh, rw)
 
 class Boards(Tab):
     """boards.yml: install boards, see their files and settings, edit the list."""
@@ -504,10 +535,12 @@ class Boards(Tab):
         if self.lv.move(k, len(boards_cfg())): return True
         return super().key(k)
     def draw(self, w, y, x, h, wd):
-        bs = boards_cfg(); inst = installed(); lw = min(46, wd // 3)
-        box(w, y, x, h, lw, f"BOARDS.YML ({len([b for b in bs if b in inst])}/{len(bs)} installed)", True)
-        rows = [[(" ● " if b in inst else " ○ ", C["ok"] if b in inst else C["bad"]), (b.ljust(14), curses.A_BOLD), (c.get("part", "")[:lw - 20], C["dim"])] for b, c in bs.items()]
-        self.lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows)
+        bs = boards_cfg(); inst = installed()
+        (ly, lx, lh, lw), (ry, rx, rh, rw) = split(y, x, h, wd, min(46, wd // 3), len(bs) + 2)
+        box(w, ly, lx, lh, lw, f"BOARDS.YML ({len([b for b in bs if b in inst])}/{len(bs)} installed)", True)
+        rows = [[(" ● " if b in inst else " ○ ", C["ok"] if b in inst else C["bad"]), (b.ljust(14), curses.A_BOLD), (c.get("part", "")[:lw - 20], C["dim"]),
+                 (("  " + c.get("description", "")) if wd < WIDE else "", C["dim"])] for b, c in bs.items()]
+        self.lv.draw(w, ly + 1, lx + 1, lh - 2, lw - 2, rows)
         name = self.cur()
         if not name: return
         c = bs[name]; src = c.get("source", {})
@@ -515,7 +548,7 @@ class Boards(Tab):
         lines = [f"{name}  ·  {c.get('description', '')}", "",
                  f"part        {part}",
                  f"installed   {'yes' if name in inst else 'no: i installs it'}",
-                 f"bitstream   {'open (prjxray)' if part.startswith('xc7') else 'open place and route; Vivado only writes the bitstream (open_io)'}",
+                 f"bitstream   {'open (prjxray)' if part.startswith('xc7') else 'open place and route; Vivado only writes it (open_io)'}",
                  f"source      {'XilinxBoardStore: ' + ', '.join([src['store']] if isinstance(src.get('store'), str) else src.get('store', [])) if src.get('store') else src.get('git', '-')}"]
         if src.get("path"): lines.append(f"            path {src['path']}" + (f", xdc {src['xdc']}" if src.get("xdc") else ""))
         extra = {k: v for k, v in c.items() if k not in ("source", "part", "description")}
@@ -524,9 +557,9 @@ class Boards(Tab):
             files = sorted(rel(p) for p in (ROOT / "boards" / name).rglob("*") if p.is_file())
             lines += ["", f"targets/{name}.yml"] + ["  " + l for l in (ROOT / "targets" / f"{name}.yml").read_text().splitlines() if l and not l.startswith("#")]
             lines += ["", "board files"] + [f"  {f}" for f in files]
-        rh = h - (12 if self.job else 0)
-        textpane(w, y, x + lw, rh, wd - lw, lines, name, False, colorize=False)
-        if self.job: self.log(w, y + rh, x + lw, 12, wd - lw)
+        jh = min(12, rh // 2) if self.job else 0
+        textpane(w, ry, rx, rh - jh, rw, lines, name, False, self.scroll if not self.job else 0, colorize=False)
+        if self.job: self.log(w, ry + rh - jh, rx, jh, rw)
 
 class Hardware(Tab):
     """JTAG cables (scan, program, reset) and the UART monitor of their serial ports."""
@@ -625,41 +658,40 @@ class Hardware(Tab):
         if self.lv.move(k, len(self.items())): return True
         return super().key(k)
     def draw(self, w, y, x, h, wd):
-        lw = min(60, wd // 2 - 4)
         its = self.items()
-        box(w, y, x, h, lw, ("JTAG cables " + SPIN[int(time.time() * 8) % 10] + " scanning") if self.scanning else f"JTAG CABLES ({len(self.cables)})", True)
         rows = []
         for kind, c, p in its:
             if kind == "cable":
                 ok = bool(c["models"])
                 rows.append([(" ◆ ", C["accent"] if ok else C["bad"]), (c["serial"].ljust(14), curses.A_BOLD), (", ".join(c["models"]) or ("no access: permissions?" if re.search(r"denied|usb_open|claim", c["err"]) else "no FPGA answered"), C["ok"] if ok else C["bad"])])
                 bs = self.boards_of(c)
-                if bs: rows.append([("     ", 0), (f"{c['product'][:22]} · USB {c['busdev']} · {', '.join(bs)}", C["dim"])])
-                else: rows.append([("     ", 0), (f"{c['product'][:22]} · USB {c['busdev']}", C["dim"])])
+                rows.append([("     ", 0), (f"{c['product'][:22]} · USB {c['busdev']}" + (f" · {', '.join(bs)}" if bs else ""), C["dim"])])
             else:
                 u = self.uart_name(c, p) if c else ""
                 rows.append([("   └ ", C["dim"]), (p[0].ljust(14), C["info"]), (f"if {p[2]}  {u}", C["ok"] if u else C["dim"])])
-        # the list moves on items; the cable rows take two lines: map selection to the drawn rows
-        drawn, sel_row, r = [], 0, 0
+        (ly, lx, lh, lw), (ry, rx, rh, rw) = split(y, x, h, wd, min(60, wd // 2 - 4), min(len(rows) + 2, h // 2))
+        box(w, ly, lx, lh, lw, ("JTAG " + SPIN[int(time.time() * 8) % 10] + " scanning") if self.scanning else f"JTAG CABLES ({len(self.cables)})  ↑↓", True)
+        # the list moves on items; cable rows take two lines: map the selection to the drawn rows
+        sel_row, r = 0, 0
         for i, (kind, _, _) in enumerate(its):
             if i == self.lv.i: sel_row = r
             r += 2 if kind == "cable" else 1
         lv = ListView(); lv.i = sel_row
-        lv.draw(w, y + 1, x + 1, h - 2, lw - 2, rows or [[(" no FTDI JTAG cable found (s rescans)" if not self.scanning else " scanning USB…", C["dim"])]])
-        # UART monitor
-        rx = x + lw; rw = wd - lw; uh = h - 10
+        lv.draw(w, ly + 1, lx + 1, lh - 2, lw - 2, rows or [[(" no FTDI JTAG cable found (s rescans)" if not self.scanning else " scanning USB…", C["dim"])]])
+        # UART monitor above, JTAG command log below
+        jh = 10 if wd >= WIDE else max(5, min(8, rh // 3)); uh = rh - jh
         if self.uart:
             data = bytes(self.uart.data)
             if self.hex: lines = [" ".join(f"{b:02x}" for b in data[i:i + 16]) + "  " + "".join(chr(b) if 32 <= b < 127 else "." for b in data[i:i + 16]) for i in range(max(0, len(data) - 16 * 400), len(data), 16)]
             else: lines = data.decode(errors="replace").replace("\r\n", "\n").replace("\r", "\n").split("\n")[-2000:]
-            title = f"UART {self.uart.port} · {self.baud} baud · rx {len(data)} B · tx {self.uart.sent} B" + ("  · HEX" if self.hex else "") + (f"  ✘ {self.uart.err}" if self.uart.err else "")
-            textpane(w, y, rx, uh - 3, rw, lines, title, True, self.scroll, colorize=False)
-            box(w, y + uh - 3, rx, 3, rw, "send  (i to type · Enter sends · Esc stops)" if not self.capture else "typing: Enter sends the line, Esc stops", self.capture)
-            put(w, y + uh - 2, rx + 2, ("› " + self.line + ("█" if self.capture else "")), C["accent"] if self.capture else C["dim"], rw - 4)
+            title = f"UART {self.uart.port} · {self.baud} · rx {len(data)} B · tx {self.uart.sent} B" + (" · HEX" if self.hex else "") + (f"  ✘ {self.uart.err}" if self.uart.err else "")
+            textpane(w, ry, rx, uh - 3, rw, lines, title, True, self.scroll, colorize=False)
+            box(w, ry + uh - 3, rx, 3, rw, "send: i to type" if not self.capture else "typing: Enter sends · Esc stops", self.capture)
+            put(w, ry + uh - 2, rx + 2, ("› " + self.line + ("█" if self.capture else "")), C["accent"] if self.capture else C["dim"], rw - 4)
         else:
-            textpane(w, y, rx, uh, rw, ["", "  UART closed.", "", f"  select a port under its cable and press o   (baud {self.baud}, b to change)",
-                                        "  ports marked 'PL UART of <board>' are wired to the FPGA (uart_loopback example)"], "UART", False, colorize=False)
-        self.log(w, y + uh, rx, 10, rw, "jtag")
+            textpane(w, ry, rx, uh, rw, ["UART closed: select a port under its cable and press o", f"baud {self.baud} (b changes it)",
+                                         "'PL UART of <board>' ports are wired to the FPGA"], "UART", False, colorize=False)
+        self.log(w, ry + uh, rx, jh, rw, "jtag")
 
 class Tools(Tab):
     """tools.lock: status, install, update to the latest version; environment; doctor."""
@@ -688,23 +720,33 @@ class Tools(Tab):
         if self.lv.move(k, len(self.app.cache("tools", cli.tool_status))): return True
         return super().key(k)
     def draw(self, w, y, x, h, wd):
-        ts = self.app.cache("tools", cli.tool_status); lw = min(64, wd // 2)
-        lh = len(ts) + 2
-        box(w, y, x, lh, lw, "TOOLS.LOCK", True)
-        rows = [[(" ● " if t["ok"] else " ○ ", C["ok"] if t["ok"] else C["bad"]), (t["name"].ljust(26), curses.A_BOLD),
-                 ((t["sha"] or "-").ljust(11), C["dim"]), ("pinned" if t["pinned"] else "latest", C["warn"] if t["pinned"] else C["info"])] for t in ts]
-        self.lv.draw(w, y + 1, x + 1, lh - 2, lw - 2, rows)
-        t = self.cur()
-        if t:
-            info = [f"{t['name']}", f"  role      {t['role']}", f"  source    {t['url']}",
-                    f"  follows   {'pinned commit ' + t['ref'][:12] + ' (kept on purpose)' if t['pinned'] else 'default branch, latest commit'}",
-                    f"  checkout  {t['sha'] or 'not fetched'}", f"  status    {'ready' if t['ok'] else 'missing: i installs it'}",
-                    f"  install   make {self.INSTALL.get(t['name'], 'install')}"]
-            textpane(w, y + lh, x, min(len(info) + 2, h - lh), lw, info, "DETAILS", False, colorize=False)
+        ts = self.app.cache("tools", cli.tool_status)
         env = self.app.env
         er = [f"{'●' if ok else '○'} {n:<18} {v:<10} {wh.replace(os.path.expanduser('~'), '~')}" for n, ok, v, wh in env] if env else ["  checking…"]
-        textpane(w, y, x + lw, len(er) + 2, wd - lw, er, "ENVIRONMENT", False, colorize=False)
-        self.log(w, y + len(er) + 2, x + lw, h - len(er) - 2, wd - lw)
+        lh = len(ts) + 2; wide = wd >= WIDE; lw = min(64, wd // 2) if wide else wd
+        box(w, y, x, lh, lw, "TOOLS.LOCK  ↑↓", True)
+        rows = [[(" ● " if t["ok"] else " ○ ", C["ok"] if t["ok"] else C["bad"]), (t["name"].ljust(26), curses.A_BOLD),
+                 ((t["sha"] or "-").ljust(11), C["dim"]), ("pinned" if t["pinned"] else "latest", C["warn"] if t["pinned"] else C["info"]),
+                 (("  " + t["role"]) if not wide else "", C["dim"])] for t in ts]
+        self.lv.draw(w, y + 1, x + 1, lh - 2, lw - 2, rows)
+        t = self.cur()
+        follows = lambda t: f"pinned {t['ref'][:12]} (on purpose)" if t["pinned"] else "latest commit of the default branch"
+        if wide:
+            if t:
+                info = [f"{t['name']}", f"  role      {t['role']}", f"  source    {t['url']}", f"  follows   {follows(t)}",
+                        f"  checkout  {t['sha'] or 'not fetched'}", f"  status    {'ready' if t['ok'] else 'missing: i installs it'}",
+                        f"  install   make {self.INSTALL.get(t['name'], 'install')}"]
+                textpane(w, y + lh, x, min(len(info) + 2, h - lh), lw, info, "DETAILS", False, colorize=False)
+            textpane(w, y, x + lw, len(er) + 2, wd - lw, er, "ENVIRONMENT", False, colorize=False)
+            self.log(w, y + len(er) + 2, x + lw, h - len(er) - 2, wd - lw)
+            return
+        yy = y + lh
+        if t and h - (yy - y) >= 9:
+            info = [f"{t['url']}", f"{follows(t)} · install: make {self.INSTALL.get(t['name'], 'install')}"]
+            textpane(w, yy, x, 4, wd, info, t["name"], False, colorize=False); yy += 4
+        if h - (yy - y) >= len(er) + 6:
+            textpane(w, yy, x, len(er) + 2, wd, er, "ENVIRONMENT", False, colorize=False); yy += len(er) + 2
+        if h - (yy - y) >= 4: self.log(w, yy, x, h - (yy - y), wd)
 
 TABS = [Home, Flow, Builds, Boards, Hardware, Tools]  # add a tab here
 
@@ -713,6 +755,8 @@ class App:
     def __init__(self, scr):
         self.scr, self.jobs, self.msg, self._cache, self.env = scr, [], ("", 0, 0), {}, None
         init_colors(); curses.curs_set(0); scr.keypad(True); scr.timeout(200)
+        curses.mousemask(curses.ALL_MOUSE_EVENTS); curses.mouseinterval(0)  # click a tab, wheel scrolls (Shift+drag still selects text)
+        self.tab_y, self.tab_x = -1, []
         self.sha = cli.run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"])
         self.load_env()
         self.tabs = [cls(self) for cls in TABS]; self.cur = 0
@@ -733,8 +777,10 @@ class App:
         self.scr.refresh(); self._cache.clear()
     def header(self, w):
         h = self.scr.getmaxyx()[0]
-        if h < 34:
-            put(self.scr, 0, 1, "◆ FREISA", C["accent"] | curses.A_BOLD); put(self.scr, 0, 11, cli.TAGLINE, C["dim"], w - 12)
+        if h < 40 or w < 100:  # compact: one line
+            put(self.scr, 0, 1, "◆ FREISA", C["accent"] | curses.A_BOLD)
+            put(self.scr, 0, 11, cli.TAGLINE if w >= 100 else "open RTL → bitstream", C["dim"], w - 22)
+            put(self.scr, 0, w - 10, f"{self.sha or '':>8}", C["dim"])
             return 1
         art = cli.BANNER.strip("\n").splitlines()
         for r, l in enumerate(art):
@@ -748,38 +794,67 @@ class App:
         put(self.scr, 2, ax, "open-source RTL → bitstream, step by step, on FPGA Interchange", C["dim"], w - ax - 1)
         put(self.scr, 4, ax, f"{str(ROOT).replace(os.path.expanduser('~'), '~')}  ·  commit {self.sha or '-'}", C["dim"], w - ax - 1)
         return len(art) + 1
+
     def tabbar(self, y, w):
-        x = 1
+        busy = lambda t: t.job and t.job.running
+        def label(i, t, lvl):  # lvl 0: icon and title, 1: title, 2: short title (narrow terminals)
+            name = t.title if lvl < 2 or i == self.cur else t.title[:3]
+            return f" {i + 1}{(' ' + t.icon) if lvl == 0 else ''} {name}{' ' + SPIN[int(time.time() * 8) % 10] if busy(t) else ''} "
+        lvl = next((l for l in (0, 1) if sum(len(label(i, t, l)) + 1 for i, t in enumerate(self.tabs)) < w - 2), 2)
+        x = 1; self.tab_y, self.tab_x = y, []
         for i, t in enumerate(self.tabs):
-            busy = t.job and t.job.running
-            s = f" {i + 1} {t.icon} {t.title}{' ' + SPIN[int(time.time() * 8) % 10] if busy else ''} "
-            put(self.scr, y, x, s, C["tab"] if i == self.cur else (C["accent"] if busy else C["dim"]))
-            x += len(s) + 1
-        put(self.scr, y + 1, 0, "─" * w, C["accent"])
-    def footer(self, y, w):
-        t = self.tabs[self.cur]
-        parts = [(k, hnt) for k, hnt, _ in t.keys()] + [("1-6/Tab", "tabs"), ("?", "help"), ("q", "quit")]
-        x = 1
-        for k, hnt in parts:
-            if x + len(k) + len(hnt) + 3 > w - 2: break
-            put(self.scr, y, x, f" {k} ", C["tab"]); x += len(k) + 2
-            put(self.scr, y, x, f" {hnt}  ", C["dim"]); x += len(hnt) + 3
+            s = label(i, t, lvl)
+            put(self.scr, y, x, s, C["tab"] if i == self.cur else (C["accent"] if busy(t) else C["dim"]))
+            self.tab_x.append((x, x + len(s))); x += len(s) + 1
         text, attr, ts = self.msg
-        if text and time.time() - ts < 4: put(self.scr, y - 1, 2, f" {text} ", attr | curses.A_BOLD, w - 4)
+        if text and time.time() - ts < 4 and x + 4 < w: put(self.scr, y, max(x + 2, w - len(text) - 3), f" {text} ", attr | curses.A_BOLD, w - x - 3)
+        put(self.scr, y + 1, 0, "─" * w, C["accent"])
+
+    def footer(self, y, w):
+        """Key hints of the tab (and the global keys if they fit) on two lines: y and y + 1."""
+        t = self.tabs[self.cur]
+        own = [(k, hnt) for k, hnt, _ in t.keys()]
+        def wrap(parts, gap):
+            lines, cur = [[]], 1
+            for k, hnt in parts:
+                n = len(k) + len(hnt) + 3 + gap  # " k " + " hint" + gap
+                if cur + n > w - 1: lines.append([]); cur = 1
+                lines[-1].append((k, hnt)); cur += n
+            return lines
+        for parts, gap in ((own + [("Tab", "tabs"), ("?", "help"), ("q", "quit")], 2), (own + [("?", "help")], 2), (own, 1)):
+            lines = wrap(parts, gap)
+            if len(lines) <= 2: break
+        lines = lines[:2]  # still too long: the rest is in the help (?)
+        for r, ln in enumerate(lines):
+            x = 1; yy = y + r + (2 - len(lines))
+            for k, hnt in ln:
+                put(self.scr, yy, x, f" {k} ", C["tab"]); x += len(k) + 2
+                put(self.scr, yy, x, f" {hnt}" + " " * gap, C["dim"]); x += len(hnt) + 1 + gap
     def draw(self):
         s = self.scr; s.erase(); h, w = s.getmaxyx()
-        if h < 24 or w < 90:
-            put(s, 0, 0, f"FREISA needs at least 90x24 (now {w}x{h}): enlarge the terminal", C["warn"]); s.refresh(); return
+        if h < 20 or w < 60:
+            put(s, 0, 0, f"FREISA needs at least 60x20 (now {w}x{h})", C["warn"]); s.refresh(); return
         y = self.header(w); self.tabbar(y, w); y += 2
         try:
             self.tabs[self.cur].draw(s, y, 0, h - y - 2, w)
         except Exception as e:  # a broken tab must not close the interface
             put(s, y + 1, 2, f"cannot draw this tab: {type(e).__name__}: {e}", C["bad"], w - 4)
-        self.footer(h - 1, w); s.refresh()
+        self.footer(h - 2, w); s.refresh()
+
+    def mouse(self, t):
+        try: _, mx, my, _, b = curses.getmouse()
+        except curses.error: return
+        if my == self.tab_y:
+            for i, (x0, x1) in enumerate(self.tab_x):
+                if x0 <= mx < x1: self.cur = i
+        elif b & curses.BUTTON4_PRESSED: t.scroll += 3
+        elif b & getattr(curses, "BUTTON5_PRESSED", 0): t.scroll = max(0, t.scroll - 3)
     def help(self):
-        lines = [("1-6, Tab, Shift+Tab", "switch tab"), ("↑↓ / j k", "move in lists"), ("Shift+↑↓ / J K", "scroll the log or the text"),
+        lines = [("1-6, Tab, Shift+Tab", "switch tab (or click it)"), ("mouse wheel", "scroll the log or the text"), ("↑↓ / j k", "move in lists"), ("Shift+↑↓ / J K", "scroll the log or the text"),
                  ("Enter", "choose"), ("x", "stop the command of this tab"), ("q", "quit (stops running commands)"),
                  ("", ""), ("add a tab", "freisa/tui.py: subclass Tab, add it to TABS"), ("add a command", "one line in the tab's keys()")]
+        own = [(k, hnt) for k, hnt, _ in self.tabs[self.cur].keys()]
+        lines = [(f"{self.tabs[self.cur].title} tab", "")] + own + [("", "")] + lines
         modal_pick(self, "FREISA keys", [(f"{a:<20}", None, b, C["accent"]) for a, b in lines])
     def loop(self):
         while True:
@@ -799,6 +874,7 @@ class App:
             elif k == curses.KEY_BTAB: self.cur = (self.cur - 1) % len(self.tabs)
             elif ord("1") <= k < ord("1") + len(self.tabs): self.cur = k - ord("1")
             elif k == ord("?"): self.help()
+            elif k == curses.KEY_MOUSE: self.mouse(t)
             else: t.key(k)
 
 def main():

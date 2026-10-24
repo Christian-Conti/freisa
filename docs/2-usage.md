@@ -117,8 +117,9 @@ the critical path is reported.
 
 ## Interactive interface
 
-`python freisa.py` opens a terminal interface (it switches to the FREISA conda env by itself). Tabs, switched with
-`1`-`6` or `Tab`; the bottom line lists the keys of the current tab, `?` shows them all.
+`python freisa.py` opens a terminal interface (it switches to the FREISA conda env by itself). It works from 60x20:
+below 110 columns the panes are stacked instead of side by side. Tabs are switched with `1`-`6`, `Tab` or a mouse click;
+the wheel scrolls logs. The two bottom lines list the keys of the current tab, `?` shows them all.
 
 | Tab | What it does |
 |---|---|
