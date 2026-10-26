@@ -34,7 +34,7 @@ What this means in practice:
 
 ## Adding a board: boards.yml
 Boards are listed in one file, `boards.yml`, at the top of the repository. For each board you write its name, its FPGA
-part and where its board files come from; `make install-boards` does the rest:
+part and where its board files come from; `python freisa.py install boards` does the rest:
 ```yaml
 boards:
   aup-zu3-8gb:
@@ -57,9 +57,9 @@ boards:
 | other keys | copied unchanged to `targets/<name>.yml`: `ofl_board`, `ofl_cable`, `uart_channel`, `jtag_serial`, `hw_device` |
 
 ```sh
-make install-boards                      # every board of boards.yml
-make install-boards BOARD=aup-zu3-8gb    # one board
-make doctor TARGET=aup-zu3-8gb           # what can run on it
+python freisa.py install boards              # every board of boards.yml
+python freisa.py install boards aup-zu3-8gb  # one board
+python freisa.py doctor -t aup-zu3-8gb       # what can run on it
 ```
 For each board this writes:
 - `boards/<name>/<board>/board.xml`, `part0_pins.xml`, `pins.xdc` (all board pins with their I/O standards);

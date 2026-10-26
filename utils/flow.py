@@ -3,15 +3,16 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : Command-line entry point: run, doctor and upload.
+# Info     : Runs the flow, the doctor table and the upload (called by `python freisa.py run|doctor|upload`).
 # Module   : flow.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 
 import argparse, json, os, pathlib, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from freisa import core, monitor, report, resolve, term
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).resolve().parents[1]
 
 def doctor(r, board):
     """Every tool of every step for one board: available or not (and why); ◀ marks the one the project file selects."""
@@ -48,7 +49,7 @@ def main():
         why = b.supports(target)
         if why: sys.exit(term.error(f"upload/{b.name} unavailable: {why}"))
         ctx.art["bit"] = pathlib.Path(a.bit) if a.bit else ctx.work / "out.bit"
-        if not ctx.art["bit"].exists(): sys.exit(term.error(f"no bitstream at {os.path.relpath(ctx.art['bit'])}: run the flow first or pass BIT="))
+        if not ctx.art["bit"].exists(): sys.exit(term.error(f"no bitstream at {os.path.relpath(ctx.art['bit'])}: run the flow first or pass --bit"))
         print(f"{term.ARROW} {term.bold('upload')}   {term.cyan(b.label())}  {term.dim(os.path.relpath(ctx.art['bit']))}")
         b.run(ctx); print(f"  {term.OK} {term.green('programmed')} {os.path.relpath(ctx.art['bit'])} {term.dim('with ' + b.label())}"); return
     sel = r.sel

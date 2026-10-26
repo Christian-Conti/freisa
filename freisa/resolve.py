@@ -10,14 +10,13 @@ import os, pathlib, sys
 from . import core
 
 HERE = pathlib.Path(__file__).resolve().parent.parent
-os.environ["PATH"] = f"{HERE / 'install' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}"  # tools built by `make install`
+os.environ["PATH"] = f"{HERE / 'install' / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}"  # tools built by `freisa.py install`
 
 class Resolved:
     def __init__(self, design, target_name, steps=None):
         core.load_backends()
         # `design` may be a project name (any designs/**/<name>.yml), a relative or an absolute path to a yml
         d = design.strip('"')
-        if d.startswith("designs//"): d = d[len("designs/"):]  # Makefile DESIGN_DIR prefix in front of an absolute path
         nm = pathlib.Path(d).stem if d.endswith(".yml") else pathlib.Path(d).name
         found = sorted((HERE / "designs").rglob(f"{nm}.yml"))
         self.dpath = pathlib.Path(d) if pathlib.Path(d).is_file() else (found[0] if found else None)
@@ -52,7 +51,7 @@ class Resolved:
 
     def problems(self, run):
         """[(step, tool, reason)] that stop the flow over the steps in `run`: tools that cannot run on this board, and the
-        rules between steps (shared by `make check` and the interactive interface)."""
+        rules between steps (shared by `freisa.py check` and the interactive interface)."""
         bad = [(s, self.sel[s].name, why) for s in run if (why := self.sel[s].supports(self.target))]
         if "sources" in run and not any(k in self.flow for k in ("rtl", "core", "edam", "filelist")):  # sources only per board
             boards = ", ".join(k for k in self.flow.get("per_target", {}) if "@" not in k)

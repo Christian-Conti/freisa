@@ -5,7 +5,7 @@
 #
 # Info     : Builds the prjxray bitstream tools (fasm2frames, xc7frames2bit) and nextpnr-xilinx (prjxray-db chip database)
 #            for the open xc7 path. The other xc7 place and route,
-#            nextpnr-fpga_interchange, comes from make install-interchange.
+#            nextpnr-fpga_interchange, comes from python freisa.py install interchange.
 # Module   : build_xc7.sh
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it

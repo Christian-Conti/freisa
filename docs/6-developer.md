@@ -16,24 +16,23 @@ writes files for the next one. A new tool is one class in one file; nothing else
 ## Code map
 | Path | What it is |
 |------|------------|
-| `flow.py` | runs a flow: `run`, `doctor`, `upload` (called by the Makefile) |
-| `freisa.py` | starts the interactive interface (`python freisa.py`) |
+| `freisa.py` | the entry point: interactive interface, or one command; it calls the scripts in `utils/` |
 | `freisa/core.py` | the block registry (`Backend`, `@backend`, `AUTO`), the run context (`Ctx`, `ctx.sh`), `prepare:` commands, explore |
 | `freisa/resolve.py` | project file + board file -> one tool per step; the rules between steps (`problems()`) |
 | `freisa/stages/` | the blocks, one file per tool family: `sources.py`, `synth_yosys.py`, `rapidwright.py`, `open_pnr.py`, `vivado.py`, `upload.py` |
 | `freisa/ifx.py` | FPGA Interchange conversions (RapidWright, python-fpga-interchange) |
 | `freisa/vivado.py` | Vivado helpers shared by the Vivado blocks (run a script, constraints, reports) |
 | `freisa/monitor.py`, `freisa/report.py` | the run monitor; reports collected after each step |
-| `freisa/cli.py`, `freisa/term.py` | `make status` / `make show`; terminal colors |
+| `freisa/cli.py`, `freisa/term.py` | `python freisa.py status` / `python freisa.py show`; terminal colors |
 | `freisa/tui/` | the interactive interface (see below) |
 | `freisa/rw/`, `freisa/yosys/` | RapidWright scripts; Yosys techmap for the open placer |
-| `utils/` | install scripts, `check_flow.py` (`make check`), `boards.py` (`make install-boards`), `uart_test.py` |
+| `utils/` | `flow.py` (`run`, `doctor`, `upload`), install scripts, `check_flow.py` (`python freisa.py check`), `boards.py` (`python freisa.py install boards`), `uart_test.py` |
 
 ## How a run works
 1. `freisa/resolve.py` loads `defaults.yml`, the project file and the board file, picks one tool per step
    (resolving `auto`) and applies the design's `per_target` overrides.
-2. `utils/check_flow.py` (run by the Makefile) verifies that every selected block can run; if not it stops with suggestions.
-3. `flow.py` runs the steps in order. Steps pass files to each other through `ctx.art`:
+2. `utils/check_flow.py` (run by `freisa.py run`) verifies that every selected block can run; if not it stops with suggestions.
+3. `utils/flow.py` runs the steps in order. Steps pass files to each other through `ctx.art`:
 
 | Key | Written by | Read by |
 |-----|-----------|---------|
@@ -77,17 +76,17 @@ If the check script should suggest how to install it, add a line to `HINTS` in `
 
 ## Source tools: tools.lock
 Tools built from source are listed in `tools.lock` (`name url ref`). `ref: HEAD` follows the repository's default branch
-(latest version, updated by `make fetch`); a commit pins the tool. Only two are pinned, because their latest version
+(latest version, updated by `python freisa.py fetch`); a commit pins the tool. Only two are pinned, because their latest version
 does not work in this flow:
 - DREAMPlaceFPGA: the commit named in the RapidWright tutorial (its master imports an operator that is never built);
 - nextpnr-fpga-interchange: the last nextpnr commit with the `fpga_interchange` architecture (removed from master in 2024).
 
 ```sh
-make outdated                         # which tools follow their latest version, which are pinned
-make fetch                            # update the ones that follow HEAD (pinned ones are left alone)
-make update NAME=<tool> REF=<commit>  # pin a tool (REF=HEAD to follow its latest version again)
-make install-dreamplace FORCE=1       # rebuild after an update (install-interchange, install-xc7, install-prjuray likewise)
-make flow TARGET=zcu104               # smoke test (`make flow` alone for the xc7 tools)
+python freisa.py outdated                    # which tools follow their latest version, which are pinned
+python freisa.py fetch                       # update the ones that follow HEAD (pinned ones are left alone)
+python freisa.py update <tool> <commit>      # pin a tool (HEAD to follow its latest version again)
+python freisa.py install dreamplace --force  # rebuild after an update (interchange, xc7, prjuray likewise)
+python freisa.py run -t zcu104               # smoke test (`python freisa.py run` alone for the xc7 tools)
 ```
 RapidWright comes from pip (`utils/python-requirements.txt`). `utils/build_dreamplace.sh` and
 `freisa/stages/rapidwright.py` contain workarounds for DREAMPlaceFPGA, each with a comment.
@@ -121,9 +120,9 @@ Each tab is a class derived from `Tab` (`tabs/base.py`):
 
 - `keys()` returns `(key, hint, function)` entries: a new command is one line there, and the footer shows its hint.
 - `draw(w, y, x, h, wd)` draws the tab in its area with the helpers `box`, `put`, `textpane` and `ListView`.
-- `self.run(cmd, title)` starts a command in the background (usually a `make` target); `self.log(...)` shows its output.
+- `self.run(cmd, title)` starts a command in the background (usually `[*FREISA, "<command>", ...]`, i.e. `python freisa.py <command>`); `self.log(...)` shows its output.
 - Popups: `modal_pick` (list), `modal_text` (one line), `confirm`.
 
 A new tab: a file in `tabs/` with a `Tab` subclass (`title`, `icon`, `keys()`, `draw()`), added to `TABS`.
 Data shown by more than one interface (environment, tools, builds) comes from `freisa/cli.py`, which also prints
-`make status`.
+`python freisa.py status`.

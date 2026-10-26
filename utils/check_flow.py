@@ -17,12 +17,12 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 from freisa import core, resolve, term as T
 
 HINTS = [  # (substring of the reason, how to fix it)
-    ("DREAMPlaceFPGA", "make install-dreamplace"),
-    ("nextpnr-fpga_interchange", "make install-interchange"),
-    ("python-fpga-interchange", "make install-interchange"),
-    ("prjuray not installed", "make install-prjuray"),
-    ("fasm2frames", "make install-xc7"),
-    ("xc7frames2bit", "make install-xc7"),
+    ("DREAMPlaceFPGA", "python freisa.py install dreamplace"),
+    ("nextpnr-fpga_interchange", "python freisa.py install interchange"),
+    ("python-fpga-interchange", "python freisa.py install interchange"),
+    ("prjuray not installed", "python freisa.py install prjuray"),
+    ("fasm2frames", "python freisa.py install xc7"),
+    ("xc7frames2bit", "python freisa.py install xc7"),
     ("Vivado not found", "install Vivado or point to it: VIVADO=/path/to/vivado, or VIVADO_ROOT=/path/to/vivado (VIVADO_VERSION=2024.1)"),
     ("openFPGALoader", "put openFPGALoader on PATH (OSS CAD Suite)"),
     ("yosys", "put Yosys on PATH (OSS CAD Suite)"),
@@ -36,7 +36,7 @@ def main():
     ap.add_argument("--upload", action="store_true", help="check the upload step only")
     ap.add_argument("--tool", help="upload tool overriding the project file")
     ap.add_argument("--step", action="append", default=[], metavar="STAGE=TOOL", help="tool of one step, overriding the project file")
-    a = ap.parse_args()
+    a = ap.parse_known_args()[0]  # the run options (-j, -o, --bit) are not for the check
     r = resolve.Resolved(a.design, a.target, dict(s.split("=", 1) for s in a.step))
     if a.tool: r.sel["upload"] = core.pick("upload", a.tool, r.target); r.steps["upload"] = a.tool
     run = ["upload"] if a.upload else core.STAGES[core.STAGES.index(a.frm):core.STAGES.index(a.to) + 1]
@@ -68,7 +68,7 @@ def main():
         elif alt:
             print(f"      {T.yellow('available')}  " + T.dim(" | ").join(T.cyan(f"{s}: {x}") for x in alt))
         if s == "bitgen" and len(run) > 1:
-            print(f"      {T.yellow('option 3')}   no bitstream, open tools up to the routed checkpoint: " + T.cyan(f"TO={run[run.index(s) - 1]}"))
+            print(f"      {T.yellow('option 3')}   no bitstream, open tools up to the routed checkpoint: " + T.cyan(f"--to {run[run.index(s) - 1]}"))
     sys.exit(1)
 
 main()

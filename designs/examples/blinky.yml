@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Info     : Project file of the blinky example: sources, tools per step and per-board settings.
-#            One project file per design; `make flow DESIGN=blinky TARGET=<board>` uses it.
+#            One project file per design; `python freisa.py run -d blinky -t <board>` uses it.
 # Module   : blinky.yml
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
@@ -32,7 +32,7 @@ synth_args: -flatten
 #           auto      first open-source tool that works on the board (also the default of a step that is not listed)
 #           all       try every tool that works on the board for this step and keep the best result
 #           all_open  try every open source tool that works on the board for this step and keep the best result
-#           <name>    a specific tool; `make doctor TARGET=<board>` lists them and whether they can run
+#           <name>    a specific tool; `python freisa.py doctor -t <board>` lists them and whether they can run
 #         synth:   yosys | vivado
 #         netlist: rapidwright_if | yosys_json_if | vivado_link | none   (auto: rapidwright_if on UltraScale+, yosys_json_if on xc7)
 #         place:   dreamplacefpga | in_route | vivado         (auto: dreamplacefpga on UltraScale+, in_route on xc7)
@@ -52,7 +52,7 @@ steps:
 #         ZCU104/ZCU106/AUP-ZU3 (UltraScale+) have no open bitstream writer, so `auto` would stop after routing.
 #         open_io: open tools also do the I/O buffers and their routing; Vivado only runs write_bitstream.
 #         KV260 is not listed: it has no PL clock oscillator (the PL clock comes from the PS), so blinky can only be
-#         built up to the routed checkpoint there: `make flow TARGET=kv260 TO=route`.
+#         built up to the routed checkpoint there: `python freisa.py run -t kv260 --to route`.
 boards:
   zcu104: {bitgen: open_io}
   zcu106: {bitgen: open_io}

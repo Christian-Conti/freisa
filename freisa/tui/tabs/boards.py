@@ -21,10 +21,10 @@ class Boards(Tab):
     def __init__(self, app): super().__init__(app); self.lv = ListView()
     def cur(self): bs = list(boards_cfg()); return bs[self.lv.i] if bs else None
     def keys(self):
-        return [("i", "install this board", lambda: self.cur() and self.run(["make", "install-boards", f"BOARD={self.cur()}"], f"install {self.cur()}")),
-                ("a", "install all", lambda: self.run(["make", "install-boards"], "install all boards")),
+        return [("i", "install this board", lambda: self.cur() and self.run([*FREISA, "install", "boards", self.cur()], f"install {self.cur()}")),
+                ("a", "install all", lambda: self.run([*FREISA, "install", "boards"], "install all boards")),
                 ("e", "edit boards.yml", lambda: self.app.edit(ROOT / "boards.yml")),
-                ("d", "doctor", lambda: self.cur() and self.run(["make", "doctor", f"TARGET={self.cur()}"], f"doctor {self.cur()}")),
+                ("d", "doctor", lambda: self.cur() and self.run([*FREISA, "doctor", "-t", self.cur()], f"doctor {self.cur()}")),
                 ("x", "stop", self.stop)]
     def key(self, k):
         if self.lv.move(k, len(boards_cfg())): return True

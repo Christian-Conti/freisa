@@ -36,7 +36,7 @@ class DreamPlaceFpga(_UsPlus):
     metric = "hpwl"
     stage, name, tools = "place", "dreamplacefpga", ["java"]
     def supports(self, target):
-        return super().supports(target) or (None if self._root() else "build DREAMPlaceFPGA: `make install-dreamplace` (or set DREAMPLACEFPGA_ROOT)")
+        return super().supports(target) or (None if self._root() else "build DREAMPlaceFPGA: `python freisa.py install dreamplace` (or set DREAMPLACEFPGA_ROOT)")
     def _root(self):
         r = pathlib.Path(os.environ.get("DREAMPLACEFPGA_ROOT", pathlib.Path(__file__).parents[2] / "third_party/dreamplacefpga"))
         return r if (r / "install" / "dreamplacefpga" / "Placer.py").exists() else None

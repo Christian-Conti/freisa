@@ -10,7 +10,7 @@
 
 """Usage: uart_test.py -t <board> [--port /dev/ttyUSBx] [--baud 115200] [--bytes 256]
 
-The board file gives `uart_channel` (FT4232H interface number of the PL UART). The JTAG scan of `make upload` finds the
+The board file gives `uart_channel` (FT4232H interface number of the PL UART). The JTAG scan of `freisa.py upload` finds the
 cable whose FPGA is this board's; its tty on that interface is the PL UART. Exit 0 when every byte comes back unchanged."""
 import argparse, os, pathlib, re, sys, time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
@@ -31,7 +31,7 @@ with_uart = {k: v for k, v in with_uart.items() if "uart_channel" in v}
 
 if a.target and a.target not in with_uart and not a.port:
     sys.exit(T.error(f"{a.target}: its USB serial port is not wired to FPGA pins (no PL UART), the loopback cannot run there.\n"
-                     f"Boards with a PL UART: {', '.join(with_uart)} -> make uart-test TARGET=<board>"))
+                     f"Boards with a PL UART: {', '.join(with_uart)} -> python freisa.py uart-test -t <board>"))
 
 if a.target is None:  # pick the connected board that has a PL UART
     found = [(k, d) for k, v in with_uart.items() for d in upload._scan()
@@ -61,7 +61,7 @@ if port is None:
     if "uart_channel" not in target: sys.exit(T.error(f"targets/{a.target}.yml has no uart_channel: pass PORT=/dev/ttyUSBx"))
     class Ctx: pass
     ctx = Ctx(); ctx.target = target; ctx.work = pathlib.Path("/tmp")
-    dev = upload.choose(ctx, "board on cable")   # same scan / choice as make upload
+    dev = upload.choose(ctx, "board on cable")   # same scan / choice as freisa.py upload
     port = tty_of(dev["serial"], int(target["uart_channel"]))
     if port is None: sys.exit(T.error(f"no ttyUSB on interface {target['uart_channel']} of cable {dev['serial']}"))
 
@@ -79,7 +79,7 @@ ok = back == data
 print(f"  {T.OK if ok else T.FAIL} {'echo matches' if ok else 'echo differs'}: sent {len(data)}, received {len(back)}" 
       + ("" if ok else f", first difference at byte {next((i for i, (x, y) in enumerate(zip(data, back)) if x != y), len(back))}"))
 if not ok:
-    print("    " + T.note(f"is uart_loopback loaded on the board? make flow DESIGN=uart_loopback TARGET={a.target} && "
-                       f"make upload DESIGN=uart_loopback TARGET={a.target}"))
+    print("    " + T.note(f"is uart_loopback loaded on the board? python freisa.py run -d uart_loopback -t {a.target} && "
+                       f"python freisa.py upload -d uart_loopback -t {a.target}"))
     
 sys.exit(0 if ok else 1)

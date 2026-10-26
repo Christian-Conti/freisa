@@ -34,7 +34,7 @@ class Flow(Tab):
         except SystemExit as e:
             self.res, self.err, self.bad = None, T.plain(str(e)), {}
     def problem_with(self, s, v):
-        """Why step s cannot run with value v (same rules as `make check`), or None."""
+        """Why step s cannot run with value v (same rules as `freisa.py check`), or None."""
         if s == "upload": return core.REGISTRY["upload"][v]().supports(target(self.board)) if v in core.REGISTRY["upload"] else None
         try:
             r = resolve.Resolved(self.design, self.board, {**{k: x for k, x in self.over.items() if k != "upload"}, s: v})
@@ -94,19 +94,19 @@ class Flow(Tab):
         self.resolve()
     def steps_arg(self):
         o = {k: v for k, v in self.over.items() if k != "upload"}
-        return [f"STEPS={' '.join(f'{k}={v}' for k, v in o.items())}"] if o else []
-    def base(self): return [f"DESIGN={self.design}", f"TARGET={self.board}"]
+        return [a for k, v in o.items() for a in ("--step", f"{k}={v}")]
+    def base(self): return ["-d", self.design, "-t", self.board]
     def go(self, to=None):
         bad = {k: v for k, v in self.bad.items() if k in self.run_stages()[:self.run_stages().index(to) + 1 if to in self.run_stages() else None]}
         if bad and modal_pick(self.app, f"{', '.join(bad)} cannot run: run anyway?",
                               [("no", False, "", 0)] + [(f"  {k}:", None, v, C["bad"]) for k, v in bad.items()] + [("yes, run", True, "", C["warn"])]) is not True: return
-        self.run(["make", "flow", *self.base(), f"FROM={self.frm}", f"TO={to or self.to}", *self.steps_arg()],
+        self.run([*FREISA, "run", *self.base(), "--from", self.frm, "--to", to or self.to, *self.steps_arg()],
                  f"flow {self.design} → {self.board}")
-    def check(self): self.run(["make", "check", *self.base(), f"FROM={self.frm}", f"TO={self.to}", *self.steps_arg()], f"check {self.design} → {self.board}")
-    def doctor(self): self.run(["make", "doctor", *self.base()], f"doctor {self.board}")
+    def check(self): self.run([*FREISA, "check", *self.base(), "--from", self.frm, "--to", self.to, *self.steps_arg()], f"check {self.design} → {self.board}")
+    def doctor(self): self.run([*FREISA, "doctor", *self.base()], f"doctor {self.board}")
     def upload(self):
         tool = self.over.get("upload")
-        self.run(["make", "upload", *self.base(), *([f"TOOL={tool}"] if tool and tool != "auto" else [])], f"upload {self.design} → {self.board}")
+        self.run([*FREISA, "upload", *self.base(), *(["--tool", tool] if tool and tool != "auto" else [])], f"upload {self.design} → {self.board}")
     def edit(self):
         p = designs().get(self.design)
         if p: self.app.edit(p); self.resolve()

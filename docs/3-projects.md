@@ -11,7 +11,7 @@
 # 3. Project files
 
 A project is one YAML file under `designs/` (any subfolder; the bundled example is `designs/examples/blinky.yml`).
-`make flow DESIGN=<name>` finds `designs/**/<name>.yml`; a path to any `.yml` works too.
+`python freisa.py run -d <name>` finds `designs/**/<name>.yml`; a path to any `.yml` works too.
 The project file says everything about a design: where its sources are, which tool runs each step, and what changes
 from board to board. There is no other configuration file.
 
@@ -20,7 +20,7 @@ from board to board. There is no other configuration file.
 2. `steps:` gives the tool of each step; `boards.<TARGET>:` overrides some of them for one board.
 3. `per_target.<TARGET>:` overrides design keys (pins, top, ...) for one board; `per_target.<TARGET>@<tool>:` only when that
    tool runs in some step on that board.
-`make check TARGET=<board>` shows the result: which tool each step will use and whether it can run.
+`python freisa.py check -t <board>` shows the result: which tool each step will use and whether it can run.
 
 ## All keys
 | Key | Meaning |
@@ -56,7 +56,7 @@ from board to board. There is no other configuration file.
 | `auto` | first open-source tool that works on the board (default of a step that is not listed) |
 | `all` | every tool that works on the board for this step is run, the best result is kept |
 | `all_open` | like `all`, with open tools only (no `(vivado)` tools) |
-| a name | that tool. `make doctor TARGET=<board>` lists every tool of every step |
+| a name | that tool. `python freisa.py doctor -t <board>` lists every tool of every step |
 
 | Step | Tools (`auto` picks the first that works) |
 |------|------------------------------------------|
@@ -100,7 +100,7 @@ boards:
 ```
 On ZCU104/ZCU106 the bitstream step is `open_io`: open tools also place the I/O buffers and clock buffer and route them,
 and Vivado only runs `write_bitstream`. KV260 is left out: it has no PL clock oscillator (its PL clock comes from the PS),
-so blinky stops at the routed checkpoint there (`make flow TARGET=kv260 TO=route`).
+so blinky stops at the routed checkpoint there (`python freisa.py run -t kv260 --to route`).
 ```yaml
 per_target:
   pynq-z2: {xdc: [pynq-z2.xdc]}
@@ -131,7 +131,7 @@ The per-board XDC files give the PL UART pins (`uart2_PL_TX`/`uart2_PL_RX` in th
 For every port bit of the top: `PACKAGE_PIN` and `IOSTANDARD` in the XDC, with the port name (`led`, `data[3]`).
 A differential input is written as two ports `<port>_p` and `<port>_n` (the design keeps one port `<port>`).
 Clock inputs (ports that drive flip-flop clocks) get a global clock buffer automatically; give their period in `clocks:`.
-Pins of a supported board can be copied from `boards/<board>/<board>/pins.xdc` (created by `make install-boards`).
+Pins of a supported board can be copied from `boards/<board>/<board>/pins.xdc` (created by `python freisa.py install boards`).
 Not supported yet by `open_io`: `inout` ports and differential outputs.
 
 ## A new project
@@ -144,7 +144,7 @@ boards:
 per_target:
   zcu104: {xdc: [zcu104_pins.xdc], clocks: {clk: 5.0}}
 ```
-Save it as `designs/my_project.yml` and run `make flow DESIGN=my_project TARGET=zcu104`.
+Save it as `designs/my_project.yml` and run `python freisa.py run -d my_project -t zcu104`.
 
 ## A project with its own generators and Vivado scripts
 A repository that generates its RTL and its file list itself is used as it is: `prepare` runs its commands, `core` reads

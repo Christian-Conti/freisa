@@ -3,8 +3,8 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : Conda environment setup rules.
-# Module   : MakeConda
+# Info     : Installs Miniconda if missing and creates or updates the FREISA conda env (python freisa.py install conda).
+# Module   : conda_env.sh
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 

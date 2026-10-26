@@ -16,7 +16,7 @@ Two examples come with FREISA. Each one is a project file in `designs/examples/`
 | Example | What it does | pynq-z2 (PYNQ-Z1/Z2) | ZCU104 | ZCU106 | KV260 | AUP-ZU3 8 GB |
 |---------|--------------|----------------------|--------|--------|-------|--------------|
 | `blinky` | LED 0 blinks | `.bit`, open tools | `.bit` (`open_io`) | `.bit` (`open_io`) | routed checkpoint only | `.bit` (`open_io`) |
-| `uart_loopback` | echoes the PL UART | — | `.bit` + `make uart-test` | `.bit` + `make uart-test` | — | — |
+| `uart_loopback` | echoes the PL UART | — | `.bit` + `python freisa.py uart-test` | `.bit` + `python freisa.py uart-test` | — | — |
 
 `open_io` ([details](8-open-io.md)): every step is done by open tools, I/O included; Vivado only runs `write_bitstream` (no open bitstream writer
 exists for UltraScale+). A dash means the board cannot run the example (see the notes of each example).
@@ -32,11 +32,11 @@ A 26-bit counter whose top bit drives an LED.
 | `examples/blinky/<board>.xdc` | clock and LED pins of each board |
 
 ```sh
-make flow                                   # = DESIGN=blinky TARGET=pynq-z2: RTL -> out.bit with open tools
-make upload                                 # program it
-make flow TARGET=zcu104 && make upload TARGET=zcu104
-make flow TARGET=aup-zu3-8gb               # AUP-ZU3: 100 MHz LVDS clock, white LED 0
-make flow TARGET=kv260 TO=route             # KV260: no PL clock oscillator, stops at the routed checkpoint
+python freisa.py run                      # = -d blinky -t pynq-z2: RTL -> out.bit with open tools
+python freisa.py upload                   # program it
+python freisa.py run -t zcu104 && python freisa.py upload -t zcu104
+python freisa.py run -t aup-zu3-8gb       # AUP-ZU3: 100 MHz LVDS clock, white LED 0
+python freisa.py run -t kv260 --to route  # KV260: no PL clock oscillator, stops at the routed checkpoint
 ```
 Result: `build/blinky/<board>/out.bit`; on the board LED 0 blinks (period of 2^26 clock cycles: about 2 Hz on PYNQ at 125 MHz, about 4.5 Hz on ZCU10x at 300 MHz).
 
@@ -53,10 +53,10 @@ cable programs the board and runs the test.
 | `examples/uart_loopback/<board>.xdc` | PL UART, clock and LED pins of ZCU104 and ZCU106 |
 
 ```sh
-make flow   DESIGN=uart_loopback TARGET=zcu104
-make upload DESIGN=uart_loopback TARGET=zcu104
-make uart-test                              # finds the connected board and its serial port, sends 256 random bytes
-make uart-test TARGET=zcu104 BAUD=921600    # or a given board / baud rate; PORT=/dev/ttyUSBx to force the port
+python freisa.py run -d uart_loopback -t zcu104
+python freisa.py upload -d uart_loopback -t zcu104
+python freisa.py uart-test                          # finds the connected board and its serial port, sends 256 random bytes
+python freisa.py uart-test -t zcu104 --baud 921600  # or a given board / baud rate; --port /dev/ttyUSBx to force the port
 ```
 Expected: `✔ echo matches: sent 256, received 256`. If nothing comes back, check that uart_loopback (not blinky) is
 loaded on the board.
@@ -67,4 +67,4 @@ on PMOD pins (with its own pin file).
 
 ## Using an example as a template
 Copy a project file to `designs/<name>.yml`, change `repo`, `top`, `rtl` and the pin files, and run
-`make flow DESIGN=<name> TARGET=<board>`. `make check DESIGN=<name> TARGET=<board>` tells you what is missing.
+`python freisa.py run -d <name> -t <board>`. `python freisa.py check -d <name> -t <board>` tells you what is missing.

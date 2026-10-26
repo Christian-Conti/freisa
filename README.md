@@ -14,20 +14,21 @@ FREISA takes an RTL design (Verilog, SystemVerilog, VHDL) to an FPGA bitstream u
 Each step of the flow is a replaceable block, and designs and boards are short YAML files.
 Vivado is optional: it is used only when you ask for it.
 
-Everything can be done from the terminal (`make`) or from an interactive interface (`python freisa.py`).
+One entry point, `freisa.py`: alone it opens an interactive interface, with a command (`python freisa.py run ...`) it
+works from the terminal and in scripts. It switches to the FREISA conda environment by itself.
 
 ## Quick start
 ```sh
-make install                       # one time: conda env, board files, open tools
-make flow                          # default: blinky on PYNQ-Z2, RTL -> out.bit, open tools only
-make flow TARGET=zcu104            # blinky on ZCU104: open tools, Vivado only writes the bitstream
-make flow DESIGN=uart_loopback TARGET=zcu104 && make upload DESIGN=uart_loopback TARGET=zcu104 && make uart-test TARGET=zcu104
-make help                          # every command and variable
+python freisa.py install        # one time: conda env, board files, open tools
+python freisa.py run            # default: blinky on PYNQ-Z2, RTL -> out.bit, open tools only
+python freisa.py run -t zcu104  # blinky on ZCU104: open tools, Vivado only writes the bitstream
+python freisa.py run -d uart_loopback -t zcu104 && python freisa.py upload -d uart_loopback -t zcu104 && python freisa.py uart-test -t zcu104
+python freisa.py help           # every command and its options
 ```
 
 ## Interactive interface
 ```sh
-python freisa.py                   # switches to the FREISA conda env by itself; works from 60x20
+python freisa.py  # switches to the FREISA conda env by itself; works from 60x20
 ```
 One tab per activity, switched with `1`-`6`, `Tab` or the mouse; the bottom lines list the keys of the tab, `?` all of them:
 
@@ -59,14 +60,13 @@ Read in this order:
 ## Repository layout
 | Path | Content |
 |------|---------|
-| `Makefile`, `flow.py` | entry points of the terminal commands |
-| `freisa.py` | entry point of the interactive interface |
+| `freisa.py` | the entry point: interactive interface, or one command (`python freisa.py help`) |
 | `designs/` | project files, one per design (examples: `designs/examples/blinky.yml`, `uart_loopback.yml`) |
 | `examples/` | RTL and pin files of the bundled examples |
 | `targets/` | board files (generated from `boards.yml`) |
 | `freisa/` | flow engine (`core`, `resolve`, `monitor`, `report`), the tools of each step (`freisa/stages/`), the interactive interface (`freisa/tui/`), RapidWright scripts (`freisa/rw/`); map in the [Developer guide](docs/6-developer.md#code-map) |
 | `utils/` | install, check and helper scripts |
 | `defaults.yml` | default tool options |
-| `boards.yml` | the boards to install (you edit it; `make install-boards`) |
+| `boards.yml` | the boards to install (you edit it; `python freisa.py install boards`) |
 | `tools.lock`, `boards.lock` | source tools (latest version or pinned commit) / commits of the fetched board files |
 | `build/<design>/<board>/` | outputs (created by the flow) |

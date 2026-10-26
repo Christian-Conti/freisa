@@ -11,24 +11,24 @@
 # 1. Getting started
 
 ## Requirements
-- Linux x86-64, git, a C++ toolchain, cmake (checked by `make check-deps`, which prints the `apt` line for anything missing).
+- Linux x86-64, git, a C++ toolchain, cmake (checked by `python freisa.py install deps`, which prints the `apt` line for anything missing).
 - [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) on `PATH`: Yosys with the `slang` and `ghdl` plugins, openFPGALoader.
 - Java 11 or newer (RapidWright).
 - Optional: Vivado. FREISA finds it through `$VIVADO`, then `PATH`, then `/path/to/Xilinx/Vivado/<version>/bin/vivado`. 
 
 ## Install
 ```sh
-make install
+python freisa.py install
 ```
 This creates the `freisa` conda environment, downloads the board files of the supported boards, and builds the open tools
 that are not packaged (nextpnr-fpga_interchange, python-fpga-interchange in its own env `freisa-if`, prjxray, Project U-Ray,
 DREAMPlaceFPGA) into `install/` and `third_party/`. The first run on a new chip also builds its Interchange device
 description (a few minutes, once).
-Tools already built are skipped; `FORCE=1` rebuilds them. `make uninstall` removes everything `make install` created.
+Tools already built are skipped; `--force` rebuilds them; `python freisa.py install <part>` installs one part (`python freisa.py help`). `python freisa.py uninstall` removes everything `python freisa.py install` created.
 
 ## First run
 ```sh
-make flow                     # default: DESIGN=blinky TARGET=pynq-z2 (PYNQ-Z1/Z2)
+python freisa.py run  # default: -d blinky -t pynq-z2
 ```
 What you see:
 ```
@@ -46,14 +46,14 @@ off. The same text, without colors, is saved in `build/<design>/<board>/flow.log
 
 The result is `build/blinky/pynq-z2/out.bit`, produced only by open tools. To program a connected board:
 ```sh
-make upload                   # openFPGALoader; TOOL=vivado to use the Vivado hardware manager
-                              # several boards connected: it lists them and asks which one (or JTAG=<serial>)
+python freisa.py upload  # openFPGALoader; --tool vivado to use the Vivado hardware manager
+                         # several boards connected: it lists them and asks which one (or JTAG=<serial>)
 ```
 
 ## Other boards
 ```sh
-make flow TARGET=zcu104       # ZCU104 / ZCU106
-make flow TARGET=kv260 TO=route
+python freisa.py run -t zcu104  # ZCU104 / ZCU106
+python freisa.py run -t kv260 --to route
 ```
 On ZCU104 and ZCU106 everything is done by open tools, I/O buffers and clock buffer included (`bitgen: open_io`, see [open_io](8-open-io.md));
 Vivado only runs `write_bitstream` on the finished checkpoint, because no open bitstream writer exists for UltraScale+.
@@ -65,11 +65,11 @@ Supported boards: `pynq-z2`, `zcu104`, `zcu106`, `kv260` (see [Boards](4-boards.
 On ZCU104 and ZCU106 the USB cable used for JTAG also carries the FPGA's UART (another channel of the same FTDI chip),
 so one cable is enough:
 ```sh
-make flow   DESIGN=uart_loopback TARGET=zcu104
-make upload DESIGN=uart_loopback TARGET=zcu104
-make uart-test TARGET=zcu104          # finds the serial port of that cable, sends random bytes, checks the echo
+python freisa.py run -d uart_loopback -t zcu104
+python freisa.py upload -d uart_loopback -t zcu104
+python freisa.py uart-test -t zcu104  # finds the serial port of that cable, sends random bytes, checks the echo
 ```
-`make uart-test` finds the port on its own (`uart_channel` in the board file); `PORT=/dev/ttyUSBx` and `BAUD=` override.
+`python freisa.py uart-test` finds the port on its own (`uart_channel` in the board file); `--port /dev/ttyUSBx` and `--baud` override.
 On the PYNQ-Z1/Z2 and the KV260 the USB serial port is wired only to the processor (PS), not to FPGA pins: there a
 loopback needs software on the processor or an external USB-serial adapter on PMOD pins.
 
@@ -84,11 +84,11 @@ build/<design>/<board>/
 ```
 
 ## When something is missing
-Every `make flow` and `make upload` first runs a check. If a selected tool is not available for the board,
-it stops and prints what to install or which variable to change. You can run it alone:
+Every `python freisa.py run` and `python freisa.py upload` first runs a check. If a selected tool is not available for the board,
+it stops and prints what to install or what to change. You can run it alone:
 ```sh
-make check TARGET=zcu104
-python freisa.py                              # interactive interface: browse everything, run every command from a menu
-make status                                  # dashboard: tools, boards, projects, builds
-make doctor                                   # every tool of every step, yes/no, for every board (TARGET=<b> for one)
+python freisa.py check -t zcu104
+python freisa.py         # interactive interface: browse everything, run every command from a menu
+python freisa.py status  # dashboard: tools, boards, projects, builds
+python freisa.py doctor  # every tool of every step, yes/no, for every board (-t <b> for one)
 ```

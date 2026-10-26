@@ -18,25 +18,25 @@ from .base import Tab
 class Tools(Tab):
     """tools.lock: status, install, update to the latest version; environment; doctor."""
     title, icon = "Tools", "⚒"
-    INSTALL = {"prjxray": "install-xc7", "prjxray-db": "install-xc7", "nextpnr-xilinx": "install-xc7", "dreamplacefpga": "install-dreamplace",
-               "nextpnr-fpga-interchange": "install-interchange", "python-fpga-interchange": "install-interchange",
-               "fpga-interchange-schema": "install-interchange", "prjuray": "install-prjuray", "prjuray-db": "install-prjuray"}
+    INSTALL = {"prjxray": "xc7", "prjxray-db": "xc7", "nextpnr-xilinx": "xc7", "dreamplacefpga": "dreamplace",
+               "nextpnr-fpga-interchange": "interchange", "python-fpga-interchange": "interchange",
+               "fpga-interchange-schema": "interchange", "prjuray": "prjuray", "prjuray-db": "prjuray"}  # tool -> `freisa.py install` part
     def __init__(self, app): super().__init__(app); self.lv = ListView()
     def cur(self):
         ts = self.app.cache("tools", cli.tool_status); return ts[self.lv.i] if ts else None
     def install(self):
         t = self.cur()
-        if t: self.run(["make", self.INSTALL.get(t["name"], "install")], f"{self.INSTALL.get(t['name'], 'install')} ({t['name']})"); self.app.uncache("tools")
+        if t: part = self.INSTALL.get(t["name"], "all"); self.run([*FREISA, "install", part], f"install {part} ({t['name']})"); self.app.uncache("tools")
     def update(self):
         t = self.cur()
         if t and confirm(self.app, f"move {t['name']} to its latest upstream commit in tools.lock?"):
-            self.run(["make", "update", f"NAME={t['name']}"], f"update {t['name']}"); self.app.uncache("tools")
+            self.run([*FREISA, "update", t["name"]], f"update {t['name']}"); self.app.uncache("tools")
     def keys(self):
         return [("i", "install this", self.install),
-                ("I", "install everything", lambda: confirm(self.app, "run make install (long)?") and self.run(["make", "install"], "install everything")),
-                ("o", "outdated", lambda: self.run(["make", "outdated"], "outdated tools")), ("u", "update", self.update),
-                ("k", "check deps", lambda: self.run(["make", "check-deps"], "check deps")),
-                ("d", "doctor", lambda: self.run(["make", "doctor"], "doctor, all boards")),
+                ("I", "install everything", lambda: confirm(self.app, "install everything (long)?") and self.run([*FREISA, "install"], "install everything")),
+                ("o", "outdated", lambda: self.run([*FREISA, "outdated"], "outdated tools")), ("u", "update", self.update),
+                ("k", "check deps", lambda: self.run([*FREISA, "install", "deps"], "check deps")),
+                ("d", "doctor", lambda: self.run([*FREISA, "doctor"], "doctor, all boards")),
                 ("r", "refresh", lambda: (self.app.uncache("tools"), self.app.load_env())), ("x", "stop", self.stop)]
     def key(self, k):
         if self.lv.move(k, len(self.app.cache("tools", cli.tool_status))): return True
@@ -57,14 +57,14 @@ class Tools(Tab):
             if t:
                 info = [f"{t['name']}", f"  role      {t['role']}", f"  source    {t['url']}", f"  follows   {follows(t)}",
                         f"  checkout  {t['sha'] or 'not fetched'}", f"  status    {'ready' if t['ok'] else 'missing: i installs it'}",
-                        f"  install   make {self.INSTALL.get(t['name'], 'install')}"]
+                        f"  install   python freisa.py install {self.INSTALL.get(t['name'], 'all')}"]
                 textpane(w, y + lh, x, min(len(info) + 2, h - lh), lw, info, "DETAILS", False, colorize=False)
             textpane(w, y, x + lw, len(er) + 2, wd - lw, er, "ENVIRONMENT", False, colorize=False)
             self.log(w, y + len(er) + 2, x + lw, h - len(er) - 2, wd - lw)
             return
         yy = y + lh
         if t and h - (yy - y) >= 9:
-            info = [f"{t['url']}", f"{follows(t)} · install: make {self.INSTALL.get(t['name'], 'install')}"]
+            info = [f"{t['url']}", f"{follows(t)} · install: python freisa.py install {self.INSTALL.get(t['name'], 'all')}"]
             textpane(w, yy, x, 4, wd, info, t["name"], False, colorize=False); yy += 4
         if h - (yy - y) >= len(er) + 6:
             textpane(w, yy, x, len(er) + 2, wd, er, "ENVIRONMENT", False, colorize=False); yy += len(er) + 2

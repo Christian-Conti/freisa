@@ -139,7 +139,7 @@ class App:
             for j in self.jobs:  # a finished command says how it went, whatever tab is open
                 if not j.running and not getattr(j, "told", False):
                     j.told = True
-                    why = next((l for l in reversed(j.lines) if re.search(r"\bfail|\berror|✘", l, re.I) and not l.strip().startswith(("✘ exit", "make"))), "")
+                    why = next((l for l in reversed(j.lines) if re.search(r"\bfail|\berror|✘", l, re.I) and not l.strip().startswith("✘ exit")), "")
                     self.flash(f"✔ {j.title}" if j.rc == 0 else f"✘ {j.title}: {why.strip() or f'exit code {j.rc}'}", C["ok"] if j.rc == 0 else C["bad"], 4 if j.rc == 0 else 20)
             self.draw()
             k = self.scr.getch()

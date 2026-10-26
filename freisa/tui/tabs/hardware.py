@@ -101,7 +101,7 @@ class Hardware(Tab):
     def loopback(self):
         k, c, p = self.sel()
         if self.uart: self.uart.close(); self.uart = None  # the test opens the port itself
-        self.run(["make", "uart-test", *([f"PORT={p[0]}"] if p else []), f"BAUD={self.baud}"], "uart loopback test")
+        self.run([*FREISA, "uart-test", *(["--port", p[0]] if p else []), "--baud", str(self.baud)], "uart loopback test")
     def keys(self):
         return [("s", "scan", self.scan), ("p", "program", self.program), ("R", "reset PL", self.reset_pl), ("Y", "reset system (vivado)", self.reset_sys),
                 ("o", "open/close UART", self.toggle_uart), ("b", "baud", self.set_baud), ("i", "type", self.typing),

@@ -19,7 +19,7 @@ def _p(x):  # board paths: ~ and flow-root relative
 class _Xc7(Backend):
     def supports(self, target):
         if target.get("family") != "xc7": return "7-series (xc7) only"
-        if ifx.if_python() is None: return "python-fpga-interchange not installed (make install-interchange)"
+        if ifx.if_python() is None: return "python-fpga-interchange not installed (python freisa.py install interchange)"
         return super().supports(target)
 
 @backend
@@ -59,7 +59,7 @@ class NextpnrXilinx(_Xc7):
     def supports(self, target):
         db = pathlib.Path(__file__).parents[2] / "install" / "share" / "nextpnr-xilinx" / f"{target.get('part')}.bin"
         if target.get("family") != "xc7": return "7-series (xc7) only"
-        return super(_Xc7, self).supports(target) or (None if db.exists() else f"no nextpnr-xilinx database for {target.get('part')} (make install-xc7)")
+        return super(_Xc7, self).supports(target) or (None if db.exists() else f"no nextpnr-xilinx database for {target.get('part')} (python freisa.py install xc7)")
     def run(self, ctx):
         db = pathlib.Path(__file__).parents[2] / "install" / "share" / "nextpnr-xilinx" / f"{ctx.target['part']}.bin"
         xdc = ctx.work / "pins.xdc"
@@ -97,7 +97,7 @@ class Prjuray(Backend):
         return next((p for p in prjuray_parts() if dev(p.split("/")[-1]) == dev(target["part"])), None)
     def supports(self, target):
         if target.get("family") not in ("xczu", "xcvu", "xcku"): return "UltraScale+ only"
-        if not PRJURAY_DB.exists(): return "prjuray not installed (make install-prjuray)"
+        if not PRJURAY_DB.exists(): return "prjuray not installed (python freisa.py install prjuray)"
         if self._db(target) is None:
             return f"prjuray-db has no tile grid for {target['part']} (covered: {', '.join(p.split('/')[1] for p in prjuray_parts())})"
         return super().supports(target) or "no Interchange (.phys) -> FASM generator for UltraScale+ yet"

@@ -75,7 +75,7 @@ Tested here: an (empty) FASM for xczu3eg-sbva484 gives a bitstream. Two pieces a
 1. a generator from Interchange `.phys` to Project U-Ray FASM for UltraScale+ (python-fpga-interchange only has xc7 and Nexus);
 2. a tile grid for the other parts: xczu7ev (ZCU104, ZCU106) and xck26 (KV260) are not in prjuray-db. Project U-Ray
    builds it with its fuzzers, which run Vivado to produce test bitstreams (once, to build the database, not in the flow).
-`make doctor` shows `prjuray` as `no` with the reason; `make install-prjuray` installs the tools and the database.
+`python freisa.py doctor` shows `prjuray` as `no` with the reason; `python freisa.py install prjuray` installs the tools and the database.
 
 ## Limits of the open UltraScale+ path (Yosys, RapidWright, DREAMPlaceFPGA, RWRoute)
 - The design is implemented out of context (no I/O buffers, no PS); `open_io` adds the I/O afterwards.

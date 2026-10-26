@@ -19,28 +19,32 @@ Each step has one or more tools. The project file chooses the tool of every step
 ## Commands
 | Command | What it does |
 |---------|--------------|
-| `make flow DESIGN=<d> TARGET=<b>` | run the flow; `STEPS="place=dreamplacefpga route=rwroute"` changes the tool of some steps for this run only |
-| `make check` | check that the selected tools are available; suggest fixes if not |
-| `python freisa.py` | interactive interface, see below |
-| `make status` | dashboard: environment, tools (commit, pinned or latest), installed boards, projects and latest builds; `PART=env\|tools\|boards\|projects\|builds` for one panel |
-| `make show DESIGN=<d> TARGET=<b>` | one build: time/cpu/memory of each step, area, timing and output files |
-| `make doctor` | every tool of every step and whether it can run: for all boards, or only `TARGET=<b>` |
-| `make uart-test` | send data on the board's PL UART and check the echo (uart_loopback example; `PORT=`, `BAUD=`) |
-| `make upload` | program `build/<d>/<b>/out.bit` on the board |
-| `make install`, `make uninstall` | install / remove everything |
-| `make install-boards [BOARD=<name>]` | install the boards of `boards.yml` (board files, pin file, `targets/<name>.yml`) |
-| `make install-xc7`, `make install-interchange`, `make install-prjuray`, `make install-dreamplace` | build one open tool (`FORCE=1` to rebuild) |
-| `make outdated`, `make update NAME=<tool> [REF=<commit>]` | show which tools follow their latest version and which are pinned / pin one |
-| `make clean` | delete `build/` |
-| `make help` | this list with every variable |
+Every command is `python freisa.py <command> [options]`; without a command it opens the interactive interface (below).
+| Command | What it does |
+|---------|--------------|
+| `run -d <d> -t <b>` | check, then run the flow; `--step place=dreamplacefpga` (repeatable) changes the tool of a step for this run only |
+| `check -d <d> -t <b>` | check that the selected tools are available; suggest fixes if not |
+| `status [env\|tools\|boards\|projects\|builds]` | dashboard: environment, tools (commit, pinned or latest), installed boards, projects and latest builds, or one panel |
+| `show <d> <b>` | one build: time/cpu/memory of each step, area, timing and output files |
+| `doctor [-t <b>]` | every tool of every step and whether it can run: for all boards, or one |
+| `upload -d <d> -t <b>` | program `build/<d>/<b>/out.bit` on the board (`--tool`, `--bit`) |
+| `uart-test [-t <b>]` | send data on the board's PL UART and check the echo (uart_loopback example; `--port`, `--baud`) |
+| `install`, `uninstall` | install / remove everything |
+| `install boards [<name>...]` | install the boards of `boards.yml` (board files, pin file, `targets/<name>.yml`) |
+| `install conda\|deps\|xc7\|interchange\|prjuray\|dreamplace` | one part: the conda env, the dependency check, one open tool (`--force` rebuilds) |
+| `fetch`, `outdated`, `update <tool> [<commit>]` | clone the pinned tools / show which follow their latest version / pin one |
+| `clean` | delete `build/` |
+| `help` | every command with its options |
 
-## Variables
-| Variable | Default | Meaning |
-|----------|---------|---------|
-| `DESIGN` | `blinky` | project name (`designs/**/<name>.yml`) or path; `make flow` alone builds blinky for pynq-z2 |
-| `TARGET` | `pynq-z2` | board file name in `targets/` |
-| `FROM`, `TO` | `sources`, `bitgen` | first and last step; `FROM` reuses the outputs of a previous run |
-| `TOOL`, `BIT` | `openfpgaloader`, `out.bit` | for `make upload` |
+## Options
+| Option | Default | Meaning |
+|--------|---------|---------|
+| `-d` | `blinky` | project name (`designs/**/<name>.yml`) or path |
+| `-t` | `pynq-z2` | board file name in `targets/` |
+| `--from`, `--to` | `sources`, `bitgen` | first and last step; `--from` reuses the outputs of a previous run |
+| `--step STAGE=TOOL` | project file | tool of one step for this run |
+| `--tool`, `--bit` | `openfpgaloader`, `out.bit` | for `upload` |
+| `JTAG=<serial>` (environment) | — | the JTAG cable to use when several boards are connected |
 
 ## Choosing the tools
 Every project file has a `steps:` section (tool of each step, all boards) and a `boards:` section (changes for one board):
@@ -53,9 +57,9 @@ boards:
 `all_open` does the same with open tools only (no tool marked `(vivado)`); a step not
 listed is `auto`. All values and tools: [Project files](3-projects.md#values-of-steps--boards).
 
-`make check` validates the choice for the board: for every step whose tool cannot run it prints why, how to install it,
+`python freisa.py check` validates the choice for the board: for every step whose tool cannot run it prints why, how to install it,
 and which tools work there instead, as the line to put in the project file. The same check runs before every
-`make flow` and `make upload`. `make doctor` lists every tool of every step and whether it can run, for every board (`TARGET=<board>` for one).
+`python freisa.py run` and `python freisa.py upload`. `python freisa.py doctor` lists every tool of every step and whether it can run, for every board (`-t <board>` for one).
 
 ## Several runs per step (explore)
 A step can run several variants in parallel and keep the best one; the next step continues from it.
@@ -78,12 +82,12 @@ placer and router, worst slack for Vivado steps).
 
 ## Programming the board
 ```sh
-make upload TARGET=zcu104                       # openFPGALoader
-make upload TARGET=zcu104 TOOL=vivado           # Vivado hardware manager
-make upload JTAG=38138                          # a specific JTAG cable (USB serial)
-make upload BIT=path/to/file.bit
+python freisa.py upload -t zcu104                # openFPGALoader
+python freisa.py upload -t zcu104 --tool vivado  # Vivado hardware manager
+JTAG=38138 python freisa.py upload               # a specific JTAG cable (USB serial)
+python freisa.py upload --bit path/to/file.bit
 ```
-`make upload` scans every FTDI JTAG cable on USB and reads the FPGA on each. With one board matching `TARGET` it
+`python freisa.py upload` scans every FTDI JTAG cable on USB and reads the FPGA on each. With one board matching `-t` it
 programs it directly; with several devices on a terminal it shows them and asks which one:
 ```
     #  SERIAL         USB    CABLE                        FPGA
@@ -133,5 +137,5 @@ in its log title the elapsed time, the CPU and memory of all its processes (Viva
 | 6 Tools | tools.lock: commit, pinned or latest, built or not; `i` installs one, `u` moves it to the latest commit, `o` lists the outdated ones; environment |
 
 Commands run in the background: you can change tab while a flow runs; `x` stops the command of the tab, `q` quits
-(asking first if something still runs). Tools chosen in the Flow tab apply to that run only (`STEPS=`); to keep them,
+(asking first if something still runs). Tools chosen in the Flow tab apply to that run only (`--step`); to keep them,
 write them in the project file (`e`).

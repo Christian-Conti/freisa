@@ -13,6 +13,7 @@ from .. import cli, core, term as T
 from ..stages import upload
 
 ROOT = cli.ROOT
+FREISA = [__import__('sys').executable, str(ROOT / "freisa.py")]  # command line of every job
 SPIN = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 BAUDS = [9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600]
 CHIP = ["  ┌┴┴┴┴┴┴┴┴┴┐ ",
@@ -44,7 +45,7 @@ def builds():
     return sorted(ds, key=lambda p: (p / "flow.log").stat().st_mtime, reverse=True)
 
 def fpga_want(part):
-    """Prefix of the FPGA model JTAG reports for this part (same rule as `make upload`)."""
+    """Prefix of the FPGA model JTAG reports for this part (same rule as `freisa.py upload`)."""
     return re.sub(r"(ev|eg|cg|dr)$", "", upload._model(part))
 
 def ports():

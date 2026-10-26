@@ -37,11 +37,11 @@ class Builds(Tab):
         bit = cli.build_info(d)[1]
         if not bit: self.app.flash("this build has no bitstream", C["bad"]); return
         design = d.parent.name if d.parent.name in designs() else next(iter(designs()))
-        self.run(["make", "upload", f"DESIGN={design}", f"TARGET={d.name}", f"BIT={rel(bit)}"], f"upload {d.parent.name} → {d.name}")
+        self.run([*FREISA, "upload", "-d", design, "-t", d.name, "--bit", rel(bit)], f"upload {d.parent.name} → {d.name}")
     def rerun(self):
         d = self.cur()
         if d and d.parent.name in designs():
-            self.run(["make", "flow", f"DESIGN={d.parent.name}", f"TARGET={d.name}"], f"flow {d.parent.name} → {d.name}")
+            self.run([*FREISA, "run", "-d", d.parent.name, "-t", d.name], f"flow {d.parent.name} → {d.name}")
     def keys(self):
         return [("v", "next view", lambda: setattr(self, "view", (self.view + 1) % len(self.VIEWS))),
                 ("u", "program board", self.upload), ("r", "run again", self.rerun), ("D", "delete build", self.delete), ("x", "stop", self.stop)]

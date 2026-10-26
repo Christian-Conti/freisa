@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Info     : Project file of the uart_loopback example: what the PC sends on the board's PL UART comes back.
-#            Build: `make flow DESIGN=uart_loopback TARGET=zcu104`, program: `make upload DESIGN=uart_loopback TARGET=zcu104`,
-#            test: `make uart-test TARGET=zcu104` (same USB cable as JTAG: the PL UART is another channel of its FT4232H).
+#            Build: `python freisa.py run -d uart_loopback -t zcu104`, program: `python freisa.py upload -d uart_loopback -t zcu104`,
+#            test: `python freisa.py uart-test -t zcu104` (same USB cable as JTAG: the PL UART is another channel of its FT4232H).
 # Module   : uart_loopback.yml
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it

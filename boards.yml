@@ -2,7 +2,7 @@
 # Apache License, Version 2.0, see LICENSE.md for details.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Info     : The boards FREISA installs. Add a board here and run `make install-boards`: its board files are fetched
+# Info     : The boards FREISA installs. Add a board here and run `python freisa.py install boards`: its board files are fetched
 #            (default branch of the repository: its latest version), its pin file is generated in boards/<name>/ and targets/<name>.yml is written for you.
 # Module   : boards.yml
 # Author   : Christian Conti
@@ -16,8 +16,8 @@
 #                  xdc: <file>                     optional, git only: the board's own constraint file (copied as board.xdc)
 #   description  optional, shown in the generated board file
 #   any other key is copied unchanged into targets/<name>.yml, e.g.
-#     ofl_board / ofl_cable   openFPGALoader board name / cable type (make upload)
-#     uart_channel            FTDI interface of a PL UART (make uart-test)
+#     ofl_board / ofl_cable   openFPGALoader board name / cable type (python freisa.py upload)
+#     uart_channel            FTDI interface of a PL UART (python freisa.py uart-test)
 #     jtag_serial             force one JTAG cable when several are connected
 
 boards:

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Info     : FREISA status interface: environment, tools, boards, projects and builds at a glance.
-#            make status [PART=env|tools|boards|projects|builds], make show DESIGN=<d> TARGET=<b>
+#            python freisa.py status [env|tools|boards|projects|builds], python freisa.py show <design> <board>
 # Module   : cli.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
@@ -164,7 +164,7 @@ def builds(limit=12):
     for d in dirs[:limit]:
         state, bit, timing, ts = build_info(d)
         rows.append([d.parent.name, d.name, state, ago(ts), YES if bit else NO, timing or "-"])
-    return panel(f"Builds  (latest {min(limit, len(dirs))} of {len(dirs)})", rows or ["no builds yet: make flow"],
+    return panel(f"Builds  (latest {min(limit, len(dirs))} of {len(dirs)})", rows or ["no builds yet: python freisa.py run"],
                  ["design", "board", "result", "when", ".bit", "timing"])
 
 def show(design, board, banner=True):
@@ -200,20 +200,20 @@ def main():
     a = sys.argv[1:] or ["status"]
     cmd = a[0]
     if cmd in ("-h", "--help", "help"):
-        print(header() + "\n\n  make status [PART=env|tools|boards|projects|builds]   make show DESIGN=<d> TARGET=<b>\n"
-              "  build and program with make: make flow, make upload, make doctor, make help"); return
+        print(header() + "\n\n  python freisa.py status [env|tools|boards|projects|builds]   python freisa.py show <design> <board>\n"
+              "  all commands: python freisa.py help"); return
     if cmd == "show":
-        if len(a) < 3: sys.exit(T.error("usage: make show DESIGN=<d> TARGET=<b>"))
+        if len(a) < 3: sys.exit(T.error("usage: python freisa.py show <design> <board>"))
         print(show(a[1], a[2])); return
     parts = {"env": env, "tools": tools, "boards": boards, "projects": projects, "builds": builds}
     if cmd == "status":
         print(header() + "\n")
         for f in parts.values(): print(f() + "\n")
-        print("  " + T.dim("details: make show DESIGN=<d> TARGET=<b>   ·   run: make flow DESIGN=<d> TARGET=<b>   ·   all commands: make help"))
+        print("  " + T.dim("details: python freisa.py show <design> <board>   ·   run: python freisa.py run -d <design> -t <board>   ·   all commands: python freisa.py help"))
     elif cmd in parts:
         print(parts[cmd]())
     else:
-        sys.exit(T.error(f"unknown command {cmd}: make help"))
+        sys.exit(T.error(f"unknown command {cmd}: python freisa.py help"))
 
 if __name__ == "__main__":
     main()

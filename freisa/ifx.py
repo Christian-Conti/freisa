@@ -40,7 +40,7 @@ def rw(ctx, cls, args, log, cwd=None):
 def pyif(ctx, module, args, log, cwd=None):
     """Run a python-fpga-interchange module in its own environment."""
     py = if_python()
-    if py is None: raise SystemExit(f"python-fpga-interchange environment '{IF_ENV}' not found: make install-interchange")
+    if py is None: raise SystemExit(f"python-fpga-interchange environment '{IF_ENV}' not found: python freisa.py install interchange")
     ctx.sh([py, "-m", f"fpga_interchange.{module}", *args], log, cwd=cwd or ctx.work)
 
 # ------------------------------------------------------------------ device databases (built once per part)

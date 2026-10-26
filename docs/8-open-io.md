@@ -11,7 +11,7 @@
 # 8. open_io: UltraScale+ bitstream with open tools
 
 `open_io` is the bitgen step that produces the bitstream on UltraScale+ boards (ZCU104, ZCU106) while letting the open
-tools do almost everything. In `make check`, `make doctor` and during a run it is shown as `open_io (vivado)`, because
+tools do almost everything. In `python freisa.py check`, `python freisa.py doctor` and during a run it is shown as `open_io (vivado)`, because
 Vivado writes the final file.
 
 ## The problem it solves
