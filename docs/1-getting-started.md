@@ -14,7 +14,7 @@
 - Linux x86-64, git, a C++ toolchain, cmake (checked by `make check-deps`, which prints the `apt` line for anything missing).
 - [OSS CAD Suite](https://github.com/YosysHQ/oss-cad-suite-build) on `PATH`: Yosys with the `slang` and `ghdl` plugins, openFPGALoader.
 - Java 11 or newer (RapidWright).
-- Optional: Vivado. FREISA finds it through `$VIVADO`, then `PATH`, then `/path/to/Xilinx/Vivado/<version>/bin/vivado` (2024.1 preferred).
+- Optional: Vivado. FREISA finds it through `$VIVADO`, then `PATH`, then `/path/to/Xilinx/Vivado/<version>/bin/vivado`. 
 
 ## Install
 ```sh
