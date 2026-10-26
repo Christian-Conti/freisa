@@ -101,7 +101,3 @@ Vivado is used only where the project file selects it. It is found through `$VIV
 `/eda/Xilinx/Vivado/<version>/bin/vivado` (`VIVADO_ROOT`, `VIVADO_VERSION`; 2024.1 preferred).
 A design that uses the PS needs a block design (`bd_tcl:`, `bd_name:` in the project file) and `bitgen: vivado_ps`,
 which writes `out.bit`, `out.hwh` (hardware handoff) and `out.xsa`. `vivado_ps` has not been tested on hardware yet.
-
-## Tools that were evaluated and not integrated
-OpenPARF and AMF-Placer (contest architectures only, or need Vivado), f4pga (7-series wrapper for Artix-7 and xc7z010;
-programs through openFPGALoader, already used here), the FPL'26 contest agent (Vivado-driven).
