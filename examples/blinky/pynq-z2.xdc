@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Info     : Pin and IO constraints of the blinky example.
-# Module   : xc7z020.xdc
+# Module   : pynq-z2.xdc
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 

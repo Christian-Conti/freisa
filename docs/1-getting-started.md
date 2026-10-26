@@ -28,11 +28,11 @@ Tools already built are skipped; `FORCE=1` rebuilds them. `make uninstall` remov
 
 ## First run
 ```sh
-make flow                     # default: DESIGN=blinky TARGET=xc7z020 (PYNQ-Z1/Z2)
+make flow                     # default: DESIGN=blinky TARGET=pynq-z2 (PYNQ-Z1/Z2)
 ```
 What you see:
 ```
-▶ check    blinky → xc7z020        every step's tool, ✔ available / ✘ not (with what to change)
+▶ check    blinky → pynq-z2        every step's tool, ✔ available / ✘ not (with what to change)
 FREISA  blinky → xc7z020clg400-1   header with the steps of the run
 ▶ synth    yosys                   a step starts
   ✔ synth done in 00:00:06  cpu 80%  mem 0.1G  score 27
@@ -44,7 +44,7 @@ While a step runs, the bottom of the terminal shows a progress bar (step n of N,
 the running tools) and the last line of the tool log. Colors are used only on a terminal; set `NO_COLOR=1` to turn them
 off. The same text, without colors, is saved in `build/<design>/<board>/flow.log`.
 
-The result is `build/blinky/xc7z020/out.bit`, produced only by open tools. To program a connected board:
+The result is `build/blinky/pynq-z2/out.bit`, produced only by open tools. To program a connected board:
 ```sh
 make upload                   # openFPGALoader; TOOL=vivado to use the Vivado hardware manager
                               # several boards connected: it lists them and asks which one (or JTAG=<serial>)
@@ -58,7 +58,7 @@ make flow TARGET=kv260 TO=route
 On ZCU104 and ZCU106 everything is done by open tools, I/O buffers and clock buffer included (`bitgen: open_io`, see [open_io](8-open-io.md));
 Vivado only runs `write_bitstream` on the finished checkpoint, because no open bitstream writer exists for UltraScale+.
 The KV260 has no PL clock oscillator (its PL clock comes from the PS), so blinky stops at the routed checkpoint there.
-Supported boards: `xc7z020`, `zcu104`, `zcu106`, `kv260` (see [Boards](4-boards.md)).
+Supported boards: `pynq-z2`, `zcu104`, `zcu106`, `kv260` (see [Boards](4-boards.md)).
 
 ## Second example: UART loopback
 `designs/examples/uart_loopback.yml`: the FPGA sends back on its UART whatever it receives, at any baud rate.

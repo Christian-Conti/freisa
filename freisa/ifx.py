@@ -73,7 +73,7 @@ def chipdb(ctx):
     return out
 
 # ------------------------------------------------------------------ conversions at the edges
-def from_dcp(ctx, dcp, name):
+def from_dcp(ctx, dcp, name, vivado=False):
     """DCP -> <work>/<name>.netlist + <name>.phys (RapidWright); sets ctx.art['netlist'/'phys']."""
     d = ctx.work / f"{name}.dcp"
     if pathlib.Path(dcp).resolve() != d.resolve(): shutil.copy(dcp, d)
@@ -81,9 +81,14 @@ def from_dcp(ctx, dcp, name):
     if edf.exists() and edf.resolve() != d.with_suffix(".edf").resolve(): shutil.copy(edf, d.with_suffix(".edf"))
     rw(ctx, "interchange.DcpToInterchange", [d], f"{name}_to_if")
     ctx.art.update(netlist=ctx.work / f"{name}.netlist", phys=ctx.work / f"{name}.phys")
+    ctx.art.pop("dcp_of", None)
+    if vivado: ctx.art["dcp_of"] = [str(dcp), str(ctx.art["phys"])]  # the next Vivado step opens this checkpoint directly
 
 def to_dcp(ctx, name, ooc=True):
     """ctx.art netlist + phys -> <work>/<name>.dcp (RapidWright); returns the path and sets ctx.art['dcp']."""
+    src, of = ctx.art.get("dcp_of") or (None, None)
+    if of and str(ctx.art["phys"]) == of and pathlib.Path(src).exists():  # unchanged since a Vivado step: its checkpoint as is
+        ctx.art["dcp"] = pathlib.Path(src); return ctx.art["dcp"]
     xdc = ctx.work / f"{name}_empty.xdc"; xdc.write_text("")
     out = ctx.work / f"{name}.dcp"
     rw(ctx, "interchange.PhysicalNetlistToDcp", [ctx.art["netlist"], ctx.art["phys"], xdc, out] + (["--out_of_context"] if ooc else []),

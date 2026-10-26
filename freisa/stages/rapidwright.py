@@ -51,7 +51,19 @@ class DreamPlaceFpga(_UsPlus):
         patched = root / "IFsupport" / f"IF2bookshelf_{part}.py"  # schema dir is script-relative
         patched.write_text((root / "IFsupport/IF2bookshelf.py").read_text().replace("xcvu3p-ffvc1517-2-e", part)
                             # top-level port refs have no instance; upstream reuses the previous cell for them
-                            .replace("                    if port_inst.which() == 'inst':", "                    if port_inst.which() != 'inst':\n                        continue\n                    if port_inst.which() == 'inst':"))
+                            .replace("                    if port_inst.which() == 'inst':", "                    if port_inst.which() != 'inst':\n                        continue\n                    if port_inst.which() == 'inst':")
+                            # flip-flops with async clear/preset or sync set sit on the same sites as FDRE: placed as FDRE,
+                            # their reset/set pin as R; the placement written back keeps their real type and pins
+                            .replace("        # database for design.nodes",
+                                     "        for _t in ('FDCE', 'FDPE', 'FDSE'):\n"
+                                     "            if _t in self.cell_ports and 'FDRE' not in self.cell_ports:\n"
+                                     "                self.cell_ports['FDRE'] = [('R' if n in ('CLR', 'PRE', 'S') else n, d) for n, d in self.cell_ports[_t]]\n"
+                                     "        # database for design.nodes")
+                            .replace("                self.nodes[cell_name] = cell_type",
+                                     "                self.nodes[cell_name] = 'FDRE' if cell_type in ('FDCE', 'FDPE', 'FDSE') else cell_type\n"
+                                     "                if cell_type in ('FDCE', 'FDPE', 'FDSE'): self.__dict__.setdefault('_ff', set()).add(cell_name)")
+                            .replace("                        self.nets[net_name].append((cell, port_name))",
+                                     "                        self.nets[net_name].append((cell, 'R' if cell in self.__dict__.get('_ff', ()) and port_name in ('CLR', 'PRE', 'S') else port_name))"))
         py = [sys.executable]
         ctx.sh(py + [patched, "--netlist", d / f"{base}.netlist"], "if2bookshelf", cwd=root)
         cfg = {**json.loads((pathlib.Path(__file__).parent.parent / "rw" / "dp_template.json").read_text()),  # settings from RapidWright's tutorial

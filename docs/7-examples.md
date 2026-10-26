@@ -13,9 +13,9 @@
 Two examples come with FREISA. Each one is a project file in `designs/examples/` plus its RTL and pin files in
 `examples/<name>/`.
 
-| Example | What it does | xc7z020 (PYNQ-Z1/Z2) | ZCU104 | ZCU106 | KV260 | AUP-ZU3 8 GB |
+| Example | What it does | pynq-z2 (PYNQ-Z1/Z2) | ZCU104 | ZCU106 | KV260 | AUP-ZU3 8 GB |
 |---------|--------------|----------------------|--------|--------|-------|--------------|
-| `blinky` | LED 0 blinks | `.bit`, open tools | `.bit` (`open_io`) | `.bit` (`open_io`) | routed checkpoint only | routed checkpoint only |
+| `blinky` | LED 0 blinks | `.bit`, open tools | `.bit` (`open_io`) | `.bit` (`open_io`) | routed checkpoint only | `.bit` (`open_io`) |
 | `uart_loopback` | echoes the PL UART | — | `.bit` + `make uart-test` | `.bit` + `make uart-test` | — | — |
 
 `open_io` ([details](8-open-io.md)): every step is done by open tools, I/O included; Vivado only runs `write_bitstream` (no open bitstream writer
@@ -32,9 +32,10 @@ A 26-bit counter whose top bit drives an LED.
 | `examples/blinky/<board>.xdc` | clock and LED pins of each board |
 
 ```sh
-make flow                                   # = DESIGN=blinky TARGET=xc7z020: RTL -> out.bit with open tools
+make flow                                   # = DESIGN=blinky TARGET=pynq-z2: RTL -> out.bit with open tools
 make upload                                 # program it
 make flow TARGET=zcu104 && make upload TARGET=zcu104
+make flow TARGET=aup-zu3-8gb               # AUP-ZU3: 100 MHz LVDS clock, white LED 0
 make flow TARGET=kv260 TO=route             # KV260: no PL clock oscillator, stops at the routed checkpoint
 ```
 Result: `build/blinky/<board>/out.bit`; on the board LED 0 blinks (period of 2^26 clock cycles: about 2 Hz on PYNQ at 125 MHz, about 4.5 Hz on ZCU10x at 300 MHz).

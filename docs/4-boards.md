@@ -15,19 +15,20 @@ The first tool of each cell is the one `auto` selects in a project file (open to
 
 | Chip | Boards (`TARGET`) | Synthesis | Netlist | Placement | Routing | Bitstream | Programming |
 |------|-------------------|-----------|---------|-----------|---------|-----------|-------------|
-| xc7z020 (Zynq-7000) | PYNQ-Z1, PYNQ-Z2 (`xc7z020`) | Yosys, Vivado | python-fpga-interchange, Vivado | (in routing), Vivado | nextpnr-fpga_interchange, nextpnr-xilinx, Vivado | prjxray, Vivado | openFPGALoader, Vivado |
+| pynq-z2 (Zynq-7000) | PYNQ-Z1, PYNQ-Z2 (`pynq-z2`) | Yosys, Vivado | python-fpga-interchange, Vivado | (in routing), Vivado | nextpnr-fpga_interchange, nextpnr-xilinx, Vivado | prjxray, Vivado | openFPGALoader, Vivado |
 | xczu7ev (Zynq UltraScale+) | ZCU104 (`zcu104`), ZCU106 (`zcu106`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
 | xck26 (Zynq UltraScale+) | Kria KV260 (`kv260`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: not this part | openFPGALoader, Vivado |
 | xczu3eg (Zynq UltraScale+) | AUP-ZU3 8 GB (`aup-zu3-8gb`) | Yosys, Vivado | RapidWright, Vivado | DREAMPlaceFPGA, Vivado | RWRoute, Vivado | open_io (vivado), Vivado; prjuray: part covered by prjuray-db, FASM generator missing | openFPGALoader, Vivado |
 
 What this means in practice:
-- **xc7z020**: the whole flow, bitstream included, runs with open tools.
+- **pynq-z2**: the whole flow, bitstream included, runs with open tools.
 - **UltraScale+**: open tools go up to the routed checkpoint, out of context (no I/O pins), because the open placer cannot
   place I/O and no open bitstream writer exists for these chips yet. `bitgen: vivado_wrap` lets Vivado add only the I/O
   wrapper and write the bitstream, keeping the open placement and routing. `bitgen: open_io` goes further: the I/O is also
   done by open tools and Vivado only writes the file. Alternatively every step can run in Vivado.
-- **KV260, AUP-ZU3**: no PL clock oscillator in the board files; the PL clock comes from the PS, so a running design
-  needs a block design with the PS (`bitgen: vivado_ps`). Blinky stops at the routed design there (`TO=route`).
+- **KV260**: no PL clock oscillator in the board files; the PL clock comes from the PS, so a running design needs a
+  block design with the PS (`bitgen: vivado_ps`). Blinky stops at the routed design there (`TO=route`).
+- **AUP-ZU3**: a 100 MHz differential (LVDS) PL clock on pins D7/D6; blinky builds with `open_io` as on the ZCU10x.
 - **AUP-ZU3**: its chip (xczu3eg-sfvc784) is one of the two parts in prjuray-db, the open UltraScale+ bitstream database:
   the first candidate for a fully open UltraScale+ bitstream once a `.phys` → FASM generator exists.
 

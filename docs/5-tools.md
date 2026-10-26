@@ -42,6 +42,7 @@ A name followed by `(vivado)` uses Vivado for part of its work; everything else 
 | route | `vivado` | Vivado `route_design` | `.netlist` + `.phys` → `.phys` | Interchange ↔ DCP |
 | bitgen | `prjxray` | python-fpga-interchange + prjxray | `.netlist` + `.phys` → FASM → `.bit` | open, xc7 |
 | bitgen | `prjuray` | Project U-Ray (`fasm2bit`) + prjuray-db | FASM → `.bit` | open, UltraScale+; see below for what is missing |
+| bitgen | `vivado_wrap (vivado)` | Vivado | open core `.phys` + hand-written I/O wrapper (`wrap:`) → `.bit` | Vivado places and routes only the wrapper around the locked open core |
 | bitgen | `open_io (vivado)` | RapidWright + RWRoute, Vivado `write_bitstream` | `.netlist` + `.phys` → `.bit` | open I/O assembly; Vivado only writes the file ([details](8-open-io.md)) |
 | bitgen | `vivado_wrap (vivado)` | Vivado | `.netlist` + `.phys` → `.bit` | Vivado implements an I/O wrapper around the open design |
 | bitgen | `vivado` | Vivado `write_bitstream` | `.netlist` + `.phys` → `.bit` | needs pins and Vivado placement |
@@ -55,7 +56,7 @@ project file.
 ## Bitstream: which boards are fully open
 | Chip | Boards | Open bitstream | How |
 |------|--------|----------------|-----|
-| xc7z020 | PYNQ-Z1, PYNQ-Z2 | yes | prjxray (database prjxray-db) |
+| pynq-z2 | PYNQ-Z1, PYNQ-Z2 | yes | prjxray (database prjxray-db) |
 | xczu7ev | ZCU104, ZCU106 | no | `open_io (vivado)`: only `write_bitstream` is Vivado |
 | xck26 | KV260 | no | `open_io (vivado)`, but blinky has no PL clock there |
 | xczu3eg | AUP-ZU3 8 GB | no | `open_io (vivado)`; no PL clock oscillator for blinky. Its part is in prjuray-db (see below) |

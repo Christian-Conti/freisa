@@ -38,13 +38,13 @@ for n, (d, bs) in ports.items():
     for i, b in enumerate(bs): bits.append((n, i, len(bs), d, b in clock_bits))
 
 # ---------- 2. pins ----------
-pin, std = {}, {}
+pin, std, term = {}, {}, {}
 for f in a.xdc:
     for line in open(f):
-        for m in re.finditer(r"set_property\s+(PACKAGE_PIN|LOC|IOSTANDARD)\s+(\S+)\s+\[get_ports\s+\{?([^\]\}]+?)\}?\]", line):
+        for m in re.finditer(r"set_property\s+(PACKAGE_PIN|LOC|IOSTANDARD|DIFF_TERM_ADV)\s+(\S+)\s+\[get_ports\s+\{?([^\]\}]+?)\}?\]", line):
             prop, val, names = m.groups()
             for nm in names.split():
-                (std if prop == "IOSTANDARD" else pin)[nm] = val
+                {"IOSTANDARD": std, "DIFF_TERM_ADV": term}.get(prop, pin)[nm] = val
         m = re.search(r"-dict\s+\{([^}]*)\}\s+\[get_ports\s+\{?([^\]\}]+?)\}?\]", line)
         if m:
             kv = dict(zip(m.group(1).split()[::2], m.group(1).split()[1::2]))
@@ -174,6 +174,10 @@ for j, x in enumerate(io):
     names = outer(x)
     for nm, p in zip(names, x["pins"]):
         xdc += [f"set_property PACKAGE_PIN {p} [get_ports {{{nm}}}]", f"set_property IOSTANDARD {x['std']} [get_ports {{{nm}}}]"]
+    # differential input termination: as in the XDC; LVDS-type standards need it set (Vivado's own default: none),
+    # the SSTL/HSTL ones do not accept it
+    if x["kind"] == "diff_in" and (names[0] in term or x["std"].startswith(("LVDS", "SLVS", "SUB_LVDS", "MIPI"))):
+        xdc.append(f"set_property DIFF_TERM_ADV {term.get(names[0], 'TERM_NONE')} [get_ports {{{names[0]}}}]")
     if x["kind"] == "out":
         top.placeIOB(tc.getCellInst(f"{s}_ob"), x["pins"][0], x["std"]); continue
     place(f"{s}_ic", sites[0], "IBUFCTRL")

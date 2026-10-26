@@ -31,7 +31,7 @@ HINTS = [  # (substring of the reason, how to fix it)
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-d", "--design", default="blinky"); ap.add_argument("-t", "--target", default="xc7z020")
+    ap.add_argument("-d", "--design", default="blinky"); ap.add_argument("-t", "--target", default="pynq-z2")
     ap.add_argument("--from", dest="frm", default=core.STAGES[0]); ap.add_argument("--to", default=core.STAGES[-1])
     ap.add_argument("--upload", action="store_true", help="check the upload step only")
     ap.add_argument("--tool", help="upload tool overriding the project file")

@@ -28,19 +28,23 @@ class YosysSlang(Backend):
     metric = "area"
     stage, name, tools = "synth", "yosys", ["yosys"]
     def run(self, ctx):
-        t, c = ctx.target, ctx.cfg
+        t, c = dict(ctx.target), ctx.cfg
+        if c.get("_place", "dreamplacefpga") != "dreamplacefpga" and t.get("legalize") == "dreamplace":  # Vivado places: full cell set
+            t.update(legalize=None, carry="carry8")
         sv = [f for f, ft in ctx.art["rtl"] if ft != "vhdlSource"]
         vhd = [f for f, ft in ctx.art["rtl"] if ft == "vhdlSource"]
         defs = " ".join(f"-D {k}={v}" for k, v in {**c.get("defines", {}), **ctx.art.get("defines", {})}.items())
         defs += "".join(f" -I {d}" for d in ctx.art.get("incdirs", []))
         pars = " ".join(f"-G {k}={v}" for k, v in c.get("params", {}).items())
-        s = ["plugin -i slang"]
+        s = ["plugin -i slang",
+             "read_verilog -lib +/xilinx/cells_sim.v +/xilinx/cells_xtra.v"]  # Xilinx primitives the RTL instantiates (IOBUF, BUFGCE, ...)
         if vhd:  # ghdl entities become yosys modules slang can instantiate
             s += ["plugin -i ghdl", f"ghdl --std=08 -fsynopsys {' '.join(vhd)} -e {c.get('vhdl_top', c['top'])}"]
         if sv: s += [f"read_slang {c.get('slang_args', '')} --top {c['top']} {defs} {pars} {' '.join(sv)}"]
         s += c.get("yosys_pre", [])  # raw yosys commands between read and synth
         base = f"synth_xilinx -top {c['top']} -family {t['yosys_family']} {c['synth_args']}"
-        if t.get("legalize") == "dreamplace": base += " -nowidelut -nodsp -nolutram -nosrl -noiopad -noclkbuf"  # placer: no MUXF7/8, its DSP placement fails on xczu, no IO sites: OOC netlist
+        if t.get("legalize") == "dreamplace":
+            base += " -nowidelut -nodsp -nolutram -nosrl -noiopad -noclkbuf"  # placer: no MUXF7/8, its DSP placement fails on xczu, no IO sites: OOC netlist
         if t.get("legalize") == "nextpnr_if": base += " -nolutram -nowidelut -nosrl -nodsp"  # what nextpnr-fpga_interchange can place
         if t.get("carry") == "none":  # placer has no carry-chain node type: adders become LUTs
             s += [base + " -nocarry"]
@@ -55,9 +59,10 @@ class YosysSlang(Backend):
         if t.get("legalize") == "dreamplace":
             (ctx.work / "dp_legal.v").write_text((pathlib.Path(__file__).parent.parent / "yosys" / "dp_legal.v").read_text())
             s += ["techmap -map dp_legal.v", "opt_clean"]
-        s += ["rename -enumerate -pattern n%",  # '$auto$' names are illegal in EDIF/bookshelf
-
-              "hierarchy -top " + c["top"] + " -purge_lib", "tee -o stats.txt stat", "write_edif -pvector bra out.edif", "write_json out.json"]
+        s += ["rename -hide w:*.* c:*.*",  # flattened hierarchy names (a.b) are illegal in bookshelf: renamed with the rest below
+              "rename -enumerate -pattern n%",  # '$auto$' names are illegal in EDIF/bookshelf
+              "hierarchy -top " + c["top"] + " -purge_lib", "tee -o stats.txt stat"]
+        s += ["write_edif -pvector bra out.edif", "write_json out.json"]
         (ctx.work / "synth.ys").write_text("\n".join(s) + "\n")
         ctx.sh(["yosys", "-l", "yosys.full.log", "-s", "synth.ys"], "synth", cwd=ctx.work)
         ctx.art["edif"], ctx.art["json"] = ctx.work / "out.edif", ctx.work / "out.json"

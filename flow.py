@@ -9,7 +9,7 @@
 # Contact  : christian.conti@mail.it
 
 import argparse, json, os, pathlib, sys
-from freisa import core, ui, report, resolve, term
+from freisa import core, monitor, report, resolve, term
 
 HERE = pathlib.Path(__file__).parent
 
@@ -25,7 +25,7 @@ def doctor(r, board):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["run", "doctor", "upload"])
-    ap.add_argument("-t", "--target", default="xc7z020")
+    ap.add_argument("-t", "--target", default="pynq-z2")
     ap.add_argument("-d", "--design", default="blinky", help="designs/<name>.yml or a path")
     ap.add_argument("--tool", default=None, help="upload: openfpgaloader | vivado (default: `upload` in the project file)")
     ap.add_argument("--bit", help="upload: bitstream (default: build/<design>/<board>/out.bit)")
@@ -42,7 +42,7 @@ def main():
         return
     r = resolve.Resolved(a.design, a.target, dict(s.split("=", 1) for s in a.step))
     flow, target, name = r.flow, r.target, r.name
-    ctx = core.Ctx(target, flow, pathlib.Path(a.out) / name / a.target, r.root)
+    ctx = core.Ctx(target, flow, pathlib.Path(a.out).resolve() / name / a.target, r.root)
     if a.cmd == "upload":
         b = core.pick("upload", a.tool, target) if a.tool else r.sel["upload"]
         why = b.supports(target)
@@ -70,11 +70,12 @@ def main():
         why = sel[s].supports(target)
         if why and s == run[-1] and len(run) > 1: print(term.note(f"stopping before {s}/{sel[s].label()}: {why}")); run = run[:-1]
         elif why: sys.exit(term.error(f"stage {s}/{sel[s].label()} unavailable: {why}"))
-    mon = ui.Monitor(run, ctx, ctx.work / "flow.log"); mon.start(); rep = report.Reporter(ctx)
+    mon = monitor.Monitor(run, ctx, ctx.work / "flow.log"); mon.start(); rep = report.Reporter(ctx)
     for s in run:
         b = sel[s]
         mon.begin(s, b.label())
         try:
+            if s == "sources": core.prepare(ctx)
             core.explore(s, b, ctx, flow["explore"][s], a.jobs) if s in flow.get("explore", {}) else b.run(ctx)
         except SystemExit as e:
             mon.finish(False); raise
@@ -88,7 +89,7 @@ def main():
     rdir = os.path.relpath(rep.finalize())
     mon.say(f"\n{term.bold('results')}  {term.dim(os.path.relpath(ctx.work))}")
     for k, v in ctx.art.items():
-        if k != "rtl": mon.say(f"  {term.orange(k.ljust(6))} {os.path.relpath(v)}")
+        if isinstance(v, (str, pathlib.Path)): mon.say(f"  {term.orange(k.ljust(6))} {os.path.relpath(v)}")  # files only
     mon.say(f"  {term.orange('report'.ljust(6))} {rdir}/summary.md  {term.dim('(+ reports/, logs/, artifacts/)')}")
     mon.finish()
 

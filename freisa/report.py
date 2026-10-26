@@ -36,7 +36,7 @@ class Reporter:
     def finalize(self):
         ctx, art = self.ctx, self.ctx.art
         for k, v in art.items():
-            if k == "rtl": continue
+            if not isinstance(v, (str, pathlib.Path)): continue  # files only (rtl, include dirs, defines, ... are lists)
             p = pathlib.Path(v)
             if p.exists():
                 link = self.dir / "artifacts" / p.name
@@ -47,7 +47,7 @@ class Reporter:
         if ctx.cfg.get("signoff") == "vivado" and dcp and pathlib.Path(dcp).exists():  # Vivado reports only on request
             self._signoff(pathlib.Path(dcp))
         (self.dir / "summary.json").write_text(json.dumps(dict(design=ctx.cfg.get("top"), part=ctx.target["part"], stages=self.rows,
-                                                               artifacts={k: os.path.relpath(v) for k, v in art.items() if k != "rtl"}), indent=1))
+                                                               artifacts={k: os.path.relpath(v) for k, v in art.items() if isinstance(v, (str, pathlib.Path))}), indent=1))
         md = [f"# {ctx.cfg.get('top')} on {ctx.target['part']}\n", "| stage | backend | time (s) | avg cpu % | peak mem GB | score |", "|---|---|---|---|---|---|"]
         md += [f"| {r['stage']} | {r['backend']} | {r['seconds']} | {r['avg_cpu_percent']} | {r['peak_mem_gb']} | {r['score']} |" for r in self.rows]
         md += ["", "## Area", "```"] + area + ["```", "", "## Timing", "```"] + timing + ["```"]

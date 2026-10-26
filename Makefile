@@ -22,7 +22,7 @@ DESIGN_DIR = "designs/"
 DESIGN ?= blinky
 
 ## @param TARGET Board file name in targets/
-TARGET ?= xc7z020
+TARGET ?= pynq-z2
 
 
 

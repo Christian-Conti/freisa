@@ -49,6 +49,28 @@ class Ctx:
         if p.returncode:
             sys.exit(_err(f"{log} failed (exit {p.returncode}), see {os.path.relpath(self.work / (log + '.log'))}"))
 
+def prepare(ctx):
+    """`prepare:` commands run before the sources are read: the project's own generators, e.g. `make generate`.
+    Each entry: a shell command, or {run, cwd (relative to the repo), conda (env name: its python, tools and
+    CONDA_DEFAULT_ENV), env (extra variables)}. Logs: prepare_<n>.log."""
+    for i, p in enumerate(ctx.cfg.get("prepare", [])):
+        p = {"run": p} if isinstance(p, str) else p
+        print(f"    {_t().dim('$ ' + p['run'])}")
+        ctx.sh(["bash", "-c", p["run"]], f"prepare_{i}", cwd=ctx.root / p.get("cwd", "."), env=project_env(p.get("conda"), p.get("env")))
+
+def project_env(conda=None, extra=None):
+    """Environment for a project's own commands: without FREISA's conda env; inside `conda` (its tools, python and
+    CONDA_DEFAULT_ENV) when given; plus `extra` variables (~ expanded)."""
+    env = {k: v for k, v in os.environ.items() if not k.startswith("CONDA")}
+    env["PATH"] = os.pathsep.join(x for x in env.get("PATH", "").split(os.pathsep) if os.environ.get("CONDA_PREFIX", "//") not in x)
+    if conda:
+        base = subprocess.run(["conda", "info", "--base"], capture_output=True, text=True).stdout.strip()
+        pre = pathlib.Path(base) / "envs" / conda
+        if not pre.exists(): sys.exit(_err(f"conda env '{conda}' not found ({pre})"))
+        env.update(CONDA_DEFAULT_ENV=conda, CONDA_PREFIX=str(pre), PATH=f"{pre}/bin{os.pathsep}{env['PATH']}")
+    env.update({k: os.path.expanduser(str(v)) for k, v in (extra or {}).items()})
+    return env
+
 class Backend:
     stage = name = None
     tools = []  # executables needed

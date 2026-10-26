@@ -28,7 +28,11 @@ from board to board. There is no other configuration file.
 | `repo` | folder with the RTL, relative to the project file (or absolute); other paths are relative to it |
 | `top` | top-level module or entity |
 | `rtl` | source files as glob patterns; language from the extension (`.v`, `.sv`, `.vhd`, `.vhdl`) |
-| `core`, `core_target` | instead of `rtl`: a FuseSoC `.core` file and its target |
+| `core`, `core_target` | instead of `rtl`: a FuseSoC `.core` file and its target; FREISA runs `fusesoc run --setup` of that target (dependencies, generators, defines) and reads the resulting file list as with `edam` |
+| `fusesoc` | `{conda, env, flags}`: conda env where `fusesoc` runs, extra variables, extra `fusesoc run` options |
+| `filelist` | instead of `rtl`: a `.f`/`.vc` file list (files, `+incdir+`, `+define+`) |
+| `edam` | instead of `rtl`: the `.eda.yml` that `fusesoc run --setup` writes for a target (glob allowed: the newest file is used); gives RTL, include dirs and defines |
+| `prepare` | commands run before the sources are read, in the repo: a string, or `{run, cwd, conda, env}` (`conda`: run inside that conda env, e.g. the project's own generators) |
 | `steps` | tool of each step for every board (`auto`, `all`, `all_open` or a tool name, see below) |
 | `boards` | `{<board>: {<step>: <tool>}}`: tools for one board, merged over `steps` |
 | `per_target` | `{<board>: {...}}` or `{<board>@<tool>: {...}}`: design keys for one board (or board + tool) |
@@ -87,7 +91,7 @@ steps:
   bitgen: auto
   upload: openfpgaloader
 ```
-Open tools everywhere. With `auto`, xc7z020 gets nextpnr-fpga_interchange and prjxray (a complete open bitstream); UltraScale+
+Open tools everywhere. With `auto`, pynq-z2 gets nextpnr-fpga_interchange and prjxray (a complete open bitstream); UltraScale+
 boards get RapidWright, DREAMPlaceFPGA and RWRoute, and no bitstream writer (none exists for UltraScale+).
 ```yaml
 boards:
@@ -99,9 +103,9 @@ and Vivado only runs `write_bitstream`. KV260 is left out: it has no PL clock os
 so blinky stops at the routed checkpoint there (`make flow TARGET=kv260 TO=route`).
 ```yaml
 per_target:
-  xc7z020: {xdc: [xc7z020.xdc]}
+  pynq-z2: {xdc: [pynq-z2.xdc]}
 ```
-On the PYNQ-Z1/Z2, pins come from `examples/blinky/xc7z020.xdc` (125 MHz single-ended clock, LED 0).
+On the PYNQ-Z1/Z2, pins come from `examples/blinky/pynq-z2.xdc` (125 MHz single-ended clock, LED 0).
 ```yaml
   zcu104@open_io: {xdc: [zcu104.xdc], clocks: {clk: 3.333}}
   zcu106@open_io: {xdc: [zcu106.xdc], clocks: {clk: 3.333}}
@@ -141,3 +145,17 @@ per_target:
   zcu104: {xdc: [zcu104_pins.xdc], clocks: {clk: 5.0}}
 ```
 Save it as `designs/my_project.yml` and run `make flow DESIGN=my_project TARGET=zcu104`.
+
+## A project with its own generators and Vivado scripts
+A repository that generates its RTL and its file list itself is used as it is: `prepare` runs its commands, `core` reads
+its FuseSoC target (or `edam` an EDAM file already written). More: [Real designs](9-real-designs.md).
+```yaml
+per_target:
+  zcu104:
+    prepare:
+      - {run: make generate, conda: my-env}
+    core: my_soc.core
+    core_target: zcu104
+    fusesoc: {conda: my-env}
+    xdc: [constraints/zcu104.xdc]
+```

@@ -46,10 +46,10 @@ def panel(title, rows, cols=None):
     """Box with a title; rows are lists of cells (a table, columns sized to fit) or plain strings."""
     W = width(); inner = W - 4
     out = [T.orange("╭─ ") + T.bold(T.orange(title)) + T.orange(" " + "─" * max(0, W - vis(title) - 5) + "╮")]
-    table = [r for r in rows if isinstance(r, (list, tuple))]
+    table = [r for r in rows if isinstance(r, (list, tuple))] + ([list(cols)] if cols else [])  # column widths: rows and header
     if table:
         n = max(len(r) for r in table)
-        w = [max(vis(str(r[i])) if i < len(r) else 0 for r in table + ([cols] if cols else [])) for i in range(n)]
+        w = [max(vis(str(r[i])) if i < len(r) else 0 for r in table) for i in range(n)]
         while sum(w) + 2 * (n - 1) > inner and max(w) > 8: w[w.index(max(w))] -= 1  # shrink the widest column
     if cols:
         line = "  ".join(fit(T.dim(c), w[i]) for i, c in enumerate(cols))

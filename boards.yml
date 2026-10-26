@@ -21,8 +21,8 @@
 #     jtag_serial             force one JTAG cable when several are connected
 
 boards:
-  xc7z020:
-    description: PYNQ-Z1 / PYNQ-Z2 (Zynq-7000)
+  pynq-z2:
+    description: PYNQ-Z2 (Zynq-7000; also fits the PYNQ-Z1)
     part: xc7z020clg400-1
     source: {store: TUL/pynq-z2}
     ofl_board: pynq_z2

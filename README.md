@@ -17,7 +17,7 @@ Vivado is optional: it is used only when you ask for it.
 ## Quick start
 ```sh
 make install                       # one time: conda env, board files, open tools
-make flow                          # default: blinky on PYNQ-Z1/Z2 (xc7z020), RTL -> out.bit, open tools only
+make flow                          # default: blinky on PYNQ-Z1/Z2 (pynq-z2), RTL -> out.bit, open tools only
 make flow TARGET=zcu104            # blinky on ZCU104: open tools, Vivado only writes the bitstream
 make flow DESIGN=uart_loopback TARGET=zcu104 && make upload DESIGN=uart_loopback TARGET=zcu104 && make uart-test TARGET=zcu104
 make help                          # every command and variable
@@ -34,6 +34,7 @@ Read in this order:
 6. [Developer guide](docs/6-developer.md): how the engine works, adding or updating a block.
 7. [Examples](docs/7-examples.md): blinky and uart_loopback on every board: build, program, test.
 8. [open_io](docs/8-open-io.md): how UltraScale+ bitstreams are made with open tools for everything except `write_bitstream`.
+9. [Real designs](docs/9-real-designs.md): any repository untouched (generators, FuseSoC cores) and which flow to use.
 
 ## Repository layout
 | Path | Content |

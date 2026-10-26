@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Info     : Live monitor: progress, time, CPU/memory of the running tools, last log line, step summaries.
-# Module   : ui.py
+# Module   : monitor.py
 # Author   : Christian Conti
 # Contact  : christian.conti@mail.it
 

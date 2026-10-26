@@ -49,13 +49,14 @@ steps:
   upload: openfpgaloader
 
 # boards: tools for one board only, merged over `steps` when TARGET is that board.
-#         ZCU104/ZCU106 (UltraScale+) have no open bitstream writer, so `auto` would stop after routing.
+#         ZCU104/ZCU106/AUP-ZU3 (UltraScale+) have no open bitstream writer, so `auto` would stop after routing.
 #         open_io: open tools also do the I/O buffers and their routing; Vivado only runs write_bitstream.
 #         KV260 is not listed: it has no PL clock oscillator (the PL clock comes from the PS), so blinky can only be
 #         built up to the routed checkpoint there: `make flow TARGET=kv260 TO=route`.
 boards:
   zcu104: {bitgen: open_io}
   zcu106: {bitgen: open_io}
+  aup-zu3-8gb: {bitgen: open_io}
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Per-board design settings
@@ -71,10 +72,12 @@ boards:
 #   wrap:    {top, rtl, cell}: I/O wrapper used by bitgen vivado_wrap (Vivado puts the open-routed design into `cell`).
 per_target:
   # PYNQ-Z1/Z2: single-ended 125 MHz clock and one LED; the open tools write out.bit
-  xc7z020: {xdc: [xc7z020.xdc]}
+  pynq-z2: {xdc: [pynq-z2.xdc]}
   # ZCU104/ZCU106 with open_io: the XDC names the differential clock pins clk_p/clk_n, which open_io connects to port clk
   zcu104@open_io: {xdc: [zcu104.xdc], clocks: {clk: 3.333}}
   zcu106@open_io: {xdc: [zcu106.xdc], clocks: {clk: 3.333}}
+  # AUP-ZU3 with open_io: 100 MHz differential clock, white LED 0
+  aup-zu3-8gb@open_io: {xdc: [aup-zu3-8gb.xdc], clocks: {clk: 10.0}}
   # alternative bitgen vivado_wrap: Vivado implements the hand-written I/O wrapper blinky_diff around the open design
   zcu104@vivado_wrap: {xdc: [zcu104.xdc], wrap: {top: blinky_diff, rtl: [blinky_diff.v], cell: core}}
   zcu106@vivado_wrap: {xdc: [zcu106.xdc], wrap: {top: blinky_diff, rtl: [blinky_diff.v], cell: core}}

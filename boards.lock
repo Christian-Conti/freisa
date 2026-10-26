@@ -5,7 +5,7 @@
 # Info     : Commits fetched by the last `make install-boards` (default branch of each repository).
 # Module   : boards.lock
 
-xc7z020        https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
+pynq-z2        https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
 zcu104         https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
 zcu106         https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7
 kv260          https://github.com/Xilinx/XilinxBoardStore.git 40fad97cf36f3d856c6759d83c2390de1566ffa7

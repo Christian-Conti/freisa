@@ -10,6 +10,25 @@
 -->
 # 6. Developer guide
 
+The point of FREISA is that every step is a black box with a fixed contract: it reads files from the previous step and
+writes files for the next one. A new tool is one class in one file; nothing else changes.
+
+## Code map
+| Path | What it is |
+|------|------------|
+| `flow.py` | runs a flow: `run`, `doctor`, `upload` (called by the Makefile) |
+| `freisa.py` | starts the interactive interface (`python freisa.py`) |
+| `freisa/core.py` | the block registry (`Backend`, `@backend`, `AUTO`), the run context (`Ctx`, `ctx.sh`), `prepare:` commands, explore |
+| `freisa/resolve.py` | project file + board file -> one tool per step; the rules between steps (`problems()`) |
+| `freisa/stages/` | the blocks, one file per tool family: `sources.py`, `synth_yosys.py`, `rapidwright.py`, `open_pnr.py`, `vivado.py`, `upload.py` |
+| `freisa/ifx.py` | FPGA Interchange conversions (RapidWright, python-fpga-interchange) |
+| `freisa/vivado.py` | Vivado helpers shared by the Vivado blocks (run a script, constraints, reports) |
+| `freisa/monitor.py`, `freisa/report.py` | the run monitor; reports collected after each step |
+| `freisa/cli.py`, `freisa/term.py` | `make status` / `make show`; terminal colors |
+| `freisa/tui/` | the interactive interface (see below) |
+| `freisa/rw/`, `freisa/yosys/` | RapidWright scripts; Yosys techmap for the open placer |
+| `utils/` | install scripts, `check_flow.py` (`make check`), `boards.py` (`make install-boards`), `uart_test.py` |
+
 ## How a run works
 1. `freisa/resolve.py` loads `defaults.yml`, the project file and the board file, picks one tool per step
    (resolving `auto`) and applies the design's `per_target` overrides.
@@ -18,14 +37,14 @@
 
 | Key | Written by | Read by |
 |-----|-----------|---------|
-| `rtl` | sources | synth |
+| `rtl`, `incdirs`, `defines` | sources | synth |
 | `json`, `edif` | synth | netlist |
 | `netlist` (`.netlist`, FPGA Interchange logical netlist) | netlist (or Vivado synth) | every later step |
 | `phys` (`.phys`, FPGA Interchange physical netlist) | place, route | route, bitgen |
 | `dcp`, `fasm` | written only inside a step that needs them (conversion at its edges) | that step |
 | `bit`, `hwh`, `xsa` | bitgen | upload, you |
 
-4. `freisa/ui.py` draws the monitor; `freisa/report.py` collects reports into `report/` after each step.
+4. `freisa/monitor.py` draws the run monitor; `freisa/report.py` collects reports into `report/` after each step.
 
 ## Adding a block
 Create `freisa/stages/<name>.py`:
@@ -88,13 +107,23 @@ read `xdc:` from the project file.
 
 ## Adding to the interactive interface
 
-`python freisa.py` runs `freisa/tui.py`. Each tab is a class derived from `Tab`, listed in `TABS`:
+`python freisa.py` runs the package `freisa/tui/`:
+
+| File | What it is |
+|------|------------|
+| `data.py` | what is read from the repository: projects, boards, builds, serial ports, PC resources |
+| `draw.py` | colors, `put`, `box`, `textpane`, `ListView`, popups (`modal_pick`, `modal_text`, `confirm`) |
+| `jobs.py` | `Job` (a command in the background, its log, CPU and memory) and `Uart` (serial port monitor) |
+| `tabs/` | one file per tab; `tabs/__init__.py` lists them in `TABS` |
+| `app.py` | the application: header, tab bar, footer, keys, mouse, help |
+
+Each tab is a class derived from `Tab` (`tabs/base.py`):
 
 - `keys()` returns `(key, hint, function)` entries: a new command is one line there, and the footer shows its hint.
 - `draw(w, y, x, h, wd)` draws the tab in its area with the helpers `box`, `put`, `textpane` and `ListView`.
 - `self.run(cmd, title)` starts a command in the background (usually a `make` target); `self.log(...)` shows its output.
 - Popups: `modal_pick` (list), `modal_text` (one line), `confirm`.
 
-A new tab: subclass `Tab`, set `title` and `icon`, write `keys()` and `draw()`, and append the class to `TABS`.
+A new tab: a file in `tabs/` with a `Tab` subclass (`title`, `icon`, `keys()`, `draw()`), added to `TABS`.
 Data shown by more than one interface (environment, tools, builds) comes from `freisa/cli.py`, which also prints
 `make status`.

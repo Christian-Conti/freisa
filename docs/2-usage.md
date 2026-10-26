@@ -37,8 +37,8 @@ Each step has one or more tools. The project file chooses the tool of every step
 ## Variables
 | Variable | Default | Meaning |
 |----------|---------|---------|
-| `DESIGN` | `blinky` | project name (`designs/**/<name>.yml`) or path; `make flow` alone builds blinky for xc7z020 |
-| `TARGET` | `xc7z020` | board file name in `targets/` |
+| `DESIGN` | `blinky` | project name (`designs/**/<name>.yml`) or path; `make flow` alone builds blinky for pynq-z2 |
+| `TARGET` | `pynq-z2` | board file name in `targets/` |
 | `FROM`, `TO` | `sources`, `bitgen` | first and last step; `FROM` reuses the outputs of a previous run |
 | `TOOL`, `BIT` | `openfpgaloader`, `out.bit` | for `make upload` |
 
@@ -120,14 +120,16 @@ the critical path is reported.
 `python freisa.py` opens a terminal interface (it switches to the FREISA conda env by itself). It works from 60x20:
 below 110 columns the panes are stacked instead of side by side. Tabs are switched with `1`-`6`, `Tab` or a mouse click;
 the wheel scrolls logs. The two bottom lines list the keys of the current tab, `?` shows them all.
+The tab bar shows the PC resources on every tab (CPU, memory; red above 90%). Every command run from the interface shows
+in its log title the elapsed time, the CPU and memory of all its processes (Vivado, Java, ...) and the memory peak.
 
 | Tab | What it does |
 |---|---|
-| 1 Home | overview: tools built, boards installed, projects, builds, Vivado; the open flow `auto` picks for each board family; latest builds |
+| 1 Home | overview: tools built, boards installed, projects, builds, Vivado; the open flow `auto` picks for each board family; every build: `Enter` opens its reports, `u` programs it, `r` runs it again, `D` deletes it |
 | 2 Flow | choose design, board, FROM/TO and the tool of every step (Enter on a step: every tool with whether it can run on that board); `r` run, `s` synthesis only, `c` check, `u` upload, `e` edit the project file. Progress per step and two live logs: the flow and the tool running now |
-| 3 Builds | every build: steps, area, timing, flow log, summary (`←→`); `u` programs its bitstream, `r` runs it again |
+| 3 Builds | every build: steps, area, timing, flow log, summary (`←→`); `u` programs its bitstream, `r` runs it again, `D` deletes it |
 | 4 Boards | boards.yml: installed or not, part, source, generated settings and board files; `i` installs one board, `a` all, `e` edits boards.yml |
-| 5 Hardware | JTAG cables found on USB with their FPGA and boards, and their serial ports (the PL UART is marked); `p` programs a bitstream, `R` resets the FPGA (openFPGALoader), `Y` resets the whole board (PS and PL, Vivado xsdb); `o` opens a UART monitor (`b` baud, `i` type and send, `h` hex), `t` loopback test |
+| 5 Hardware | JTAG cables found on USB with their FPGA and boards, and their serial ports (the PL UART is marked); `p` programs a bitstream, `R` resets the FPGA (openFPGALoader; on Zynq UltraScale+, which it cannot reset, it reloads the last bitstream programmed from this tab), `Y` resets the whole board (PS and PL, Vivado xsdb); `o` opens a UART monitor as a conversation, sent messages on the left and received on the right (`b` baud, `i` type and send, `h` raw hex view, `C` clear), `t` loopback test |
 | 6 Tools | tools.lock: commit, pinned or latest, built or not; `i` installs one, `u` moves it to the latest commit, `o` lists the outdated ones; environment |
 
 Commands run in the background: you can change tab while a flow runs; `x` stops the command of the tab, `q` quits
