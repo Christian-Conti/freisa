@@ -50,7 +50,7 @@ Read in this order:
 1. [Getting started](docs/1-getting-started.md): install, first run, where the results are.
 2. [Using the flow](docs/2-usage.md): commands, variables, explore, upload, reports, the interactive interface.
 3. [Project files](docs/3-projects.md): one file per design with sources, tools per step and board settings.
-4. [Boards](docs/4-boards.md): supported boards (PYNQ-Z2, ZCU104, ZCU106, KV260, AUP-ZU3 8 GB), tools per step, adding a board in `boards.yml`.
+4. [Boards](docs/4-boards.md): supported boards, tools per step, adding a board in `boards.yml`.
 5. [Tools per step](docs/5-tools.md): what each block does and its limits (including Vivado and the PS / `.hwh`).
 6. [Developer guide](docs/6-developer.md): how the engine works, adding or updating a block.
 7. [Examples](docs/7-examples.md): blinky and uart_loopback on every board: build, program, test.
